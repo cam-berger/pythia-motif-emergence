@@ -1,0 +1,36 @@
+# Checkpoint sweep schedule — pre-registered per-size sampling.
+#
+# 40 log-spaced checkpoints per Pythia size, drawn from the canonical Pythia
+# checkpoint set: step0 plus powers of two up to step512, then every 1000
+# from step1000 to step143000 (final).
+#
+# Per-size differentiation rationale: smaller models tend to emerge earlier,
+# so the dense-sampling region is shifted to where each size's logistic
+# inflection is most likely to land. This keeps fit quality comparable across
+# sizes for the cross-size ordering claim.
+#
+# Pre-registration discipline: this schedule was committed before the pilot.
+# It MAY be augmented during weeks 9-10 with extra checkpoints near observed
+# emergence boundaries (adding points strengthens fits without violating
+# pre-reg). It MAY NOT be replaced or thinned post-hoc.
+
+70M:
+  steps: [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
+          1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+          10000, 11000, 13000, 15000, 17000, 19000, 22000, 25000, 28000,
+          32000, 36000, 42000, 50000, 60000, 75000, 90000, 105000, 120000,
+          130000, 143000]
+
+160M:
+  steps: [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
+          1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+          11000, 13000, 15000, 18000, 21000, 25000, 29000, 34000, 40000,
+          47000, 55000, 65000, 75000, 85000, 95000, 105000, 115000, 125000,
+          135000, 143000]
+
+410M:
+  steps: [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
+          1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000,
+          12000, 15000, 18000, 22000, 26000, 31000, 36000, 42000, 48000,
+          55000, 62000, 70000, 78000, 86000, 95000, 105000, 115000, 125000,
+          135000, 143000]
