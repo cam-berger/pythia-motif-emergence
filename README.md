@@ -23,12 +23,12 @@ The full plan — weekly milestones, decision gates, pre-committed limitations, 
 | Phase | Weeks | Status |
 |---|---|---|
 | 0 — Reading | parallel with 1–4 | not started |
-| 1 — Tooling & replication | 1–4 | not started |
-| 1.0 — Pilot (Path A vs Path C decision) | week 1 | in progress (Day 1 ✓, Day 2 ✓) |
-| 1.1 — TransformerLens fluency on Pythia | week 2 | not started |
+| 1 — Tooling & replication | 1–4 | in progress |
+| 1.0 — Pilot (Path A vs Path C decision) | week 1 | **✓ complete — Path C registered** (`PILOT_RESULTS.md`) |
+| 1.1 — TransformerLens fluency on Pythia | week 2 | substantially complete (de facto from Day 1–4 work) |
 | 1.2 — Tigges IOI replication | week 3 | not started |
-| 1.3 — Detector validation | week 4 | not started |
-| 2 — Novel sweep | 5–10 | not started |
+| 1.3 — Detector validation | week 4 | not started — **scope updated by Path C: third detector is now S-inhibition** (Wang 2023), not copy-suppression |
+| 2 — Novel sweep | 5–10 | not started — registered hypothesis is **H1-C** (induction → successor → S-inhibition) |
 | 3 — Push past replication | 11–13 | not started |
 | 4 — Writeup | 14–16 | not started |
 
