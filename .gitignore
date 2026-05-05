@@ -45,7 +45,10 @@ htmlcov/
 data/activations/
 data/checkpoints/
 data/cache/
+data/pilot/
 *.parquet
+*.parquet.bak
+*.npz
 !data/motif_sweep.parquet.schema.json
 
 # Project-private notes

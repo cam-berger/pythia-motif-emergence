@@ -37,11 +37,23 @@ class CopySuppressionResult:
     Both tensors have shape (n_layers, n_heads). QK is in [0, 1] (it's a sum of
     attention probabilities, capped by 1 since attention rows sum to 1). OV is
     unbounded but should be negative for copy-suppression candidates.
+
+    When `collect_per_position=True` is passed to `copy_suppression_score`, the
+    `per_position_ov` and `per_position_meta` fields are populated. Their
+    rows are aligned: `per_position_meta[k] == (passage_idx, position)` is the
+    (passage, query position) for the k-th row of `per_position_ov`, which has
+    shape `(n_total_eligible, n_layers, n_heads)`. This is the side-cache
+    needed for data-driven worked-example selection (Q7 rule from the Day 3
+    design): for a target head, sort by `per_position_ov[:, L, H]` ascending
+    and the top-K rows are the corpus positions where head (L, H) most strongly
+    suppresses.
     """
 
     qk_scores: torch.Tensor
     ov_scores: torch.Tensor
     n_positions: int
+    per_position_ov: torch.Tensor | None = None
+    per_position_meta: list[tuple[int, int]] | None = None
 
     def candidates(
         self, qk_threshold: float = 0.3, ov_threshold: float = 0.0
@@ -91,6 +103,8 @@ def _build_dup_index(token_ids: list[int]) -> dict[int, list[int]]:
 def copy_suppression_score(
     model: HookedTransformer,
     sequences: torch.Tensor | list[torch.Tensor],
+    *,
+    collect_per_position: bool = False,
 ) -> CopySuppressionResult:
     """Compute McDougall QK and OV scores for every (layer, head) in `model`.
 
@@ -100,10 +114,16 @@ def copy_suppression_score(
             or a list of 1D tensors with token IDs (variable length). Positions
             with at least one prior duplicate token contribute to the scores;
             positions without prior duplicates are skipped.
+        collect_per_position: if True, also collect per-(passage, position) OV
+            contributions to all heads. Required for data-driven worked-example
+            selection (Q7 rule). Adds memory cost
+            ~ n_eligible_total * n_layers * n_heads * 4 bytes.
 
     Returns:
         CopySuppressionResult with per-(layer, head) QK and OV scores averaged
-        across all eligible positions in all sequences.
+        across all eligible positions in all sequences. If `collect_per_position`
+        is True, the result also has `per_position_ov` and `per_position_meta`
+        populated.
     """
     if isinstance(sequences, torch.Tensor):
         if sequences.dim() != 2:
@@ -124,11 +144,14 @@ def copy_suppression_score(
     ov_sum = torch.zeros((n_layers, n_heads), dtype=torch.float32)
     n_positions = 0
 
+    per_position_ov_chunks: list[torch.Tensor] = []
+    per_position_meta: list[tuple[int, int]] = []
+
     device = next(model.parameters()).device
     W_U = model.W_U  # (d_model, d_vocab)
 
     with torch.no_grad():
-        for tokens_1d in seq_iter:
+        for passage_idx, tokens_1d in enumerate(seq_iter):
             tokens = tokens_1d.to(device)
             tok_list = tokens.tolist()
             dup_map = _build_dup_index(tok_list)
@@ -144,6 +167,13 @@ def copy_suppression_score(
 
             eligible = list(dup_map.keys())
 
+            if collect_per_position:
+                # Pre-allocate (n_eligible, n_layers, n_heads) for this passage.
+                passage_ov = torch.zeros(
+                    (len(eligible), n_layers, n_heads), dtype=torch.float32
+                )
+                pos_index_map = {pos: idx for idx, pos in enumerate(eligible)}
+
             for layer in range(n_layers):
                 pattern = cache[f"blocks.{layer}.attn.hook_pattern"]  # (1, h, q, k)
                 z = cache[f"blocks.{layer}.attn.hook_z"]  # (1, q, h, d_head)
@@ -157,6 +187,12 @@ def copy_suppression_score(
                     ov_per_head = (head_out[0, i] @ W_U[:, tok_i]).float().cpu()
                     qk_sum[layer] += qk_per_head
                     ov_sum[layer] += ov_per_head
+                    if collect_per_position:
+                        passage_ov[pos_index_map[i], layer] = ov_per_head
+
+            if collect_per_position:
+                per_position_ov_chunks.append(passage_ov)
+                per_position_meta.extend((passage_idx, pos) for pos in eligible)
 
             n_positions += len(eligible)
 
@@ -168,6 +204,17 @@ def copy_suppression_score(
 
     qk_scores = qk_sum / n_positions
     ov_scores = ov_sum / n_positions
+
+    per_position_ov: torch.Tensor | None = None
+    per_position_meta_out: list[tuple[int, int]] | None = None
+    if collect_per_position and per_position_ov_chunks:
+        per_position_ov = torch.cat(per_position_ov_chunks, dim=0)
+        per_position_meta_out = per_position_meta
+
     return CopySuppressionResult(
-        qk_scores=qk_scores, ov_scores=ov_scores, n_positions=n_positions
+        qk_scores=qk_scores,
+        ov_scores=ov_scores,
+        n_positions=n_positions,
+        per_position_ov=per_position_ov,
+        per_position_meta=per_position_meta_out,
     )

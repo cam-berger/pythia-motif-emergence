@@ -58,3 +58,42 @@ These will appear in the paper's limitations section verbatim. No retrospective 
 ## Amendment policy
 
 This document is the pre-registered hypothesis. Any change to the hypothesis, operational definition, falsification criterion, or decision rule made *after* the first pilot result is recorded must be made in a new commit that explicitly acknowledges it post-dates pilot results. The original commit history is the source of truth for what was registered.
+
+## Amendment 2026-05-05 — validation reframing and calibrated supplementary scheme
+
+**Posted after partial pilot results.** Day 2's GPT-2 calibration of the McDougall two-criterion detector revealed a threshold-transfer issue: the published QK > 0.3 threshold was inherited from McDougall 2024, where QK was computed on filtered data (positions where the model strongly predicts a prior token). On raw prose corpora — including the canonical corpus this project uses for Pythia application (`data/corpora/copy_suppression_corpus.txt`, ~7.5k tokens) — even the published reference head **GPT-2 small L10H7** plateaus at mean QK ≈ 0.10, well below 0.3. Under a strict reading of the registered detector, L10H7 fails to validate against itself.
+
+This amendment makes three changes, all transparent and dated. None relax the path-decision rule.
+
+### 1. Validation reframing (gating change)
+
+**Original (pre-pilot):** *"Detector fires on GPT-2 small layer 10 head 7."* Implicitly assumed McDougall's filtered-data threshold transferred to raw text.
+
+**Reframed (this amendment):** validation is reported in two parallel forms on the canonical corpus:
+
+- **Strict validation (McDougall threshold):** L10H7 mean QK is recorded; PASS only if QK > 0.3 *and* OV < 0. Under raw-text application this is expected to FAIL, and that failure is interpreted as *the strict threshold under-detects on raw text*, not as *the motif is absent*.
+- **Calibrated validation (locked here):** L10H7 must (a) rank in the top 5 of all 144 GPT-2 small heads by most-negative OV, and (b) have mean QK > 0.05 on the canonical corpus.
+
+If calibrated validation fails, the supplementary analysis below is dropped and the project reverts to strict-only on Pythia.
+
+### 2. Calibrated supplementary scheme (non-gating)
+
+A second detector criterion is added strictly for *threshold-sensitivity reporting* per limitation §54 (which already pre-committed to bootstrap CIs across thresholds). It is reported alongside the strict criterion but does **not** gate the Path A vs Path C decision:
+
+- **Calibrated criterion:** OV < 0 AND QK > 0.05 on raw-prose canonical corpus.
+- **Reported in:** `PILOT_RESULTS.md` § Supplementary analyses (separate from the gating section).
+- **Selection rule for the proof notebook's worked example** (when strict candidates are absent): top-3 by most-negative OV among heads passing the calibrated criterion, with deterministic fallback to GPT-2 L10H7 if the calibrated set is empty everywhere across the Pythia sweep.
+
+### 3. Pilot decision rule (unchanged)
+
+The Path A vs Path C decision rule in §"Pilot decision rule (Week 1)" continues to key on the **strict** criterion exclusively. The calibrated scheme is descriptive, not gating. If strict returns 0 passing heads on Pythia-410M @ `step143000`, Path C is registered regardless of what the calibrated scheme finds.
+
+The amendment exists to document threshold transfer transparently — not to relax detection requirements.
+
+### Rationale
+
+The strict threshold likely under-detects copy-suppression on raw text in *all* models, including GPT-2. Hiding that fact would require either:
+- silently switching what "validation" means (bad pre-reg hygiene), or
+- reporting a known-positive-fails-its-own-detector finding without context (uninterpretable).
+
+Reframing validation as dual-reported (strict + calibrated) and adding the calibrated supplementary as a separate non-gating analysis preserves the original conservative gating while making the threshold-transfer issue itself a finding to be reported, per §54.
