@@ -10,7 +10,7 @@ This template was committed alongside `HYPOTHESIS.md` *before* the pilot ran. Fi
 - **Pilot end date:** TBD (Day 5 path lock)
 - **Model:** Pythia-410M-deduped, checkpoint `step143000` (final)
 - **Detector:** McDougall two-criterion copy-suppression detector (`src/detectors/copy_suppression.py`)
-- **Detector implementation commit:** TBD (recorded at Day 3 commit time)
+- **Detector implementation commit:** `78e48dc` (Day 2 introduction of `src/detectors/copy_suppression.py`); `67828bb` (Day 3 addition of `collect_per_position` parameter for per-position OV side cache)
 - **Validation:** dual report per `HYPOTHESIS.md` 2026-05-05 amendment §1
   - **Strict (McDougall published threshold, QK > 0.3 AND OV < 0):** **FAIL** — L10H7 mean QK=0.019 on canonical corpus, mean OV=-0.802. Threshold-transfer issue documented in amendment §1.
   - **Calibrated (Q4 rubric, top-5 OV AND QK > 0.05):** **FAIL** — L10H7 OV rank=15 of 144, mean QK=0.019. Calibrated supplementary scheme dropped per amendment §1; Pythia application reverts to strict-only.
@@ -77,7 +77,7 @@ Apply the rule from `HYPOTHESIS.md` § *Pilot decision rule (Week 1)*, in order.
 - **Justification:** The McDougall two-criterion detector applied to Pythia-410M-deduped @ step143000 on the canonical 7.5k-token corpus identifies exactly 1 head passing both strict thresholds (L2H8: QK=0.328, OV=-0.023). Day 4 qualitative inspection shows L2H8 has a textbook duplicate-attending QK pattern (0.91 attention back to the prior occurrence at the rank-1 worked-example position) but its corpus-wide ablation effect on duplicate-token logits is **-0.009** — i.e., ablating L2H8 *lowers* duplicate-token confidence, the opposite of suppression. The four supplementary candidates (L19H3, L1H4, L0H15, L1H6) all show similar negative corpus-wide d-logit (-0.007 to -0.115). L2H8 is best characterized as a previous-token / induction-precursor head, not a copy-suppression head. By `HYPOTHESIS.md` decision rule path 3, the numerically-passing head failing qualitative inspection registers Path C. The project pivots: the registered hypothesis becomes H1-C, with S-inhibition replacing copy-suppression as the third motif. Phase 2 detector targets are induction, successor, and S-inhibition.
 - **Decision recorded by:** Cam Berger (cam-berger)
 - **Date:** 2026-05-05
-- **Decision commit SHA:** TBD (recorded at Day 3/4 commit time)
+- **Decision commit SHA:** `67828bb` (this document's path-decision state was committed by this SHA; subsequent SHAs may update commit references but not the path call)
 - **Registered hypothesis going forward:** H1-C (per `HYPOTHESIS.md` §"Pivot hypothesis (H1-C)")
 
 ## Notes from pilot
