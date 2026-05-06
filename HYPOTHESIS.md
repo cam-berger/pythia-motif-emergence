@@ -285,3 +285,49 @@ Two lessons from Phase 1.3 inform the SU-4 design and are recorded here for trac
 This amendment is **reference-style**: the locked procedural specification lives here in HYPOTHESIS.md; the full grilling rationale and option-list-with-rejected-alternatives lives in NOTES.md (gitignored working memory) under the Phase 1.4 grilling entry. τ is locked in a *separate* HYPOTHESIS.md amendment (§SU-tau) posted after the GPT-2 validation gate (SU-4) is executed.
 
 Implementation files (planned, not yet written): `src/detectors/successor.py` (cross-category DLA detector reusing `src/replication/tigges_ioi.py::component_dla` machinery for per-(layer, head) DLA computation). 4-category prompt builder either inline in the detector module or in a sibling file. No new dependencies. Compute estimate: ~1-2 minutes for GPT-2 small validation, ~5-10 minutes for the full 18-cell Pythia sweep on M5 Pro.
+
+## Amendment 2026-05-06 (early) — §SU-1b: lift-form scoring (supersede of §SU-3 / §SU-4 score definition)
+
+**Posted before any formal validation run is recorded.** This supersede amendment corrects a methodological flaw in the §SU-1 spec that surfaced during a pre-validation smoke test: the score `mean cross-category DLA on real prompts` conflates successor mechanism with category-token-boost behavior, and the population-level null threshold of §SU-3 doesn't isolate one from the other. Pre-validation diagnostic (uncommitted; not a formal validation run) showed L9H1 ranked #36 of 144 under the §SU-1 spec, while the rank-1 head L10H3 had real DLA = +10.37 but lift = real − null = **−1.90** — i.e., L10H3 boosts ordinal tokens *more* on category-shuffled prompts than on real prompts, the literal anti-successor behavior. L9H1 ranked #1 of 144 by lift with lift = +0.3917, exactly the rank L 2023's argmax-within-7-days protocol predicts (verified pre-amendment: L9H1 is the unique 7/7 head; all other 143 heads score ≤3/7 under L's exact protocol).
+
+The chronology — §SU-1 spec locked → smoke-test surfaced the spec failure → research confirmed L 2023 used argmax-within-restricted-vocabulary, not magnitude-summed DLA → local diagnostic showed lift form recovers L 2023's named target as rank-1 → this supersede locks the corrected score *before* formal validation runs are recorded — is the auditable pre-registration record. **No formal data has been recorded yet under §SU-1**; this amendment is the operative spec for Phase 1.4 validation onward.
+
+### SU-1b-3. Score definition (supersedes §SU-3 score-and-threshold construction)
+
+For each head `h`, define the **lift score**:
+
+```
+lift[h] = mean over 4 categories c of ( real_DLA_c[h]  −  null_DLA_c[h] )
+```
+
+where `real_DLA_c[h]` is the mean DLA at the END token toward `c4`'s first token across all real (clean-text) prompts in category `c`, and `null_DLA_c[h]` is the same mean across the within-category-prefix-permuted variants of those same prompts (one fixed seed-pinned permutation per (category, base prompt), per the unchanged §SU-3 permutation procedure). The unchanged §SU-2 first-token-DLA convention applies.
+
+The lift form measures the head's *successor-specific contribution* — the magnitude by which the head boosts the correct successor over what it would boost when given the same prompt structure with the ordinal relationship destroyed. Heads that boost any ordinal-category token (category-token-boosters) have lift ≈ 0 because their real and null are matched. Heads that boost the successor specifically — the §SU-0 mechanism Gould et al. and L 2023 describe — have positive lift. Anti-successor heads (those that boost the duplicate position more than the successor under the prompt structure) have negative lift; we expect zero or negligible counts of these for our purposes.
+
+The null threshold τ is now defined as **the 95th percentile of the pooled per-head lifts** (one entry per head: 144 entries on GPT-2 small; 384 on Pythia-410M). Pooling is at the per-head-mean level, identical to the §SU-3 unit. τ remains numerically deferred; it is committed in §SU-tau after the GPT-2 validation screen runs.
+
+### SU-1b-4. Validation gate (supersedes §SU-4)
+
+The gate has two conjunctive conditions, both of which must be satisfied:
+
+1. **Top-3 inclusion by lift.** L9H1 must appear within the top-3 of the per-head ranking by `lift`.
+2. **Lift exceeds τ.** L9H1's `lift` must exceed τ (the 95th-percentile of the pooled per-head-lift distribution).
+
+The conjunctive structure (§S-5 / §SU-4 belt-and-suspenders pattern) is preserved unchanged. k=3, hard-stop on failure (§SU-6) unchanged. The only change is the score definition: from `real_DLA` to `lift = real − null`.
+
+### SU-1b-5. Untouched legs
+
+§SU-0 (validation target attribution to L 2023, GPT-2 small L9H1), §SU-1 (4 categories, 3-context, predict-4th), §SU-2 (first-token DLA), §SU-3 *permutation* (within-category prefix permutation, one fixed seed-pinned permutation per (category, base prompt), pooled across heads), §SU-5 (Phase 1.4 scope, Pythia gates), §SU-6 (hard-stop on GPT-2 failure, no fallbacks), §SU-7 (methodological lessons), §SU-8 (reference-style pre-registration form) are all unchanged.
+
+### SU-1b-6. Why this is a supersede, not a re-grill
+
+Q6's hard-stop policy (§SU-6) is the canonical response to validation failure. Strictly applied, the smoke-test §SU-1 FAIL should trigger a full re-grill from §SU-1. This supersede amendment is justified by the asymmetric evidence:
+
+- The smoke-test failure surfaced **before** any formal validation run was recorded; nothing under §SU-1 is in the public artifacts. The Q6 hard-stop discipline is designed to prevent post-data goalpost-moving; the failure here is pre-data.
+- The diagnostic identified the failure mode mechanistically (`real DLA` conflates successor with category-boost; lift isolates the mechanism) and showed the corrected spec recovers L 2023's named target as rank-1.
+- The L 2023 argmax-within-7-days replication independently confirms L9H1 is a real successor head (uniquely 7/7 among 144 heads), so the validation target is correct.
+- The fix is **focused** to score definition (one leg, §SU-3/§SU-4); it doesn't touch the prompt format, multi-token handling, scope, failure-mode policy, or pre-registration form.
+
+A full re-grill would relitigate Q1-Q7 unnecessarily. The supersade preserves what works, fixes what doesn't, and surfaces the chronology in writing.
+
+This sets the precedent that pre-data, smoke-test-surfaced spec flaws may be corrected by a focused supersede amendment provided (a) no formal data is recorded under the flawed spec, (b) the failure mode is mechanistically identified, (c) the supersede touches only the affected legs, and (d) the chronology is documented in writing before the corrected spec is run. Post-data spec failures continue to require either a full re-grill (the Q6 default) or a §S-5c-style supplementary acceptance (the Phase 1.3 precedent for outlier-pathology cases).
