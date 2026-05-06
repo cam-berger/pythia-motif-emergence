@@ -359,3 +359,96 @@ Independent corroboration under L (2023)'s exact argmax-within-7-days protocol (
 The Pythia anchor inspection (deliverable ii of Phase 1.4) and the 18-cell exploration sweep (deliverable iii) apply this absolute τ_lift threshold without further calibration. Per §SU-3's pooling rule, a Pythia head clears τ_lift if its mean cross-category lift (computed under the Pythia model's own first-token mappings per §SU-2) exceeds 0.13496.
 
 A reviewer reading the chronology should see: §SU-1 / §SU-1b spec committed `788c44e` / `7ce6eb4` → smoke-test informal screen surfaced §SU-1 flaw and motivated §SU-1b → formal validation under §SU-1b runs and writes parquet + npz → this §SU-tau amendment locks τ_lift = 0.13496 from the formal validation distribution. No spec change has been made since the formal validation began.
+
+## Amendment 2026-05-06 — §H2: Phase 2 sweep specification
+
+**Posted after Phase 1.4 closed** (successor detector validated under §SU-1b with §SU-tau τ_lift = 0.13496 locked, 18-cell preview sweep complete, H1-C ordering held in all three Pythia sizes on the 6-cell preview grid). This amendment locks the Phase 2 full-sweep specification operationalizing H1-C across the three locked motifs (induction, successor, S-inhibition) and the three locked sizes (Pythia-70m, 160m, 410m). It is reference-style: the locked sweep design lives here in HYPOTHESIS.md, the option-list rationale lives in NOTES.md under the 2026-05-06 Phase 2 grilling entry. **No numerical-threshold split is deferred.** All three motif thresholds were locked in Phase 1: induction prefix-match > 0.3 (PROJECT_BRIEF.md §4); successor τ_lift = 0.13496 (§SU-tau); S-inhibition τ_strict = 0.0372 (§S-tau). Bootstrap and threshold-sensitivity parameters are not data-dependent. A single §H2 amendment now suffices.
+
+### H2-1. Checkpoint grid (locked)
+
+The Phase 2 sweep runs on **40 log-spaced cells** drawn from Pythia's published 154-checkpoint suite:
+
+```
+[0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
+ 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+ 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000,
+ 20000, 24000, 29000, 35000, 41000, 49000, 59000, 70000,
+ 84000, 100000, 120000, 143000]
+```
+
+All 11 of Pythia's early-dense cells (`step0` plus powers of 2 up to `step512`) are included verbatim; 29 mainline cells span 1000 to 143000 log-spaced. Phase 1's 6-cell preview cells `{0, 1k, 3k, 8k, 25k, 143k}` are subsets of this grid (with the preview's `step25k` landing on `step24k` after rounding to the published-checkpoint set). Consecutive cell ratios: min 1.06, median 1.20, max 2.00. The grid is identical across all 9 (size, motif) cells; no per-motif or per-size grid is defined.
+
+### H2-2. Bootstrap CI scheme (locked)
+
+**Per-prompt bootstrap with B = 1000 resamples, 95% percentile interval** is the per-(size, motif) confidence-interval mechanism for the emergence step μ. The bootstrap unit is **per-prompt resampling with replacement** — not per-head and not block-bootstrap — applied to the per-(head, prompt) score matrix that the runner caches at each cell. For each bootstrap replicate, prompts are resampled with replacement, per-head scores are re-aggregated, the count-vs-step curve is re-fit per §H2-3, and the resulting μ is recorded. The 1000 μ values yield a 95% percentile CI on μ.
+
+A separate **threshold-sensitivity analysis** varies each motif's locked threshold by **± 25% in 5 increments** (the locked threshold ± {-25%, -12.5%, 0%, +12.5%, +25%}) and reports the resulting μ range per (size, motif) cell. Threshold sensitivity is descriptive, not gating; it documents how robust the H1-C verdict is to threshold mis-specification, per the brief's pre-committed limitation §54.
+
+### H2-3. Logistic fit handling and tiered censoring (locked)
+
+The emergence step μ_{s,m} for size s and motif m is extracted from the locked logistic form
+
+```
+count(step) ≈ L / (1 + exp(-k · (log(step) − μ)))
+```
+
+via `scipy.optimize.curve_fit` on the count-vs-log-step series across the 40 cells. Three tiers handle data sparsity:
+
+- **N_emerged = 5.** If `max(count across 40 cells) ≥ 5`, fit the logistic form directly. Standard scipy fit; bootstrap CI per §H2-2.
+- **Marginal (2 ≤ max < 5).** Fit is unstable but not censored. Report the bootstrap-median μ as the point estimate, with a widened CI flagged in figures (visually distinguished from full-fit cells).
+- **N_cens = 2.** If `max(count across 40 cells) < 2`, right-censor μ at `step143000`. Treat as "did not emerge during training" for ordering-test purposes.
+
+This tiered scheme subsumes the brief's separate "drop 70m for successor" rule from PROJECT_BRIEF.md §10: 70m × successor cells that are too sparse to fit are right-censored automatically, with no special-case scope reduction.
+
+### H2-4. 70m inclusion and ties-fail policy (locked)
+
+All **9 (size, motif) cells** — 70m, 160m, 410m × induction, successor, S-inhibition — are included in the Phase 2 sweep under the §H2-3 tiered handling. Right-censoring subsumes per-motif scope reduction.
+
+**Ties-fail in permutation test.** If two motifs in the same size are both right-censored (μ tied at `step143000`), their pairwise ordering is undetermined and that size's H1-C ordering check **fails** for that pair. This is the only ordering-undetermined disposition; any other pair where both μ are point-estimated (full-fit or marginal) admits an ordering decision.
+
+### H2-5. Multiple-comparison policy (locked)
+
+**Per-pair descriptive p-values are uncorrected.** The 9 sub-tests (3 sizes × 3 ordering pairs: induction-vs-successor, successor-vs-S-inhibition, induction-vs-S-inhibition) are reported as descriptive diagnostics for the H1-C verdict, not as independent gating tests.
+
+The **joint H1-C permutation test** (p < 0.005 from `(1/6)^3 ≈ 0.00463` under H_0 of exchangeable order across 3 sizes) is the **only gating claim**. Its conjunctive structure already incorporates multiplicity adjustment by construction: under H_0, the joint probability of observing the predicted ordering in *all three* sizes equals the product of three independent (1/6) per-size probabilities, so no further Bonferroni-style correction applies.
+
+### H2-6. Compute and scheduling (locked)
+
+Sweep execution: **per-motif chunked runs** + **upfront prefetch of all unique (size, step) checkpoints not already cached** in parallel + **bootstrap as post-processing** on the cached per-(head, prompt) score matrices + background runs scheduled overnight where possible.
+
+End-to-end compute estimate: **~3 hours MPS time** for the three motif sweeps, plus **~30-60 minutes** for checkpoint prefetch, plus **~2 minutes** for bootstrap post-processing on cached scores, plus trivial logistic-fit time. Per-(size, motif) cell measurement is taken on the first sweep cell and re-projected; if the measured cost exceeds the estimate by more than 2×, the runner pauses for re-grilling rather than silently extending.
+
+### H2-7. Pre-registration form (locked, no deferred lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. Unlike §S-tau (Phase 1.3) and §SU-tau (Phase 1.4), no follow-up amendment locks a data-dependent number after the sweep runs. The reasoning:
+
+- All three motif thresholds are already locked from Phase 1: induction prefix-match > 0.3 (brief §4); successor τ_lift = 0.13496 (§SU-tau); S-inhibition τ_strict = 0.0372 (§S-tau).
+- Bootstrap parameters (B = 1000, 95%, per-prompt resampling) are pre-committed and not data-dependent.
+- Threshold-sensitivity parameters (± 25% in 5 increments) are pre-committed and not data-dependent.
+- The logistic fit form, tiered handling thresholds (N_emerged = 5, N_cens = 2), and ties-fail rule are pre-committed and not data-dependent.
+
+A single §H2 amendment therefore captures the full Phase 2 contract.
+
+### H2-8. Spec-failure-during-Phase-2 policy (locked)
+
+The §SU-1b precedent applies. Pre-data smoke-test-surfaced flaws in this §H2 spec may be corrected by a **focused supersede amendment** provided (a) no formal sweep data is recorded under the flawed spec, (b) the failure mode is mechanistically identified, (c) the supersede touches only the affected legs, (d) the chronology is documented in writing before the corrected spec is run.
+
+Post-data spec failures continue to require either a **Q6-style hard-stop** with full re-grill, or a **§S-5c-style supplementary-acceptance** amendment with the original gate failure recorded in the chronology. No silent goalpost-moving.
+
+### H2-9. Notebook deliverables (locked)
+
+Phase 2 produces **four notebooks**, the first three of which are independent full-sweep extensions of the Phase 1 6-cell previews (the previews remain on disk as 6-cell historical artifacts, *not* in-place edits):
+
+1. `notebooks/induction_full_sweep.ipynb` — 40-cell × 3-size induction sweep, emergence-step μ extraction with bootstrap CI per §H2-2, threshold-sensitivity bracket per §H2-2.
+2. `notebooks/successor_full_sweep.ipynb` — 40-cell × 3-size successor sweep, same outputs.
+3. `notebooks/s_inhibition_full_sweep.ipynb` — 40-cell × 3-size S-inhibition sweep, same outputs.
+4. `notebooks/h1c_ordering_test.ipynb` — cross-motif H1-C verdict notebook. Contents:
+   - (1) joint H1-C permutation-test verdict per §H2-5 (the gate);
+   - (2) emergence-step μ table with bootstrap CIs across all 9 (size, motif) cells;
+   - (3) per-pair descriptive p-values for the 9 sub-tests;
+   - (4) side-by-side emergence-comparison curves (3 panels, one per size; three motif curves per panel);
+   - (5) major differences between the three head types — depth, count saturation, cross-category breadth, identity stability across training;
+   - (6) threshold-sensitivity check per §H2-2;
+   - (7) verdict.
+
+Implementation files (planned, not yet written): `notebooks/_run_phase2_induction_sweep.py`, `notebooks/_run_phase2_successor_sweep.py`, `notebooks/_run_phase2_s_inhibition_sweep.py`, `src/analysis/phase2_bootstrap.py`, `src/analysis/phase2_logistic.py`, plus the four notebook builder scripts. No new dependencies beyond what Phase 1 introduced.
