@@ -153,6 +153,7 @@ def build() -> nbf.NotebookNode:
             "ax.set_xlim(-1, 30)\n"
             "ax.set_xlabel('rank')\n"
             "ax.set_ylabel('lift = mean cross-category (real − null) DLA')\n"
+            "ax.set_ylim(-0.05, 0.5)\n"
             "ax.set_title('Top 30 heads by lift — L9H1 highlighted')\n"
             "ax.legend(loc='upper right')\n"
             "ax.grid(alpha=0.3)\n"
