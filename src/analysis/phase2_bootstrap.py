@@ -242,6 +242,72 @@ def threshold_sensitivity_curve(
     return out
 
 
+@dataclass(frozen=True)
+class ReversalRateResult:
+    """Per-(size, pair) bootstrap reversal-rate result.
+
+    Replaces the hardcoded prior-probability `descriptive_p` column. The
+    reversal rate measures the *empirical* fraction of bootstrap replicates
+    in which the pair's predicted ordering does NOT hold — i.e., a real
+    summary of how robust the per-size point ordering is to per-prompt
+    resampling, rather than a prior under exchangeability.
+
+    Censored ties (both μ at the right-censor sentinel) are counted as
+    undetermined per §H2-4 ties-fail; undetermined replicates are treated as
+    not-holding when computing `reversal_rate`.
+    """
+
+    size: str
+    motif_early: str
+    motif_late: str
+    n_holds: int
+    n_undetermined: int
+    n_total: int
+    holds_rate: float
+    reversal_rate: float
+
+
+def bootstrap_pair_reversal_rate(
+    mus_early: np.ndarray,
+    mus_late: np.ndarray,
+    size: str,
+    motif_early: str,
+    motif_late: str,
+    *,
+    censor_step: float = RIGHT_CENSOR_STEP,
+) -> ReversalRateResult:
+    """Empirical reversal rate for one (size, pair) under per-prompt bootstrap.
+
+    For each bootstrap replicate b, the predicted ordering μ_early < μ_late
+    holds iff strict inequality holds. Censored ties (both at censor_step)
+    are undetermined per §H2-4 and counted as not-holding.
+
+    `reversal_rate = 1 - holds_rate` is the more reviewer-legible direction:
+    "fraction of bootstrap replicates where the registered ordering fails."
+    """
+    assert mus_early.shape == mus_late.shape, "bootstrap arrays must be paired"
+    finite_mask = np.isfinite(mus_early) & np.isfinite(mus_late)
+    early = mus_early[finite_mask]
+    late = mus_late[finite_mask]
+    both_cens = np.isclose(early, censor_step) & np.isclose(late, censor_step)
+    holds = (early < late) & ~both_cens
+    n_total = int(early.size)
+    n_holds = int(holds.sum())
+    n_undet = int(both_cens.sum())
+    holds_rate = float(n_holds) / max(n_total, 1)
+    reversal_rate = 1.0 - holds_rate
+    return ReversalRateResult(
+        size=size,
+        motif_early=motif_early,
+        motif_late=motif_late,
+        n_holds=n_holds,
+        n_undetermined=n_undet,
+        n_total=n_total,
+        holds_rate=holds_rate,
+        reversal_rate=reversal_rate,
+    )
+
+
 def summarize_bootstrap(
     size: str, motif: str, threshold: float, mus: np.ndarray, mu_point: float,
 ) -> BootstrapResult:

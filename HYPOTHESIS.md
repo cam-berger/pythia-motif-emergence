@@ -452,3 +452,71 @@ Phase 2 produces **four notebooks**, the first three of which are independent fu
    - (7) verdict.
 
 Implementation files (planned, not yet written): `notebooks/_run_phase2_induction_sweep.py`, `notebooks/_run_phase2_successor_sweep.py`, `notebooks/_run_phase2_s_inhibition_sweep.py`, `src/analysis/phase2_bootstrap.py`, `src/analysis/phase2_logistic.py`, plus the four notebook builder scripts. No new dependencies beyond what Phase 1 introduced.
+
+## Amendment 2026-05-06 (post-Phase-2 review) — §H2-9-R: post-data reframe to scale-dependent interpretation
+
+**Posted after Phase 2 sweep completion and external review.** This amendment registers a **post-data interpretation reframe** of the Phase 2 H1-C verdict. It does **not** re-amend the joint sign test, the gate, or the per-size strict-ordering policy — those remain as locked in §H2-3 through §H2-5, and the registered gate **passes** at p ≈ 0.00463 < 0.005. The reframe shifts what claim that pass supports.
+
+### What the gate measures, and what it does not
+
+The joint H1-C sign test in §H2-5 is, mechanically, a 3-bit observation: the conjunction of three per-size strict-ordering checks. Under H_0 of exchangeable per-size order, the conjunction has probability (1/6)³ ≈ 0.00463, which is below the locked 0.005 gate. We pass.
+
+The test is silent on three orthogonal questions that an external review correctly surfaced:
+
+1. **Censored versus signal-driven holds.** A pair-ordering can satisfy μ_a < μ_b either because both motifs emerge cleanly with separated CIs (the strong reading) or because the later motif fails to emerge during training and is right-censored at step143000 by §H2-3 (the vacuous reading). The sign test treats these identically. In the Phase 2 result, **4 of 9 (size, motif) cells are right-censored or marginal at the upper logistic-fit sentinel**, so the sign-test pass is partially propped up by censored cells.
+2. **Temporal versus architectural ordering.** A temporal emergence ordering (μ_ind < μ_suc < μ_si) does not entail an architectural compositional ordering in the forward pass. Sub-deliverable 4b of `notebooks/h1c_ordering_test.ipynb` documents that in 160m and 410m, successor heads sit at *deeper* normalized layer depth than S-inhibition heads — incompatible with the compositional reading in which corrective S-inhibition heads consume successor outputs at later layers.
+3. **Identity stability under turnover.** The "emergence step" abstraction tracks a count of heads above threshold. Sub-deliverable 5 documents that the *identity* of the top heads in successor and S-inhibition turns over substantially between step25k and step143k (top-3 stability 0.0–0.667 across sizes). The emerged population at step143k is not the same circuit as the emerged population at step25k for those motifs.
+
+### What the reframed headline is
+
+**Scale-dependent emergence of S-inhibition.** The headline finding from Phase 2 is that S-inhibition's emergence is scale-dependent in Pythia: it does not emerge during training at 70m (max_count = 1 head; right-censored), emerges marginally at 160m (max_count = 3; logistic fit hits the upper sentinel; bootstrap CI overlaps successor), and emerges with a clean fit at 410m (max_count = 3 with a tight CI). Induction and successor emerge robustly across all three sizes. The H1-C ordering pass is therefore **robustly supported only at 410m**; 160m is a marginal pass; 70m is a vacuous pass through censoring.
+
+This is more reportable than "joint H1-C HOLDS in 3 sizes." It is also more accurate to the data.
+
+### What this reframe does NOT do
+
+- It does NOT re-amend the gate. §H2-5's `p < 0.005` gate, the (1/6)³ joint null, the strict per-size ordering check, and the §H2-4 ties-fail policy are unchanged. The gate passes.
+- It does NOT change the registered headline of the project. PROJECT_BRIEF.md and HYPOTHESIS.md §3 register H1-C as the falsification target; the falsification target is *not falsified*. The reframe is about what supports the non-falsification.
+- It does NOT relabel any cell's regime. The §H2-3 tiered handling rule (emerged ≥ 5, marginal 2-4, censored < 2) is unchanged; the marginal/censored cells are flagged as such in the verdict, exactly as the rule prescribes.
+- It does NOT add a new gate. No new threshold, no new joint test, no new pass-fail criterion.
+
+### What this reframe DOES do
+
+It changes the **emphasis** in the writeup deliverable, the headline-notebook verdict cells, and the README status table:
+
+- The headline becomes "scale-dependent emergence of S-inhibition" rather than "H1-C HOLDS jointly."
+- The Pythia-410m row is the robust per-size confirmation; 160m is a marginal pass; 70m is a censored pass. This three-tier per-size verdict is foregrounded.
+- The depth-vs-temporal asymmetry (sub-deliverable 4b) is promoted from a side observation to a substantive finding distinct from the registered hypothesis.
+- The bootstrap reversal-rate (replacing the original prior-under-exchangeability descriptive p-values, which were not p-values) is the magnitude-aware companion to the sign test, and is reported for each (size, pair).
+- The structural-reuse analysis in `notebooks/motif_structural_reuse.ipynb` (Phase 3 / Extension B) is added as the cross-motif circuit-identity diagnostic: 410m has zero multi-motif heads in top-5, while 70m and 160m have overlap. The cleanest H1-C-confirming size is also the cleanest structural-separation size.
+
+### Procedural precedent
+
+This is a **post-data interpretation reframe**, distinct from:
+- A §SU-1b-style focused supersede (which requires no formal data recorded under the flawed spec; here, the data is recorded and the spec is correct).
+- A §S-5c-style supplementary acceptance (which records a strict gate FAIL with a rank-only override; here, the gate passes).
+- A re-amendment of §H2-3 to change the censoring rule (which would be silent goalpost-moving).
+
+The precedent set: when a registered gate passes but the supporting evidence is heterogeneous across cells in a way that makes the joint-claim headline misleading, the response is a **post-data interpretation reframe** that (a) keeps the gate, (b) documents the heterogeneity, (c) re-emphasizes the writeup. This is distinguishable from goalpost-moving because the gate is preserved as registered and the reframe is dated after the data.
+
+### Replacement of original sub-deliverable 3
+
+Sub-deliverable 3 in §H2-9 was originally specified as "per-pair descriptive p-values for the 9 sub-tests." On review, those values were `0.5 if holds else 1.0` — i.e., the prior probability of the observed pair-ordering under exchangeable H_0, dressed as a p-value. They are not p-values; they are constants by construction within {holds, fails}.
+
+Replaced under §H2-9-R with the **bootstrap reversal rate per (size, pair)**: the empirical fraction of B=1000 per-prompt bootstrap replicates in which the predicted ordering does not hold (with censored ties counted as undetermined per §H2-4). This is a magnitude-aware summary of how robust each per-size pair-ordering is to per-prompt resampling. The replacement is a clarification (the original sub-deliverable did not measure what its name suggested), not a methodological change to the gate.
+
+### Replacement of B=1 in sub-deliverable 6
+
+Sub-deliverable 6 (threshold sensitivity) was originally implemented with `B=1` per-call to the bootstrap functions, which produced point estimates with no envelope. §H2-9-R re-runs the threshold-sensitivity panel with the registered B=1000, displaying the bootstrap CI as a fill envelope on the figure. This is a bug fix to bring the implementation in line with the registered §H2-2 spec; it does not change the spec.
+
+### What gets added
+
+`notebooks/motif_structural_reuse.ipynb` — Phase 3 / Extension B cross-motif structural-reuse analysis (Jaccard similarity of top-5 head sets across motifs, multi-motif head identification at the final checkpoint). Uses existing Phase 2 sweep data; no new compute beyond the parquet reads.
+
+`notebooks/h1c_ordering_test.ipynb` adds: a methodological audit-trail section linking the upstream Tigges replication, copy-suppression pivot evidence, and §S-5c override; a power-analysis section quantifying μ-uncertainty as a function of L_true (consistent with the marginal-cell bootstrap CIs); the bootstrap reversal-rate section replacing the original descriptive_p table; the reframed verdict.
+
+The three `*_full_sweep.ipynb` notebooks add: a final-checkpoint head-identity table per size, listing every (layer, head) passing threshold (the inspectable circuit a reviewer needs).
+
+`notebooks/induction_full_sweep.ipynb` adds: the Olsson 2022 / Singh 2024 cross-reference for induction emergence step as an external tooling-validation sanity check.
+
+The README status table for Phase 2 is updated to reflect the reframed claim.
