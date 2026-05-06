@@ -331,3 +331,31 @@ Q6's hard-stop policy (§SU-6) is the canonical response to validation failure. 
 A full re-grill would relitigate Q1-Q7 unnecessarily. The supersade preserves what works, fixes what doesn't, and surfaces the chronology in writing.
 
 This sets the precedent that pre-data, smoke-test-surfaced spec flaws may be corrected by a focused supersede amendment provided (a) no formal data is recorded under the flawed spec, (b) the failure mode is mechanistically identified, (c) the supersede touches only the affected legs, and (d) the chronology is documented in writing before the corrected spec is run. Post-data spec failures continue to require either a full re-grill (the Q6 default) or a §S-5c-style supplementary acceptance (the Phase 1.3 precedent for outlier-pathology cases).
+
+## Amendment 2026-05-06 — §SU-tau: numerical lift-threshold lock
+
+**Posted after the GPT-2 small validation screen completed under §SU-1b** (commit `7ce6eb4` + validation run `notebooks/_run_gpt2_small_successor_validation.py`).
+
+Per §SU-1b-3, τ_lift is the 95th percentile of the pooled per-head lift distribution observed in the GPT-2 small screen. The validation run recorded:
+
+| head | lift | real_DLA | null_DLA |
+|---|---|---|---|
+| L9H1 (rank #1, target) | +0.3917 | +0.6147 | +0.2230 |
+| L8H8 (rank #2) | +0.3058 | +2.1531 | +1.8473 |
+| L11H10 (rank #3) | +0.2400 | −1.7342 | −1.9742 |
+| L11H11 (rank #4) | +0.2149 | +2.2355 | +2.0205 |
+| L6H5 (rank #5) | +0.2030 | −0.9410 | −1.1440 |
+
+**τ_lift = 0.13496** (95th percentile of pooled per-head lifts across all 144 GPT-2 small heads).
+
+The §SU-1b-4 gate verdict for the locked validation target L9H1:
+
+- Rank by lift: **#1 of 144** ✓ (top-3 condition)
+- L9H1 lift = +0.3917 > τ_lift = +0.13496 ✓ (threshold condition)
+- **Conjunctive gate: PASS**
+
+Independent corroboration under L (2023)'s exact argmax-within-7-days protocol (run as a §SU-1b-justification probe, not the locked detector): L9H1 is the **unique** head with 7/7 correct day predictions across all 144 heads in GPT-2 small. All 143 other heads score ≤3/7 (most score 1/7 = chance). This replicates L 2023's headline finding via a methodology fully independent of our cross-category DLA detector.
+
+The Pythia anchor inspection (deliverable ii of Phase 1.4) and the 18-cell exploration sweep (deliverable iii) apply this absolute τ_lift threshold without further calibration. Per §SU-3's pooling rule, a Pythia head clears τ_lift if its mean cross-category lift (computed under the Pythia model's own first-token mappings per §SU-2) exceeds 0.13496.
+
+A reviewer reading the chronology should see: §SU-1 / §SU-1b spec committed `788c44e` / `7ce6eb4` → smoke-test informal screen surfaced §SU-1 flaw and motivated §SU-1b → formal validation under §SU-1b runs and writes parquet + npz → this §SU-tau amendment locks τ_lift = 0.13496 from the formal validation distribution. No spec change has been made since the formal validation began.
