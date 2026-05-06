@@ -520,3 +520,100 @@ The three `*_full_sweep.ipynb` notebooks add: a final-checkpoint head-identity t
 `notebooks/induction_full_sweep.ipynb` adds: the Olsson 2022 / Singh 2024 cross-reference for induction emergence step as an external tooling-validation sanity check.
 
 The README status table for Phase 2 is updated to reflect the reframed claim.
+
+## Amendment 2026-05-06 (post-grilling) — §H3-scale: Pythia-1B scale-extension specification
+
+**Posted after Phase 2 closure (§H2-9-R reframe registered) and before any Pythia-1B compute.** This amendment locks the procedural specification of the Pythia-1B scale-extension test. It is reference-style: the locked specification lives here in HYPOTHESIS.md; the option-list rationale and the grilling chronology live in NOTES.md (gitignored working memory) under the 2026-05-06 §H3-scale grilling entry. **No numerical-threshold split is deferred.** All three motif thresholds carry over from Phase 1: induction prefix-match > 0.3 (PROJECT_BRIEF.md §4); successor τ_lift = 0.13496 (§SU-tau); S-inhibition τ_strict = 0.0372 (§S-tau). Bootstrap and threshold-sensitivity machinery are inherited from §H2-2. Tiered censoring is inherited from §H2-3.
+
+§H3-scale **extends, does not supplant**, the registered §H1-C / §H2-5 gate. §H2-5 passed as registered (joint sign-test p = 0.00463 < 0.005 across {70m, 160m, 410m}); §H2-9-R noted post-data scale-dependent emergence of S-inhibition, with 4 of 9 cells right-censored or marginal, and only 410m a robust per-size confirmation. §H3-scale is the forward-looking falsification of the §H2-9-R reframe at a fourth size: it tests whether the scale-dependent extrapolation continues, saturates, or reverses at Pythia-1B. The original §H1-C falsification target is not affected; PROJECT_BRIEF.md §3 and HYPOTHESIS.md §3 remain the registered project headline.
+
+Pre-registration chronology for auditability: §H2-9-R registered post-data → grilling session 2026-05-06 surfaced the desired §H3-scale prediction → this amendment commits before any 1B sweep code runs → §H3-scale verdict recorded in `notebooks/h1c_ordering_test.ipynb` extension after the sweep.
+
+### §H3-scale-1. Scope (locked)
+
+The 1B scale-extension runs on **Pythia-1B-deduped** (`EleutherAI/pythia-1b-deduped`), matching the deduped lineage of the registered 70m / 160m / 410m sweep. The checkpoint grid is the **40-cell §H2-1 grid verbatim**, identical to the schedule used for the 3 registered sizes. The three locked motifs (induction, successor, S-inhibition) and the three locked absolute thresholds carry over without re-derivation. The detectors operate on Pythia-1B's 128-head architecture (16 layers × 8 heads × d_model = 2048).
+
+### §H3-scale-2. Strong scale leg (A) — locked
+
+Leg (A) has three conjunctive sub-conditions; all must hold:
+
+- **(A.i) Count-threshold at 1B.** `max_count_si^1B ≥ 5` over the 40-cell sweep — full-fit regime entry per §H2-3. This is a strictly stronger requirement than the 410m S-inhibition cell achieved (max = 3, marginal regime per §H2-3); the strengthening is intentional and operationalizes the §H2-9-R "S-inhibition gets cleaner with scale" reframe in count-axis form. Pythia-1B has 128 heads total; max_count ≥ 5 corresponds to 3.9% density, vs 410m's 3/384 = 0.78%.
+
+- **(A.ii) Bootstrap reversal-rate on cross-size emergence-step ordering.** `P(μ_si^1B < μ_si^410m) ≥ 0.95` over B = 1000 paired per-prompt bootstrap replicates. Per §H2-2 machinery: each bootstrap replicate resamples prompts with replacement, refits the count-vs-step logistic curve at both 1B and 410m, and records μ_si^1B and μ_si^410m. The reversal-rate is the empirical fraction of replicates in which μ_si^1B < μ_si^410m. Threshold ≥ 0.95 corresponds to a one-sided 5% test of the directional scale-dependence claim.
+
+- **(A.iii) Within-1B bootstrap CI separation.** 95% bootstrap percentile CIs on `μ_si^1B` and `μ_suc^1B` are disjoint, with μ_si^1B strictly above μ_suc^1B. This is the within-1B coherence check on the order-preservation; it inherits §H2-2's bootstrap machinery without modification.
+
+### §H3-scale-3. Order-preservation leg (B) — locked
+
+Leg (B) has two conjunctive sub-conditions; both must hold:
+
+- **(B.i)** All three motifs at 1B reach the full-fit regime per §H2-3 (`max_count ≥ 5`).
+- **(B.ii)** Strict per-size ordering `μ_ind^1B < μ_suc^1B < μ_si^1B` holds at point estimate per §H2-5's per-size sign-test rule.
+
+§H2-4's ties-fail policy applies: if any pair has both μ right-censored, the ordering for that pair is undetermined and (B) fails.
+
+### §H3-scale-4. Joint gate — locked
+
+§H3-scale **passes** iff (A.i) AND (A.ii) AND (A.iii) AND (B.i) AND (B.ii). Failure of any leg falsifies §H3-scale; the failure pattern is interpreted per §H3-scale-6 below. There is no partial-pass disposition.
+
+### §H3-scale-5. Anchor inspection (sub-amendment §H3-scale-anchor) — locked
+
+Three sub-anchors run at Pythia-1B-deduped @ step143000 before the full sweep:
+
+- **Induction anchor:** verify ≥ 1 head clears prefix-match score > 0.3 (brief §4 threshold) on the 50-sequence Olsson 2022 probe.
+- **Successor anchor:** §SU-5 deliverable (ii) gates verbatim: numerical (≥ 1 head clears τ_lift = 0.13496) AND qualitative (top candidate has positive lift in ≥ 3/4 categories: days, months, numerals, letters).
+- **S-inhibition anchor:** §S-8 deliverable (ii) gates verbatim: numerical (≥ 1 head clears τ_strict = 0.0372 on Δ_h) AND mechanistic (≥ 2/4 of Pythia-1B's NMs — identified per §S-3 component-DLA top-4 — show positive Δ along the path candidate → NM).
+
+**The 40-cell full sweep runs unconditionally regardless of anchor outcome.** This mirrors §S-8's policy verbatim. Anchor failure is documented in the anchor notebook output as a Path-C-style negative-result artifact and the sweep proceeds. The cost asymmetry that might justify a tooling-failure halt at this scale (~4 h MPS time) is overridden by pre-registration discipline; the unconditional-sweep rule is preserved across all phases.
+
+### §H3-scale-6. Failure-mode taxonomy — locked
+
+Six pass / fail patterns are pre-committed, each matched to a paper-headline interpretation:
+
+| Pattern | Trigger | Pre-committed paper headline |
+|---|---|---|
+| **PASS** | All 5 sub-conditions hold | "Scale-dependent S-inhibition emergence holds across Pythia 70m → 1B." |
+| **SAT** | (B.i), (B.ii), (A.i), (A.iii) hold; (A.ii) fails | "S-inhibition emergence time saturates between 410m and 1B; head count continues to scale." Reframe survives, refined to count-axis. |
+| **REGR** | (A.i) fails (max_count < 5 at 1B; potentially < 3) | "Non-monotonic S-inhibition emergence in Pythia: regression at 1B." Substantive falsification of §H2-9-R reframe; novel reverse-scaling finding. |
+| **ORD-BREAK** | (B.ii) fails | "H1-C ordering is scale-bounded in Pythia: breaks at 1B." Localized falsification of H1-C-extended; §H2-5 (3-size) still stands. |
+| **WIDE-CI** | (A.iii) fails (CIs overlap between μ_si^1B and μ_suc^1B) | "1B reproduces 160m's marginal-overlap pattern, not 410m's clean separation; scale-dependence is non-monotonic in CI-axis." |
+| **TOOLING** | Detector outputs distributionally broken: NaNs, all-zero, sign-flipped vs 410m anchor, score range > 10× shift from 410m | "Methodological note: detector instability at d_model = 2048 on MPS." Not a substantive result; verdict deferred pending re-tooling. |
+
+**Multi-leg failures default to the most-severe pattern triggered**, in priority order:
+
+`TOOLING > REGR > ORD-BREAK > WIDE-CI > SAT > PASS`.
+
+Rationale: TOOLING is non-substantive and overrides all others; REGR is the most novel substantive failure (reverse-scaling); ORD-BREAK is a localized falsification of an existing claim; WIDE-CI and SAT are quantitative refinements. Post-data, the writeup must use the matched headline or trigger a §H2-8 supplementary-acceptance amendment with chronology recorded; silent goalpost-moving is forbidden by the same rule that governs §H2-9-R.
+
+### §H3-scale-7. Compute and scheduling (locked)
+
+End-to-end estimate: prefetch ~30–60 min HF download + anchor ~30 min MPS + sweep ~4 h MPS + bootstrap post-processing ~2 min + analysis-notebook builds ~30 min. Disk: ~120 GB for 40 cached checkpoints with `*.bin` excluded from the prefetch snapshot patterns, leaving safetensors-only. Per §H2-6 escape hatch: if measured per-cell cost on the first sweep cell exceeds the projection by more than 2×, the runner pauses for re-grilling rather than silently extending.
+
+### §H3-scale-8. Notebook and parquet deliverables (locked)
+
+The 1B scale-extension produces:
+
+1. `notebooks/_prefetch_1b_checkpoints.py` — 40-checkpoint snapshot download, safetensors-only patterns (`*.bin` explicitly excluded from `_SNAPSHOT_PATTERNS_1B`).
+2. `notebooks/_run_pythia_1b_anchor_induction.py`, `_run_pythia_1b_anchor_successor.py`, `_run_pythia_1b_anchor_s_inhibition.py` — three anchor scripts mirroring the 410m anchors.
+3. `notebooks/_run_phase3_1b_induction_sweep.py`, `_run_phase3_1b_successor_sweep.py`, `_run_phase3_1b_s_inhibition_sweep.py` — three full-sweep runners writing to `phase3_*_sweep.parquet` (1B-only; Phase 2 parquets are not modified).
+4. `notebooks/induction_full_sweep_1b.ipynb`, `successor_full_sweep_1b.ipynb`, `s_inhibition_full_sweep_1b.ipynb` — three new per-size sweep notebooks parallel to the existing 3-size full-sweep notebooks. Existing 3-size full-sweep notebooks are NOT modified.
+5. `notebooks/h1c_ordering_test.ipynb` — extended in place with a §H3-scale verdict section appended at the end. Existing §H2-5 / §H2-9-R sections preserved. New section contents:
+   - (i) the §H3-scale gate verdict per §H3-scale-4 with the matched failure-mode pattern per §H3-scale-6;
+   - (ii) 4-size emergence-step μ table with bootstrap CIs across all 12 (size, motif) cells;
+   - (iii) bootstrap reversal-rate `P(μ_si^1B < μ_si^410m)` per §H3-scale-2 (A.ii);
+   - (iv) 4-panel emergence-curve figure (one panel per size, three motif curves per panel);
+   - (v) within-1B CI-separation diagnostic per §H3-scale-2 (A.iii);
+   - (vi) anchor-inspection diagnostic table per §H3-scale-5;
+   - (vii) the matched paper-headline string per §H3-scale-6.
+6. `notebooks/motif_structural_reuse.ipynb` — extended in place with 4-size Jaccard table and 4-size multi-motif head identification. Existing 3-size analysis preserved.
+7. `notebooks/motif_attention_inspection.ipynb` — extended in place with 1B section at step143000 for paper figures.
+
+### §H3-scale-9. Procedural precedent (locked)
+
+§H2-8's spec-failure-during-phase policy applies to §H3-scale verbatim. Pre-data smoke-test-surfaced flaws in this §H3-scale spec may be corrected by a focused supersede amendment provided the §SU-1b conditions hold (no formal data recorded under the flawed spec, mechanistic identification of the failure, focused supersede touching only affected legs, written chronology). Post-data spec failures continue to require either Q6-style hard-stop with full re-grill or §S-5c-style supplementary-acceptance amendment with the original gate failure recorded in the chronology.
+
+### §H3-scale-10. Pre-registration form (locked, no deferred lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds (induction > 0.3, τ_lift = 0.13496, τ_strict = 0.0372), bootstrap parameters (B = 1000, 95% percentile, per-prompt resampling), threshold-sensitivity parameters (± 25% in 5 increments), tiered-censoring thresholds (full-fit ≥ 5, marginal 2-4, censored < 2), and the (A.ii) reversal-rate threshold (≥ 0.95) are pre-committed in this single amendment.
+
+A reviewer reading the chronology should see: §H1-C registered → §H2 sweep specification locked → Phase 2 sweep ran and §H2-5 gate passed at p = 0.00463 → §H2-9-R post-data reframe registered → grilling session 2026-05-06 surfaced the §H3-scale forward-looking prediction → this §H3-scale amendment commits before any 1B compute → 1B sweep runs → §H3-scale verdict recorded in `notebooks/h1c_ordering_test.ipynb` extension. No spec change is anticipated between this amendment and the §H3-scale verdict.
