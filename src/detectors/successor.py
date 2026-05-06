@@ -239,6 +239,9 @@ class SuccessorResult:
     lift_dla: torch.Tensor
     lift_threshold: float
     n_prompts: int
+    per_prompt_real: torch.Tensor | None = None
+    per_prompt_null: torch.Tensor | None = None
+    prompt_categories: list[str] | None = None
 
 
 def _compute_per_prompt_dla(
@@ -297,6 +300,7 @@ def successor_screen(
     prompts: list[SuccessorPrompt],
     *,
     batch_size: int = 8,
+    return_per_prompt: bool = False,
 ) -> SuccessorResult:
     """Run the cross-category DLA screen on real and shuffled prompts.
 
@@ -372,6 +376,9 @@ def successor_screen(
         lift_dla=lift_dla,
         lift_threshold=lift_threshold,
         n_prompts=len(prompts),
+        per_prompt_real=real_dla_per_prompt if return_per_prompt else None,
+        per_prompt_null=null_dla_per_prompt if return_per_prompt else None,
+        prompt_categories=[p.category for p in prompts] if return_per_prompt else None,
     )
 
 

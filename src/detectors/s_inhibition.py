@@ -182,6 +182,7 @@ class SInhibitionResult:
     per_nm_matrix: torch.Tensor
     nm_heads: list[tuple[int, int]]
     n_prompts: int
+    per_prompt_delta: torch.Tensor | None = None
 
     def candidates(self, threshold: float) -> list[tuple[int, int]]:
         """Return (layer, head) pairs whose Δ_h ≥ threshold, sorted descending."""
@@ -235,6 +236,7 @@ def _compute_delta_for_group(
     k_nm = len(nm_heads)
     per_nm_sum = torch.zeros(n_senders, k_nm, dtype=torch.float32)
     valid = torch.zeros(n_senders, k_nm, dtype=torch.long)
+    per_prompt_delta = torch.zeros(n_senders, k_nm, B, dtype=torch.float32)
 
     receiver_layers_all = sorted({nl for nl, _ in nm_heads})
     sender_layers_all = {sl for sl, _ in senders}
@@ -286,9 +288,10 @@ def _compute_delta_for_group(
                 patched_at_io - clean_at_io_per_nm[nm_idx]
             )
             per_nm_sum[s_idx, nm_idx] = delta.sum()
+            per_prompt_delta[s_idx, nm_idx, :] = delta
             valid[s_idx, nm_idx] = B
 
-    return per_nm_sum, valid, torch.tensor(B)
+    return per_nm_sum, valid, torch.tensor(B), per_prompt_delta
 
 
 def _required_cache_names_for_screen(
@@ -321,6 +324,7 @@ def s_inhibition_screen(
     k_nm: int = 4,
     batch_size: int = 50,
     nm_dla_batch_size: int = 8,
+    return_per_prompt: bool = False,
 ) -> SInhibitionResult:
     """Run the full S-inhibition detector screen.
 
@@ -380,8 +384,14 @@ def s_inhibition_screen(
 
     # 3. For each length group, compute per-(sender, NM) sum across prompts.
     n_senders = len(senders)
+    n_total = len(clean_prompts)
     per_nm_sum_total = torch.zeros(n_senders, k_nm, dtype=torch.float32)
     valid_total = torch.zeros(n_senders, k_nm, dtype=torch.long)
+    per_prompt_delta_total: torch.Tensor | None = (
+        torch.zeros(n_senders, k_nm, n_total, dtype=torch.float32)
+        if return_per_prompt
+        else None
+    )
     total_prompts = 0
     device = next(model.parameters()).device
 
@@ -400,7 +410,7 @@ def s_inhibition_screen(
                 )
                 for i in chunk_idx
             ]
-            chunk_sum, chunk_valid, chunk_n = _compute_delta_for_group(
+            chunk_sum, chunk_valid, chunk_n, chunk_per_prompt = _compute_delta_for_group(
                 model,
                 clean_batch,
                 corrupt_batch,
@@ -411,6 +421,9 @@ def s_inhibition_screen(
             per_nm_sum_total += chunk_sum
             valid_total += chunk_valid
             total_prompts += int(chunk_n.item())
+            if per_prompt_delta_total is not None:
+                for k_in_chunk, prompt_i in enumerate(chunk_idx):
+                    per_prompt_delta_total[:, :, prompt_i] = chunk_per_prompt[:, :, k_in_chunk]
 
     # 4. Average per (sender, NM) by valid prompt count; aggregate Δ_h per sender
     # over its downstream NMs.
@@ -434,4 +447,5 @@ def s_inhibition_screen(
         per_nm_matrix=per_nm_matrix,
         nm_heads=nm_heads,
         n_prompts=total_prompts,
+        per_prompt_delta=per_prompt_delta_total,
     )

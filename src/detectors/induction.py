@@ -27,11 +27,18 @@ class PrefixMatchingResult:
     """Per-(layer, head) prefix-matching scores.
 
     `scores` shape: (n_layers, n_heads). Values in [0, 1].
+
+    When `prefix_matching_score` is called with `return_per_sequence=True`,
+    `per_sequence_scores` is populated with shape
+    `(n_sequences, n_layers, n_heads)` — the per-sequence per-head score
+    before averaging across sequences. Phase 2 bootstrap uses this to
+    resample sequences with replacement and recompute the aggregate.
     """
 
     scores: torch.Tensor
     n_sequences: int
     seq_len: int
+    per_sequence_scores: torch.Tensor | None = None
 
     def top_k(self, k: int = 5) -> list[tuple[int, int, float]]:
         """Return the top-k (layer, head, score) triples by score."""
@@ -71,6 +78,7 @@ def prefix_matching_score(
     seq_len: int = 100,
     seed: int = 0,
     batch_size: int = 8,
+    return_per_sequence: bool = False,
 ) -> PrefixMatchingResult:
     """Compute Olsson prefix-matching score for every (layer, head) in `model`.
 
@@ -106,6 +114,11 @@ def prefix_matching_score(
     # sequences and second-half positions; divide at the end.
     score_sum = torch.zeros((n_layers, n_heads), dtype=torch.float32)
     n_terms = 0
+    per_seq: torch.Tensor | None = (
+        torch.zeros((n_sequences, n_layers, n_heads), dtype=torch.float32)
+        if return_per_sequence
+        else None
+    )
 
     # Targets: for each second-half position p (in [half, seq_len-1]), the
     # target column is (p - half + 1). Position p == half maps to target 1.
@@ -137,9 +150,17 @@ def prefix_matching_score(
                 q_idx = second_half_positions.to(device)
                 k_idx = target_positions.to(device)
                 gathered = pattern[:, :, q_idx, k_idx]
-                # mean over second-half positions, sum over batch.
-                score_sum[layer] += gathered.mean(dim=-1).sum(dim=0).cpu().float()
+                # mean over second-half positions → (batch, n_heads).
+                per_batch_seq = gathered.mean(dim=-1).to(torch.float32).cpu()
+                score_sum[layer] += per_batch_seq.sum(dim=0)
+                if per_seq is not None:
+                    per_seq[batch_start : batch_start + batch.shape[0], layer] = per_batch_seq
             n_terms += batch.shape[0]
 
     scores = score_sum / max(n_terms, 1)
-    return PrefixMatchingResult(scores=scores, n_sequences=n_sequences, seq_len=seq_len)
+    return PrefixMatchingResult(
+        scores=scores,
+        n_sequences=n_sequences,
+        seq_len=seq_len,
+        per_sequence_scores=per_seq,
+    )
