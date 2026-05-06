@@ -204,3 +204,84 @@ Per §S-6, τ_strict = `min over Wang's four heads of Δ_h on GPT-2 small`. The 
 Both numbers are now locked. The Pythia-410M anchor inspection (deliverable ii of Phase 1.3) and the 18-cell exploration sweep (deliverable iii) apply these absolute thresholds. Per the §S-3 NM identification rule: NMs are re-derived per-model via component-DLA top-4, so the GPT-2 NM set `{(9,9), (9,6), (10,0), (10,6)}` is *not* transferred to Pythia. Only the Δ_h threshold values transfer.
 
 Component-DLA top-4 NMs on GPT-2 small (recorded for the (sender × NM) figure in the proof notebook): `(9,9), (9,6), (10,0), (10,6)`. Three of four match Wang's published NMs `{(9,6), (9,9), (10,0)}`; our top-4 includes `(10,6)` as the additional component-DLA-driven receiver. This is the §S-3-anticipated divergence and is recorded as a methodological finding rather than a re-amendment of §S-3.
+
+## Amendment 2026-05-05 (later evening) — §SU: Phase 1.4 successor detector specification
+
+**Posted after Phase 1.3 (S-inhibition detector, validated with documented §S-5c override and 18-cell exploration sweep complete).** This amendment locks the procedural specification of the successor-head detector that operationalizes H1-C's second motif. It is reference-style: the detector's prompt format, scoring method, null-shuffle scheme, and validation gate are committed here. The 95th-percentile null-threshold value is **not** locked in this amendment; it is data-dependent on the GPT-2 small reference distribution and will be locked in a follow-up §SU-tau amendment after the GPT-2 validation runs have been executed and recorded. DLA = direct logit attribution; BPE = byte-pair encoding.
+
+### SU-0. Validation target and source attribution (correction of brief misattribution)
+
+The brief at PROJECT_BRIEF.md §4 ("Successor heads", lines 78-83) names the validation target as "GPT-2 medium layer 9 head 1 (Gould et al. 2024)". A Phase 1.4 grilling research step established that this attribution is wrong on two counts:
+
+1. **Wrong model.** L9H1 is a successor head in GPT-2 *small*, not GPT-2 medium. Gould et al. (2024) test GPT-2 small in their Figure 2 cross-model scatter but never name a specific (layer, head) for it in the paper text; their named case-study head is Pythia-1.4B L12H0.
+2. **Wrong attribution.** The identification of GPT-2 small L9H1 as a successor head is due to L (2023), "Mechanistically interpreting time in GPT-2 small," LessWrong (https://www.lesswrong.com/posts/6tHNM2s6SWzFHv3Wo/). Gould et al. (2024) §5 *cite* this LessWrong post but do not own the identification.
+
+The locked validation target for Phase 1.4 is therefore:
+
+> **GPT-2 small layer 9 head 1** (notation: L9H1). Source: L (2023), "Mechanistically interpreting time in GPT-2 small," LessWrong. Cited by Gould et al. (2024) §5 in the cross-model successor scatter analysis.
+
+This amendment supersedes PROJECT_BRIEF.md §4's validation-target line. The chronology — brief said GPT-2 medium L9H1 / Gould 2024 → research showed GPT-2 small L9H1 / L 2023 → amendment locks the corrected target *before* validation runs — is the auditable pre-registration record.
+
+### SU-1. Prompt format (locked)
+
+Successor prompts are 3-context comma-separated ordinal lists, scored at the END token for prediction of the 4th element. Four categories are screened: **days** (7 items: Monday...Sunday), **months** (12 items: January...December), **numerals** (40 items: a single category mixing 1-20 in digit form *and* one-twenty in word form), **letters** (26 items: A...Z). Total: 65 items across four categories.
+
+For each (category, starting-index) pair admissible under the category length, a base prompt is constructed of the form `f"{c1}, {c2}, {c3}, "` where `c1, c2, c3` are three consecutive ordinal items. The DLA is computed at the END token (the position after the trailing space, where the model emits its prediction of `c4`). The numerals category mixes digit form and word form within a single category specifically so that a head whose successor mechanism operates on the abstract ordinal direction (per Gould et al.'s OV-circuit account) scores positively across both surface forms; a head that memorizes only the digit sequence "1, 2, 3" or only the word sequence "one, two, three" scores across only the relevant subset and fails the cross-category requirement at SU-4.
+
+### SU-2. Multi-token handling (locked)
+
+Items vary in token length under different tokenizers. The detector uses **first-token DLA**: for each item, encode `f' {item}'` (with leading space) under the active tokenizer and target the **first token** of the resulting sequence regardless of total token count. The (item, tokenizer, first-token-id, first-token-string) mapping is logged at prompt-construction time and persisted alongside the prompt set for reproducibility.
+
+This choice keeps all 65 items in screen across both GPT-2 BPE and GPT-NeoX BPE without per-tokenizer item filtering, at the cost of conflating the DLA on `c4`'s first token with the DLA on `c4` as a complete item. The conflation is acceptable because the cross-category aggregation (SU-4) averages out tokenization idiosyncrasies, and the alternative (per-tokenizer item filtering) would produce different category sizes for GPT-2 validation vs Pythia application — making cross-model comparison less clean.
+
+### SU-3. Null-distribution shuffle (locked, threshold value deferred)
+
+The null distribution against which a candidate head's mean cross-category DLA is judged is constructed by **within-category prefix permutation**. For each (category, base prompt) pair, the three context items `(c1, c2, c3)` are replaced with a deterministic seed-pinned permutation of the same three items, with the constraint that the permutation differs from the identity (so the shuffled prompt is not byte-identical to the clean prompt). One fixed permutation per (category, base prompt) is used — not a Monte-Carlo distribution over permutations — to keep the null distribution single-pass-computable and seed-deterministic.
+
+The null distribution is **pooled across heads at the per-head mean level**: for each head, the *mean cross-category DLA on the shuffled prompt set* is computed (one scalar per head, identical aggregation as the real-prompt score being thresholded). These per-head shuffled means are pooled into a single distribution with one entry per head — 144 entries on GPT-2 small, 384 on Pythia-410M, etc. The **pooled null's 95th percentile** is the threshold τ.
+
+Pooling at the per-head-mean level (rather than at the per-prompt-DLA level) matches the statistic being thresholded — the comparison "head's mean cross-cat DLA exceeds τ" is mean-against-mean, not mean-against-individual-DLAs. Pooling at the per-prompt level would produce a higher threshold (per-prompt DLAs scatter widely; per-head means are tighter around zero), but the comparison would conflate units. Per-head-mean pooling is the methodologically correct choice; the small-sample size of the resulting 144-value distribution is the cost.
+
+τ is **not numerically committed in this amendment**. It is committed in a follow-up §SU-tau amendment after the GPT-2 validation screen has been executed, with the per-head pooled-null distribution summarized alongside the chosen percentile cut.
+
+### SU-4. Validation gate (GPT-2 small, locked)
+
+The detector is screened over **all 144 heads of GPT-2 small** under the locked specification SU-1 through SU-3. The gate has two conjunctive conditions, both of which must be satisfied:
+
+1. **Top-3 inclusion.** L9H1 must appear within the top-3 of the per-head ranking by **mean cross-category DLA** (equally weighted across the four categories: days, months, numerals, letters).
+2. **Null-threshold clearance.** L9H1's mean cross-category DLA must exceed τ (the per-head-mean pooled 95th-percentile null threshold defined in SU-3).
+
+Both conditions are evaluated under the same prompt set with one fixed seed; the null permutation seed is pinned at construction time. If either condition fails, the detector specification is treated as invalid and Phase 1.4 hard-stops per SU-6 below. L9H1 is highlighted in the screen figure regardless of pass/fail.
+
+The conjunctive gate is belt-and-suspenders: top-3 by ranking establishes that L9H1 is among the most successor-like heads under the detector (sensitivity), and clearing τ establishes that its score is above what permuted-prefix prompts produce on average across heads (specificity). k=3 is chosen because top-1 is too strict (a single noisy prompt could push L9H1 to rank 2 even if its mechanism is intact), while top-5 is too loose (it admits the possibility of L9H1 being an also-ran among many heads with comparable DLA, which would not validate the *specificity* of the detector). Top-3 absorbs single-prompt noise without admitting false positives.
+
+The SU-4 specification deliberately uses **rank + null-percentile** rather than the σ-statistic that §S-5 used in Phase 1.3 — see SU-7 for the methodological lesson carried forward.
+
+### SU-5. Phase 1.4 scope and Pythia gates (locked)
+
+Phase 1.4 has three deliverables, executed in order:
+
+1. **GPT-2 small validation** per SU-4 above. Gating deliverable; failure triggers SU-6.
+2. **Pythia-410M-deduped @ `step143000` anchor inspection.** Two pre-committed gates: a **numerical gate** (≥1 Pythia-410M head clears τ on the same mean cross-category DLA scalar) and a **qualitative gate** (the top candidate has cross-category breadth — DLA is positive across at least 3 of the 4 categories — not concentrated in a single category, which would indicate sequence memorization rather than abstract successor behaviour).
+3. **18-cell exploration sweep** on Pythia `{70m, 160m, 410m}` × `{0, 1000, 3000, 8000, 25000, 143000}`. The 70m size is included per the brief's "drop 70m" fallback being post-hoc-only; pre-registered scope includes all three sizes.
+
+The SU-6 hard-stop applies only at the GPT-2 validation level (deliverable 1). The Pythia anchor (deliverable 2) and the 18-cell sweep (deliverable 3) run unconditionally after GPT-2 validation passes; if the anchor fails either of its two gates, the sweep still completes and documents the failure pattern across the 18 cells in Path-C-style negative-result form.
+
+### SU-6. Failure-mode policy (locked)
+
+Failure of the GPT-2 validation gate at SU-4 is a **hard stop**. The response is to re-grill the detector specification from SU-1, beginning with prompt format. There are **no fallback variants** registered in this amendment: no fallback to GPT-2 medium, no fallback to a different category set, no fallback to per-category DLA rather than mean cross-category DLA, no fallback to a per-head null. Any of these would constitute a new specification and would require its own amendment with its own validation gate.
+
+This SU-6 policy mirrors §S-7 of the §S-inhibition amendment exactly. (A note on chronology: mid-grilling, Q6 was initially chosen as a soft fallback to GPT-2 small — a structure that became nonsensical once the SU-0 misattribution was identified, since GPT-2 small *is* the corrected primary. The reversion to hard-stop is documented in NOTES.md Phase 1.4 entry and is the methodological-discipline equivalent of choosing the no-fallback path in §S-7 of Phase 1.3.)
+
+### SU-7. Methodological lessons carried forward from Phase 1.3
+
+Two lessons from Phase 1.3 inform the SU-4 design and are recorded here for traceability:
+
+- **Rank-only validation is load-bearing.** §S-5c (post-data) recorded that the σ-statistic gate is pathological under outlier known-positives. Going forward — including this Phase 1.4 specification — rank-only criteria (top-k inclusion) plus a separately-defined null-percentile threshold replace any σ-of-bulk gate. The SU-4 conjunction of "top-3 by ranking AND clears null-percentile τ" is the Phase-1.4-shape of this lesson.
+- **Numerical thresholds must be specified after data is observed, with the procedure committed before.** The SU-3 procedure (within-category prefix permutation, one fixed permutation per (category, base prompt), per-head-mean pooled across heads, 95th percentile) is committed in this amendment. The numerical τ is committed only after the pooled null is observed; this is the same procedure-now / number-later split that §S-tau used for Phase 1.3.
+
+### SU-8. Pre-registration form (locked)
+
+This amendment is **reference-style**: the locked procedural specification lives here in HYPOTHESIS.md; the full grilling rationale and option-list-with-rejected-alternatives lives in NOTES.md (gitignored working memory) under the Phase 1.4 grilling entry. τ is locked in a *separate* HYPOTHESIS.md amendment (§SU-tau) posted after the GPT-2 validation gate (SU-4) is executed.
+
+Implementation files (planned, not yet written): `src/detectors/successor.py` (cross-category DLA detector reusing `src/replication/tigges_ioi.py::component_dla` machinery for per-(layer, head) DLA computation). 4-category prompt builder either inline in the detector module or in a sibling file. No new dependencies. Compute estimate: ~1-2 minutes for GPT-2 small validation, ~5-10 minutes for the full 18-cell Pythia sweep on M5 Pro.
