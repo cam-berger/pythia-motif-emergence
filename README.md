@@ -28,6 +28,7 @@ The full plan — weekly milestones, decision gates, pre-committed limitations, 
 | 1.1 — TransformerLens fluency on Pythia | week 2 | substantially complete (de facto from Day 1–4 work) |
 | 1.2 — Tigges IOI replication | week 3 | **✓ complete — gate PASS** (max abs-diff 0.066 < 0.10 vs Tigges 2024 at the 4 directly-shared steps; `notebooks/tigges_ioi_replication.ipynb`) |
 | 1.3 — Detector validation | week 4 | **✓ complete — S-inhibition validated** (GPT-2 Wang's 4 = ranks #1-#4 of 144; σ-criterion FAIL by 0.019σ overridden on rank-strength per §S-5c; Pythia anchor passes both Q8 gates; 18-cell sweep shows emergence in all 3 sizes by step143000; `notebooks/s_inhibition_proof.ipynb` + `s_inhibition_emergence_exploration.ipynb`) |
+| 1.4 — Successor detector | week 4 | **✓ complete — successor validated** (GPT-2 small L9H1 rank #1 of 144 by lift = +0.39 under §SU-1b lift-form supersede; Pythia-410M anchor passes both gates with L22H6 cross-category positive in all 4 categories; **H1-C ordering HOLDS in all 3 Pythia sizes** in the preview grid; `notebooks/successor_proof.ipynb` + `successor_emergence_exploration.ipynb`) |
 | 2 — Novel sweep | 5–10 | not started — registered hypothesis is **H1-C** (induction → successor → S-inhibition) |
 | 3 — Push past replication | 11–13 | not started |
 | 4 — Writeup | 14–16 | not started |
