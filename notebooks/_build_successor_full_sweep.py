@@ -78,7 +78,10 @@ def build() -> nbf.NotebookNode:
         ),
         md("## Load sweep data"),
         code(
-            "df = pd.concat([read_long(sweep_path(s)) for s in SIZES]).reset_index(drop=True)\n"
+            "# Dedup parquet paths: phase2_successor_sweep.parquet holds all 3 phase2 sizes,\n"
+            "# so sweep_path('70m') == sweep_path('410m'). Iterating SIZES naïvely triple-counts.\n"
+            "_paths = list(dict.fromkeys(sweep_path(s) for s in SIZES))\n"
+            "df = pd.concat([read_long(p) for p in _paths]).reset_index(drop=True)\n"
             "STEPS = sorted(df.step.unique().tolist())\n"
             "print(f'Total rows: {len(df):,}; sizes: {sorted(df[\"size\"].unique().tolist())}; n cells per size: {len(STEPS)}')"
         ),
@@ -136,8 +139,8 @@ def build() -> nbf.NotebookNode:
             "        ax.axvline(bres.mu_point_estimate, color=SIZE_COLOR[size],\n"
             "                   linestyle='--', alpha=0.7,\n"
             "                   label=f'  μ = {bres.mu_point_estimate:.0f}')\n"
-            "ax.set_xscale('symlog', linthresh=1)\n"
-            "ax.set_xlim(0.5, 200000)\n"
+            "ax.set_xscale('symlog', linthresh=100)\n"
+            "ax.set_xlim(100, 150000)\n"
             "ax.set_xlabel('training step (symlog)')\n"
             "ax.set_ylabel(f'count of heads with lift ≥ {TAU_LIFT}')\n"
             "ax.set_title('Successor emergence with bootstrap CI on μ (4 Pythia sizes)')\n"
