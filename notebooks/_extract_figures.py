@@ -22,6 +22,7 @@ NOTEBOOKS = [
     "induction_full_sweep.ipynb",
     "successor_full_sweep.ipynb",
     "s_inhibition_full_sweep.ipynb",
+    "causal_dependence.ipynb",
 ]
 
 
