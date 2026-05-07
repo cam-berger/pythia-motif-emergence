@@ -1,36 +1,50 @@
-# Checkpoint sweep schedule — pre-registered per-size sampling.
+# Checkpoint sweep schedule — pre-registered.
 #
-# 40 log-spaced checkpoints per Pythia size, drawn from the canonical Pythia
-# checkpoint set: step0 plus powers of two up to step512, then every 1000
-# from step1000 to step143000 (final).
+# CANONICAL: HYPOTHESIS.md §H2-1 ("Checkpoint grid (locked)").
+# This file is a description of the registered grid; the load-bearing source
+# of truth is §H2-1 in HYPOTHESIS.md and the `CHECKPOINTS` tuples in
+# `notebooks/_run_phase2_*_sweep.py`, `notebooks/_run_phase3_1b_*_sweep.py`,
+# and `notebooks/_prefetch_2_8b_checkpoints.py` (and Phase 4 runners when added).
+# If this file ever disagrees with §H2-1 or those tuples, this file is wrong.
 #
-# Per-size differentiation rationale: smaller models tend to emerge earlier,
-# so the dense-sampling region is shifted to where each size's logistic
-# inflection is most likely to land. This keeps fit quality comparable across
-# sizes for the cross-size ordering claim.
+# 40 log-spaced cells drawn from Pythia's published 154-checkpoint suite:
+# all 11 early-dense cells (step0 plus powers of 2 up to step512) plus 29
+# mainline cells from step1000 to step143000. Consecutive ratios: min 1.06,
+# median 1.20, max 2.00.
 #
-# Pre-registration discipline: this schedule was committed before the pilot.
-# It MAY be augmented during weeks 9-10 with extra checkpoints near observed
-# emergence boundaries (adding points strengthens fits without violating
-# pre-reg). It MAY NOT be replaced or thinned post-hoc.
+# The grid is IDENTICAL across all sizes. §H2-1: "The grid is identical
+# across all 9 (size, motif) cells; no per-motif or per-size grid is
+# defined." The earlier per-size differentiated schedule that lived in this
+# file was superseded by §H2-1 (Phase 2 lock) and never used by any runner.
+#
+# Size coverage:
+#   - §H2-1     locks the grid for Pythia-{70m, 160m, 410m} (Phase 2).
+#   - §H3-scale-1 extends the same grid verbatim to Pythia-1b (Phase 3).
+#   - §H4-1     extends the same grid verbatim to Pythia-2.8b (Phase 4).
+#
+# Pre-registration discipline: this schedule was committed before Phase 2
+# data. It MAY be augmented with extra checkpoints near observed emergence
+# boundaries (adding points strengthens fits without violating pre-reg).
+# It MAY NOT be replaced or thinned post-hoc.
+
+steps: &h2_1_grid
+  [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
+   1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+   10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000,
+   20000, 24000, 29000, 35000, 41000, 49000, 59000, 70000,
+   84000, 100000, 120000, 143000]
 
 70M:
-  steps: [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
-          1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
-          10000, 11000, 13000, 15000, 17000, 19000, 22000, 25000, 28000,
-          32000, 36000, 42000, 50000, 60000, 75000, 90000, 105000, 120000,
-          130000, 143000]
+  steps: *h2_1_grid
 
 160M:
-  steps: [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
-          1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
-          11000, 13000, 15000, 18000, 21000, 25000, 29000, 34000, 40000,
-          47000, 55000, 65000, 75000, 85000, 95000, 105000, 115000, 125000,
-          135000, 143000]
+  steps: *h2_1_grid
 
 410M:
-  steps: [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
-          1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000,
-          12000, 15000, 18000, 22000, 26000, 31000, 36000, 42000, 48000,
-          55000, 62000, 70000, 78000, 86000, 95000, 105000, 115000, 125000,
-          135000, 143000]
+  steps: *h2_1_grid
+
+1B:
+  steps: *h2_1_grid
+
+2.8B:
+  steps: *h2_1_grid
