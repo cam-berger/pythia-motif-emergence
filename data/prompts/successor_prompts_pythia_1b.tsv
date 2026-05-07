@@ -1,0 +1,78 @@
+# Phase 1.4 successor prompt set (HYPOTHESIS.md §SU-1 through §SU-3)
+# Generated: 2026-05-07T00:18:27+00:00
+# Seed: 0
+# Tokenizer: pythia-1b-deduped (GPT-NeoX BPE)
+# Total prompts: 70
+# Categories: days, months, numerals, letters
+# Format: 3-context comma-separated, predict 4th. First-token DLA target.
+category	clean_text	shuffled_text	target_word	target_first_token_id	target_first_token_str
+days	Monday, Tuesday, Wednesday, 	Wednesday, Monday, Tuesday, 	Thursday	8216	 Thursday
+days	Tuesday, Wednesday, Thursday, 	Wednesday, Tuesday, Thursday, 	Friday	6794	 Friday
+days	Wednesday, Thursday, Friday, 	Wednesday, Friday, Thursday, 	Saturday	7814	 Saturday
+days	Thursday, Friday, Saturday, 	Friday, Thursday, Saturday, 	Sunday	6926	 Sunday
+months	January, February, March, 	February, January, March, 	April	4162	 April
+months	February, March, April, 	April, March, February, 	May	2552	 May
+months	March, April, May, 	May, April, March, 	June	3978	 June
+months	April, May, June, 	May, June, April, 	July	4163	 July
+months	May, June, July, 	June, May, July, 	August	4223	 August
+months	June, July, August, 	August, June, July, 	September	4397	 September
+months	July, August, September, 	September, August, July, 	October	4437	 October
+months	August, September, October, 	October, August, September, 	November	4596	 November
+months	September, October, November, 	November, September, October, 	December	4565	 December
+numerals	1, 2, 3, 	2, 3, 1, 	4	577	 4
+numerals	2, 3, 4, 	2, 4, 3, 	5	608	 5
+numerals	3, 4, 5, 	4, 3, 5, 	6	721	 6
+numerals	4, 5, 6, 	5, 6, 4, 	7	818	 7
+numerals	5, 6, 7, 	7, 6, 5, 	8	854	 8
+numerals	6, 7, 8, 	7, 6, 8, 	9	898	 9
+numerals	7, 8, 9, 	7, 9, 8, 	10	884	 10
+numerals	8, 9, 10, 	9, 8, 10, 	11	1903	 11
+numerals	9, 10, 11, 	10, 9, 11, 	12	1249	 12
+numerals	10, 11, 12, 	11, 10, 12, 	13	2145	 13
+numerals	11, 12, 13, 	12, 13, 11, 	14	1638	 14
+numerals	12, 13, 14, 	14, 12, 13, 	15	1458	 15
+numerals	13, 14, 15, 	15, 13, 14, 	16	1668	 16
+numerals	14, 15, 16, 	15, 14, 16, 	17	1722	 17
+numerals	15, 16, 17, 	17, 15, 16, 	18	1283	 18
+numerals	16, 17, 18, 	16, 18, 17, 	19	655	 19
+numerals	17, 18, 19, 	19, 18, 17, 	20	1384	 20
+numerals	one, two, three, 	three, two, one, 	four	1740	 four
+numerals	two, three, four, 	two, four, three, 	five	2620	 five
+numerals	three, four, five, 	three, five, four, 	six	2800	 six
+numerals	four, five, six, 	six, five, four, 	seven	5093	 seven
+numerals	five, six, seven, 	seven, six, five, 	eight	4314	 eight
+numerals	six, seven, eight, 	eight, seven, six, 	nine	7457	 nine
+numerals	seven, eight, nine, 	eight, nine, seven, 	ten	3578	 ten
+numerals	eight, nine, ten, 	ten, nine, eight, 	eleven	19525	 eleven
+numerals	nine, ten, eleven, 	eleven, nine, ten, 	twelve	13265	 twelve
+numerals	ten, eleven, twelve, 	eleven, ten, twelve, 	thirteen	27291	 thirteen
+numerals	eleven, twelve, thirteen, 	thirteen, eleven, twelve, 	fourteen	25963	 fourteen
+numerals	twelve, thirteen, fourteen, 	fourteen, twelve, thirteen, 	fifteen	15342	 fifteen
+numerals	thirteen, fourteen, fifteen, 	thirteen, fifteen, fourteen, 	sixteen	25279	 sixteen
+numerals	fourteen, fifteen, sixteen, 	fourteen, sixteen, fifteen, 	seventeen	33395	 seventeen
+numerals	fifteen, sixteen, seventeen, 	seventeen, fifteen, sixteen, 	eighteen	25259	 eighteen
+numerals	sixteen, seventeen, eighteen, 	seventeen, eighteen, sixteen, 	nineteen	42380	 nineteen
+numerals	seventeen, eighteen, nineteen, 	seventeen, nineteen, eighteen, 	twenty	6818	 twenty
+letters	A, B, C, 	B, C, A, 	D	399	 D
+letters	B, C, D, 	D, C, B, 	E	444	 E
+letters	C, D, E, 	C, E, D, 	F	401	 F
+letters	D, E, F, 	F, D, E, 	G	443	 G
+letters	E, F, G, 	F, E, G, 	H	388	 H
+letters	F, G, H, 	G, H, F, 	I	309	 I
+letters	G, H, I, 	I, H, G, 	J	500	 J
+letters	H, I, J, 	I, H, J, 	K	611	 K
+letters	I, J, K, 	I, K, J, 	L	418	 L
+letters	J, K, L, 	L, K, J, 	M	353	 M
+letters	K, L, M, 	K, M, L, 	N	427	 N
+letters	L, M, N, 	N, M, L, 	O	473	 O
+letters	M, N, O, 	N, M, O, 	P	367	 P
+letters	N, O, P, 	O, P, N, 	Q	1165	 Q
+letters	O, P, Q, 	Q, O, P, 	R	416	 R
+letters	P, Q, R, 	R, Q, P, 	S	322	 S
+letters	Q, R, S, 	S, Q, R, 	T	308	 T
+letters	R, S, T, 	T, R, S, 	U	530	 U
+letters	S, T, U, 	U, S, T, 	V	657	 V
+letters	T, U, V, 	T, V, U, 	W	411	 W
+letters	U, V, W, 	U, W, V, 	X	1594	 X
+letters	V, W, X, 	X, V, W, 	Y	714	 Y
+letters	W, X, Y, 	W, Y, X, 	Z	1503	 Z

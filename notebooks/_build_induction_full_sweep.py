@@ -1,9 +1,11 @@
 """Build notebooks/induction_full_sweep.ipynb.
 
-Phase 2 induction full-sweep notebook (40 cells × 3 sizes per §H2-1).
-Mirrors the Phase 1 6-cell induction_emergence_exploration.ipynb but adds
-prompt-bootstrap CIs on μ (§H2-2) and threshold-sensitivity bracket.
-The Phase 1 preview notebook remains as the 6-cell historical artifact.
+Induction full-sweep notebook: 40 cells × 4 Pythia sizes (70m, 160m, 410m, 1b)
+per §H2-1 grid. Original 3-size Phase 2 deliverable + 1B added in-place under
+§H3-scale (the parquet artifacts remain split: `phase2_*_sweep.parquet` for
+the original 3 sizes and `phase3_1b_*_sweep.parquet` for 1B; the notebook
+loads both transparently). Bootstrap CIs on μ per §H2-2; threshold-sensitivity
+bracket per §H2-2.
 """
 
 from __future__ import annotations
@@ -28,14 +30,12 @@ def build() -> nbf.NotebookNode:
     nb = nbf.v4.new_notebook()
     nb["cells"] = [
         md(
-            "# Induction emergence — Phase 2 full sweep (40 cells × 3 sizes)\n"
+            "# Induction emergence — full sweep (40 cells × 4 Pythia sizes)\n"
             "\n"
-            "**Phase 2 deliverable.** 40-cell extension of the Phase 1 6-cell "
-            "preview (`induction_emergence_exploration.ipynb`, kept as a "
-            "historical artifact). Same Olsson prefix-matching detector "
+            "Olsson prefix-matching detector across Pythia-70m, 160m, 410m, 1b "
             "(threshold > 0.3 per `PROJECT_BRIEF.md` §4); 40 log-spaced "
             "checkpoints from `step0` to `step143000` per `HYPOTHESIS.md` §H2-1; "
-            "prompt-bootstrap CIs on μ per §H2-2; threshold-sensitivity bracket "
+            "sequence-bootstrap CIs on μ per §H2-2; threshold-sensitivity bracket "
             "± 25% in 5 increments per §H2-2.\n"
             "\n"
             "**Locked thresholds:**\n"
@@ -64,19 +64,30 @@ def build() -> nbf.NotebookNode:
             "    THRESHOLD_SENSITIVITY_FRACTIONS,\n"
             ")\n"
             "\n"
-            "SIZES = ['70m', '160m', '410m']\n"
-            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green'}\n"
-            "INDUCTION_THRESHOLD = 0.3"
+            "SIZES = ['70m', '160m', '410m', '1b']\n"
+            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red'}\n"
+            "INDUCTION_THRESHOLD = 0.3\n"
+            "\n"
+            "def sweep_path(size: str) -> Path:\n"
+            "    \"\"\"phase2_*_sweep.parquet for {70m,160m,410m}; phase3_1b_*_sweep.parquet for 1b.\"\"\"\n"
+            "    if size == '1b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase3_1b_induction_sweep.parquet'\n"
+            "    return REPO / 'data' / 'exploration' / 'phase2_induction_sweep.parquet'\n"
+            "\n"
+            "def per_seq_dir(size: str) -> Path:\n"
+            "    if size == '1b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase3_1b_induction_per_seq'\n"
+            "    return REPO / 'data' / 'exploration' / 'phase2_induction_per_seq'"
         ),
         md(
             "## Load sweep data\n"
             "\n"
-            "Long-format parquet from `_run_phase2_induction_sweep.py`. Per-cell "
-            "`.npz` with per-sequence scores for bootstrap is in "
-            "`data/exploration/phase2_induction_per_seq/`."
+            "Long-format parquets from the per-size sweep runners. Per-cell "
+            "`.npz` with per-sequence scores for bootstrap lives alongside each "
+            "parquet."
         ),
         code(
-            "df = read_long(REPO / 'data' / 'exploration' / 'phase2_induction_sweep.parquet')\n"
+            "df = pd.concat([read_long(sweep_path(s)) for s in SIZES]).reset_index(drop=True)\n"
             "print(f'Total rows: {len(df):,}')\n"
             "print(f'Sizes: {sorted(df[\"size\"].unique().tolist())}')\n"
             "print(f'Steps: {sorted(df.step.unique().tolist())[:5]}...{sorted(df.step.unique().tolist())[-3:]}')\n"
@@ -124,7 +135,7 @@ def build() -> nbf.NotebookNode:
             "    # Load per-seq cache\n"
             "    per_seq_by_step = {}\n"
             "    for s in steps:\n"
-            "        npz = np.load(REPO / 'data' / 'exploration' / 'phase2_induction_per_seq' / f'{size}_step{s}.npz')\n"
+            "        npz = np.load(per_seq_dir(size) / f'{size}_step{s}.npz')\n"
             "        per_seq_by_step[int(s)] = npz['per_sequence_scores']\n"
             "    mus, mu_point = bootstrap_induction(per_seq_by_step, INDUCTION_THRESHOLD, rng, B=1000)\n"
             "    bres = summarize_bootstrap(size, 'induction', INDUCTION_THRESHOLD, mus, mu_point)\n"
@@ -152,7 +163,7 @@ def build() -> nbf.NotebookNode:
             "ax.set_xlim(0.5, 200000)\n"
             "ax.set_xlabel('training step (symlog)')\n"
             "ax.set_ylabel('count of heads with prefix-matching score > 0.3')\n"
-            "ax.set_title('Induction-head count emergence with bootstrap CI on μ (Phase 2 full sweep)')\n"
+            "ax.set_title('Induction-head count emergence with bootstrap CI on μ (4 Pythia sizes)')\n"
             "ax.legend(fontsize=9)\n"
             "ax.grid(alpha=0.3)\n"
             "plt.tight_layout()\n"
@@ -166,7 +177,7 @@ def build() -> nbf.NotebookNode:
             "trajectory is visible at finer resolution than the 6-cell preview."
         ),
         code(
-            "# 3 sizes × 40 steps is too dense for one grid; show every 4th step\n"
+            "# 4 sizes × 40 steps is too dense for one grid; show every 4th step\n"
             "PLOT_STEPS = STEPS[::4]\n"
             "vmax = float(df['score'].max())\n"
             "fig, axes = plt.subplots(\n"
@@ -208,7 +219,7 @@ def build() -> nbf.NotebookNode:
             "    steps = sub['step'].values\n"
             "    per_seq_by_step = {}\n"
             "    for s in steps:\n"
-            "        npz = np.load(REPO / 'data' / 'exploration' / 'phase2_induction_per_seq' / f'{size}_step{s}.npz')\n"
+            "        npz = np.load(per_seq_dir(size) / f'{size}_step{s}.npz')\n"
             "        per_seq_by_step[int(s)] = npz['per_sequence_scores']\n"
             "    for frac in THRESHOLD_SENSITIVITY_FRACTIONS:\n"
             "        thr = INDUCTION_THRESHOLD * (1.0 + frac)\n"
@@ -331,7 +342,7 @@ def build() -> nbf.NotebookNode:
         md(
             "## Verdict\n"
             "\n"
-            "Phase 2 deliverable for induction: 40-cell sweep complete, μ_{s,induction} extracted with bootstrap CI per (size). The induction emergence step provides the *first* term in the H1-C ordering test; the joint H1-C verdict is in `h1c_ordering_test.ipynb`.\n"
+            "Induction full-sweep complete across 4 Pythia sizes; μ_{s,induction} extracted with bootstrap CI per (size). The induction emergence step provides the *first* term in the H1-C ordering test and the §H3-scale (B.ii) ordering check at 1B; the joint H1-C / §H3-scale verdict is in `h1c_ordering_test.ipynb`.\n"
             "\n"
             "Phase 1's 6-cell preview (`induction_emergence_exploration.ipynb`) remains on disk as a historical artifact for the chronology."
         ),

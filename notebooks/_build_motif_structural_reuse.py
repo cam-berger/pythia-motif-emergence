@@ -70,10 +70,10 @@ def build() -> nbf.NotebookNode:
             "import matplotlib.pyplot as plt\n"
             "from notebooks._lib.sweep_io import read_long\n"
             "\n"
-            "SIZES = ['70m', '160m', '410m']\n"
+            "SIZES = ['70m', '160m', '410m', '1b']\n"
             "MOTIFS = ['induction', 'successor', 's_inhibition']\n"
             "MOTIF_LABEL = {'induction': 'induction', 'successor': 'successor', 's_inhibition': 'S-inhibition'}\n"
-            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green'}\n"
+            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red'}\n"
             "PAIR_COLOR = {\n"
             "    ('induction', 'successor'): 'tab:purple',\n"
             "    ('induction', 's_inhibition'): 'tab:olive',\n"
@@ -81,11 +81,22 @@ def build() -> nbf.NotebookNode:
             "}\n"
             "K_TOP = 5"
         ),
-        md("## Load all three sweep parquets"),
+        md("## Load all sweep parquets (3 Phase 2 sizes + 1 Phase 3 1B)"),
         code(
-            "df_ind = read_long(REPO / 'data' / 'exploration' / 'phase2_induction_sweep.parquet')\n"
-            "df_suc = read_long(REPO / 'data' / 'exploration' / 'phase2_successor_sweep.parquet')\n"
-            "df_si = read_long(REPO / 'data' / 'exploration' / 'phase2_s_inhibition_sweep.parquet')\n"
+            "# Phase 2 (3 sizes) and Phase 3 (1B) parquets are concatenated for the\n"
+            "# 4-size structural-reuse extension per §H3-scale-8 (#6).\n"
+            "df_ind = pd.concat([\n"
+            "    read_long(REPO / 'data' / 'exploration' / 'phase2_induction_sweep.parquet'),\n"
+            "    read_long(REPO / 'data' / 'exploration' / 'phase3_1b_induction_sweep.parquet'),\n"
+            "])\n"
+            "df_suc = pd.concat([\n"
+            "    read_long(REPO / 'data' / 'exploration' / 'phase2_successor_sweep.parquet'),\n"
+            "    read_long(REPO / 'data' / 'exploration' / 'phase3_1b_successor_sweep.parquet'),\n"
+            "])\n"
+            "df_si = pd.concat([\n"
+            "    read_long(REPO / 'data' / 'exploration' / 'phase2_s_inhibition_sweep.parquet'),\n"
+            "    read_long(REPO / 'data' / 'exploration' / 'phase3_1b_s_inhibition_sweep.parquet'),\n"
+            "])\n"
             "DFS = {'induction': df_ind, 'successor': df_suc, 's_inhibition': df_si}\n"
             "STEPS = sorted(df_ind.step.unique().tolist())\n"
             "print(f'Loaded sweeps: {len(STEPS)} cells per size, {len(SIZES)} sizes, {len(MOTIFS)} motifs.')"
@@ -141,7 +152,7 @@ def build() -> nbf.NotebookNode:
             "jac_df = pd.DataFrame(rows)"
         ),
         code(
-            "fig, axes = plt.subplots(1, 3, figsize=(18, 5), sharey=True)\n"
+            "fig, axes = plt.subplots(1, len(SIZES), figsize=(6 * len(SIZES), 5), sharey=True)\n"
             "for ax, size in zip(axes, SIZES):\n"
             "    sub = jac_df[jac_df['size'] == size]\n"
             "    for (ma, mb) in PAIRS:\n"

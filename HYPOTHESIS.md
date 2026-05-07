@@ -617,3 +617,148 @@ The 1B scale-extension produces:
 This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds (induction > 0.3, τ_lift = 0.13496, τ_strict = 0.0372), bootstrap parameters (B = 1000, 95% percentile, per-prompt resampling), threshold-sensitivity parameters (± 25% in 5 increments), tiered-censoring thresholds (full-fit ≥ 5, marginal 2-4, censored < 2), and the (A.ii) reversal-rate threshold (≥ 0.95) are pre-committed in this single amendment.
 
 A reviewer reading the chronology should see: §H1-C registered → §H2 sweep specification locked → Phase 2 sweep ran and §H2-5 gate passed at p = 0.00463 → §H2-9-R post-data reframe registered → grilling session 2026-05-06 surfaced the §H3-scale forward-looking prediction → this §H3-scale amendment commits before any 1B compute → 1B sweep runs → §H3-scale verdict recorded in `notebooks/h1c_ordering_test.ipynb` extension. No spec change is anticipated between this amendment and the §H3-scale verdict.
+
+## Amendment 2026-05-07 — §H3-scale-8-vis: visualization-layer integration of 1B into existing notebooks
+
+**Posted post-data (after §H3-scale verdict was computed and recorded).** This amendment is a **visualization-layer supersede** of §H3-scale-8 (#4) and (#5). The §H3-scale data, gate, verdict, and matched failure-mode pattern (REGR) are unchanged. The only change is how 1B is presented in the existing notebook artifacts.
+
+### What is changed
+
+- **Per-size full-sweep notebooks** (`induction_full_sweep.ipynb`, `successor_full_sweep.ipynb`, `s_inhibition_full_sweep.ipynb`): originally Phase 2 3-size deliverables. Now extended to load both `phase2_*_sweep.parquet` and `phase3_1b_*_sweep.parquet` transparently and present 4 sizes (70m, 160m, 410m, 1b) side-by-side as the natural read. The §H3-scale-8 (#4) lock that "Existing 3-size full-sweep notebooks are NOT modified" is superseded by this amendment for the visualization layer only.
+- **`h1c_ordering_test.ipynb`**: §H1-C / §H2-5 / §H2-9-R sections preserved. The §H3-scale section originally appended at the end is reframed as a cross-cutting "1B scale-extension verdict" sub-section with the 4-size figures already produced by the main flow's bootstrap + emergence-curves cells; redundant 4-size figures and tables are removed from the §H3-scale section. The §H3-scale gate verdict, reversal-rate diagnostic, within-1B CI separation, anchor-inspection table, and matched-headline cells remain — they are §H3-scale-specific and not duplicated by the main flow.
+- **`*_full_sweep_1b.ipynb` notebooks** (the 1B-only artifacts produced under §H3-scale-8 #4): **deleted**, since their content is now subsumed by the 4-size main notebooks. The redundant `_build_*_1b.py` builder scripts are also deleted.
+
+### What is NOT changed
+
+- All raw artifacts: `phase2_*_sweep.parquet` (3-size) and `phase3_1b_*_sweep.parquet` (1B-only) are unchanged. Data lineage is preserved by the parquet split.
+- The §H3-scale gate, the (A.i)-(A.ii)-(A.iii)-(B.i)-(B.ii) leg structure, the §H3-scale-6 failure-mode taxonomy, and the matched REGR pattern from the executed gate verdict are unchanged.
+- The §H1-C / §H2-5 joint sign-test (registered to 3 sizes) continues to operate on `REGISTERED_SIZES = ['70m', '160m', '410m']` only. The 4-size visualization in `h1c_ordering_test.ipynb` does NOT extend the joint test to 4 sizes; only the figures and per-size diagnostic tables are 4-size.
+- §H3-scale's joint pre-data registration in HYPOTHESIS.md §H3-scale-1 through §H3-scale-10. The procedural lock on the gate definition is not affected; only artifact presentation is.
+
+### Why this is not a §H3-scale-9 spec failure
+
+§H3-scale-9 reserves Q6-style hard-stop and §S-5c-style supplementary-acceptance for **gate spec failures**. This amendment changes neither the gate spec nor any data; it integrates a registered Phase 3 result into the same notebook artifacts that hold the registered Phase 2 result so that a reviewer reads 4 sizes side-by-side rather than as a Phase-2 + Phase-3-extension split. The chronology — §H3-scale registered → 1B sweep ran → REGR verdict recorded → this presentation-layer amendment dated after the verdict — is preserved by the git commit history and explicit dates in this amendment chain.
+
+### Reviewer instructions
+
+A reviewer who needs to verify pre-registration discipline should:
+1. Read the §H3-scale (1-10) amendment for the locked gate spec.
+2. Read the executed verdict in `data/exploration/phase3_1b_h3scale_verdict.parquet` and the §H3-scale section of `h1c_ordering_test.ipynb`.
+3. Inspect `git log --follow notebooks/induction_full_sweep.ipynb` etc. to see the commit chronology of the original 3-size notebooks vs the 4-size visualization upgrade.
+4. The original 3-size figures, exactly as they were when §H1-C / §H2-5 passed at p = 0.00463, can be reconstructed by checking out the pre-§H3-scale-8-vis commit.
+
+## Amendment 2026-05-07 — §H4-scaling: head-count-axis scaling argument, separate from emergence
+
+**Posted after §H3-scale verdict at Pythia-1B (REGR pattern recorded) and before any Pythia-2.8B compute.** This amendment articulates the scaling-axis claim cleanly and supersedes §H3-scale-1's "Pythia-1B-deduped" target. The §H1-C / §H2-5 registered emergence claim is **unaffected** by this amendment; emergence claims remain locked at Pythia-{70m, 160m, 410m} per HYPOTHESIS.md §3, the registered §H2 sweep, and the §H2-5 joint sign-test verdict (passed at p = 0.00463). §H4 is a *separate* claim about the head-count axis, registered fresh before any 2.8B compute, evaluated against pre-registered legs at Pythia-2.8B-deduped.
+
+### Project-narrative two-track structure
+
+Going forward, the project structure has two narrative tracks, each registered separately:
+
+1. **Emergence track (registered, complete).** §H1-C ordering claim across Pythia-{70m, 160m, 410m}. Tested at the §H2 sweep, gate passed at p = 0.00463 < 0.005. Reframed post-data in §H2-9-R to scale-dependent emergence with one robust per-size confirmation (410m). **No further sizes added; emergence claim is locked at the registered three.**
+
+2. **Scaling track (this amendment).** Head-count-axis test: at higher head-count tiers, does S-inhibition scale (timing earlier + count higher)? Pythia-1B (§H3-scale, REGR-recorded) is reframed under this amendment as a head-count regression rather than a scale-up. Pythia-2.8B is the next valid scale-up tier; §H4 registers two legs at 2.8B before any 2.8B compute starts.
+
+### Head-count axis rationale
+
+Pythia-{70m, 160m, 410m} head-count progression is approximately 3× per step:
+
+| size | params | layers × heads | total heads |
+|---|---|---|---|
+| 70m | 70M | 6 × 8 | **48** |
+| 160m | 160M | 12 × 12 | **144** |
+| 410m | 410M | 24 × 16 | **384** |
+| 1b | 1.0B | 16 × 8 | **128** ← regression |
+| 1.4b | 1.4B | 24 × 16 | 384 (same as 410m) |
+| **2.8b** | **2.8B** | **32 × 32** | **1024** |
+
+Pythia-1B has 8 heads per layer (vs 16 at 410m), which makes its 128 total heads narrower than 410m's 384 — a *regression* in head count, not a scale-up. The scaling claim should be measured along the head-count axis (the axis at which detectors operate and gate predicates evaluate), not the parameter axis (which includes feedforward parameters irrelevant to attention-head emergence).
+
+This rationale is post-hoc with respect to §H3-scale (whose target was 1B), but pre-data with respect to §H4 (whose target is 2.8B). The 1B verdict (REGR per §H3-scale-6) is preserved as recorded; §H4 redefines the scaling target prospectively.
+
+### §H4-1. Scope (locked)
+
+The head-count-axis scaling test runs on **Pythia-2.8B-deduped** (`EleutherAI/pythia-2.8b-deduped`). The deduped variant matches the lineage used throughout this project (Phase 1.0 pilot, Phase 1.2 Tigges replication, Phase 1.3 / 1.4 anchors, Phase 2 sweep, §H3-scale 1B run). Deduped is the de facto mech-interp standard for Pythia (Tigges 2024, McDougall 2024, Singh 2024 all use deduped); training on the Pile-deduplicated set produces fewer memorization-driven attention-head artifacts than the original Pile. The non-deduped Pythia variants are not used at any size in this project. This deduped commitment is now explicit at the amendment level rather than inherited tacitly through `src/utils/pythia_loader.py`.
+
+The checkpoint grid is the **40-cell §H2-1 grid verbatim**. The locked thresholds carry over: induction prefix-match > 0.3 (PROJECT_BRIEF.md §4); successor τ_lift = 0.13496 (§SU-tau); S-inhibition τ_strict = 0.0372 (§S-tau). Bootstrap and threshold-sensitivity machinery are inherited from §H2-2. Tiered censoring is inherited from §H2-3.
+
+§H4-scaling concerns S-inhibition only. Induction and successor saturate "yes they emerge robustly" by 410m and at 1B; their cross-size scaling is not the substantive claim being tested. Their parquets and per-cell caches at 2.8B will be produced for completeness alongside S-inhibition's, but the §H4 gate predicates operate on S-inhibition only.
+
+### §H4-2. Scaling-claim legs (locked)
+
+§H4 has two conjunctive legs; both must hold:
+
+- **(A.timing) Bootstrap reversal-rate on emergence-step ordering, 2.8B vs 410m.** `P(μ_si^2.8B < μ_si^410m) ≥ 0.95` over B = 1000 paired per-prompt bootstrap replicates. Per §H2-2 machinery: each replicate resamples prompts with replacement, refits the count-vs-step logistic curve at both 2.8B and 410m, and records μ_si^2.8B and μ_si^410m. The reversal-rate is the empirical fraction of replicates in which μ_si^2.8B < μ_si^410m. Threshold ≥ 0.95 corresponds to a one-sided 5% test of the directional timing-axis scaling claim.
+
+- **(A.count) Absolute count threshold breaks 410m saturation.** `max_count_si^2.8B ≥ 5` over the 40-cell sweep — full-fit regime entry per §H2-3. The numerical threshold is identical to the original §H3-scale (A.i) bar; the supersede argument is that the threshold of 5 was operationally too strict at 1B's 128 heads (3.9% density bar) but is appropriate at 2.8B's 1024 heads (0.49% density). The empirical motivation: in the registered Phase 2 data, max_count_si saturates at 3 from 160m (3 / 144) through 410m (3 / 384), and the 1B head-count regression also showed max_count = 3. (A.count) tests whether breaking past head-count tier 384 (to 1024) breaks the saturation cap.
+
+### §H4-3. Joint gate (locked)
+
+§H4 **passes** iff (A.timing) AND (A.count). Failure of either leg falsifies §H4. Within-2.8B coherence (analog of §H3-scale (A.iii)) is **deliberately omitted** from the gate — the H1-C ordering at 2.8B is *measurable but not gating*, since emergence-ordering claims remain locked at Pythia-{70m, 160m, 410m} per the project-narrative two-track structure above. The within-2.8B ordering will be reported in the analysis notebook as a side observation, not as a §H4 gate predicate.
+
+### §H4-4. Anchor inspection (sub-amendment §H4-anchor) — locked
+
+Three sub-anchors run at Pythia-2.8B-deduped @ step143000 before the full sweep, **inherited verbatim from §H3-scale-5**:
+
+- **Induction anchor:** verify ≥ 1 head clears prefix-match score > 0.3 (brief §4 threshold) on the 50-sequence Olsson 2022 probe.
+- **Successor anchor:** §SU-5 deliverable (ii) gates verbatim: numerical (≥ 1 head clears τ_lift = 0.13496) AND qualitative (top candidate has positive lift in ≥ 3/4 categories: days, months, numerals, letters).
+- **S-inhibition anchor:** §S-8 deliverable (ii) gates verbatim: numerical (≥ 1 head clears τ_strict = 0.0372 on Δ_h) AND mechanistic (≥ 2/4 of Pythia-2.8B's NMs — identified per §S-3 component-DLA top-4 — show positive Δ along the path candidate → NM).
+
+**The 40-cell full sweep runs unconditionally regardless of anchor outcome.** Mirrors §S-8 / §H3-scale-5 verbatim. The anchor's job is to verify detectors fire at d_model = 2560 before the sweep, not to gate the §H4 scientific claim. Anchor failure on substantive grounds (head-existence) is documented as a Path-C-style negative-result artifact and the sweep proceeds. Anchor failure on tooling grounds (NaNs / sign-flips / score range > 10× shift from 410m) is also documented; the sweep proceeds and the analysis notebook flags the TOOLING failure-mode pattern (per §H4-5 below).
+
+### §H4-5. Failure-mode taxonomy (locked)
+
+Five pass / fail patterns are pre-committed, each matched to a paper-headline interpretation:
+
+| Pattern | Trigger | Pre-committed paper headline |
+|---|---|---|
+| **PASS** | (A.timing) AND (A.count) hold | "Scaling argument confirmed: at Pythia-2.8B's 1024-head architecture, S-inhibition timing accelerates beyond 410m and head count exceeds the 410m saturation cap." |
+| **TIMING-ONLY** | (A.timing) holds; (A.count) fails | "Timing-axis scaling holds at 2.8B; count-axis saturation extends from 1B's narrow architecture to 2.8B's 1024-head architecture, suggesting count saturation is fundamental rather than head-count-rate-limited." |
+| **COUNT-ONLY** | (A.count) holds; (A.timing) fails | "Count-axis scaling unlocks at 1024 heads; timing-axis saturates between 410m and 2.8B." |
+| **NEITHER** | Both legs fail | "Scaling argument falsified at 2.8B: both timing and count saturate beyond 410m on the head-count axis." |
+| **TOOLING** | Detector outputs distributionally broken: NaNs, all-zero, sign-flipped vs 410m anchor, or score range > 10× shift from 410m | "Methodological note: detector instability at d_model = 2560 on MPS." Not a substantive result; verdict deferred pending re-tooling. |
+
+**Multi-leg failures default to the most-severe pattern triggered**, in priority order:
+
+`TOOLING > NEITHER > COUNT-ONLY > TIMING-ONLY > PASS`.
+
+Rationale: TOOLING is non-substantive and overrides all others; NEITHER is the most-falsifying substantive pattern (both legs fail); COUNT-ONLY is more substantively interesting than TIMING-ONLY because (A.count)'s ≥ 5 is the harder bar to clear (count saturation at 410m is the surprising registered finding, breaking it is the substantive claim); TIMING-ONLY is partial vindication of the §H2-9-R reframe's timing-axis prediction. Post-data, the writeup must use the matched headline or trigger a §H2-8 supplementary-acceptance amendment with chronology recorded; silent goalpost-moving is forbidden by the same rule that governs §H2-9-R and §H3-scale-6.
+
+### §H4-6. Status of §H3-scale (Pythia-1B) result under §H4 (locked)
+
+The §H3-scale (1B) verdict — REGR per §H3-scale-6 priority `TOOLING > REGR > ORD-BREAK > WIDE-CI > SAT > PASS` — is **preserved as a sealed historical record** in HYPOTHESIS.md and the corresponding artifacts (`data/exploration/phase3_1b_*` parquets, `notebooks/h1c_ordering_test.ipynb` §H3-scale verdict cells). The 1B run is reframed under §H4 as a **head-count regression** (128 heads, narrower than 410m's 384) rather than a scale-up; in the writeup, 1B is referenced as the empirical observation that motivated the architecture-correction supersede registered in this amendment.
+
+The 1B data and verdict are NOT used to evaluate §H4. The §H4 gate (§H4-2 / §H4-3) operates on 2.8B vs 410m. §H3-scale's chronology — registered at 1B → ran at 1B → REGR verdict → architecture-axis distinction surfaced post-hoc → §H4 registered at 2.8B before 2.8B compute — is preserved verbatim by the git log and the explicit dating of this amendment.
+
+### §H4-7. Compute and scheduling (locked)
+
+End-to-end estimate at Pythia-2.8B-deduped:
+- Prefetch: ~1–2 h HF download, ~700 GB safetensors-only (40 ckpts × ~17.5 GB / ckpt). Free disk after prefetch: ~720 GB on the 1.5 TB volume.
+- Memory: 11.2 GB fp32 weights + ~5–8 GB working = ~17–20 GB. Fits in 64 GB unified, tighter than 1B (~17 GB).
+- Anchor: ~30–45 min MPS time (slightly longer than 1B's 3 min total due to d_model = 2560 cost).
+- Sweep: ~6 h MPS time (forward-pass cost ≈ 3.1× of 1B).
+- Bootstrap post-processing: ~2 min.
+- Path-patching memory pressure at d_model = 2560 × 1024 heads × clean+corrupted activations: known risk. Mitigations registered in advance — `BATCH_SIZE=10` for S-inhibition (vs 25 at 1B, 50 at smaller sizes); fp16 model fallback if fp32 OOMs.
+
+Per §H2-6 escape hatch: if measured per-cell cost on the first sweep cell exceeds the projection by more than 2×, the runner pauses for re-grilling rather than silently extending. If anchor S-inhibition OOMs at fp32, switch to fp16 model and re-anchor before sweep.
+
+### §H4-8. Notebook and parquet deliverables (locked)
+
+The §H4 scaling extension produces:
+
+1. `notebooks/_prefetch_2_8b_checkpoints.py` — 40-checkpoint snapshot download, safetensors-only patterns (mirrors `_prefetch_1b_checkpoints.py`).
+2. `notebooks/_run_pythia_2_8b_anchor_{induction,successor,s_inhibition}.py` — three anchor scripts mirroring 1B anchors with `SIZE = "2.8b"`.
+3. `notebooks/_run_phase4_2_8b_{induction,successor,s_inhibition}_sweep.py` — three full-sweep runners writing to `phase4_2_8b_*_sweep.parquet` (Phase 2 and Phase 3 parquets unchanged).
+4. `notebooks/_run_phase4_2_8b_analysis.py` — bootstrap + (A.timing) + (A.count) + §H4 verdict analysis (mirrors `_run_phase3_1b_analysis.py`).
+5. **Existing notebooks extended in place to load 5-tier head-count data** (smooth integration like the 1B add): `induction_full_sweep.ipynb`, `successor_full_sweep.ipynb`, `s_inhibition_full_sweep.ipynb` add `'2.8b'` to `SIZES`; the `sweep_path()` helpers extend with a `'2.8b'` branch loading `phase4_2_8b_*_sweep.parquet`. `motif_structural_reuse.ipynb` adds `'2.8b'` to its `SIZES`. `motif_attention_inspection.ipynb` adds the `('2.8b', motif)` rows to `TOP_HEADS` after the anchor identifies them.
+6. New section in `h1c_ordering_test.ipynb`: §H4-scaling verdict cell parallel to the existing §H3-scale verdict cell. Loads `phase4_2_8b_h4scaling_verdict.parquet`, displays the (A.timing) and (A.count) leg results, the matched §H4-5 failure-mode pattern, and the matched paper headline.
+
+### §H4-9. Procedural precedent and spec-failure policy (locked)
+
+§H2-8's spec-failure-during-phase policy applies to §H4 verbatim. Pre-data smoke-test-surfaced flaws in this §H4 spec may be corrected by a focused supersede amendment provided the §SU-1b conditions hold (no formal data recorded under the flawed spec, mechanistic identification of the failure, focused supersede touching only affected legs, written chronology). Post-data spec failures continue to require either Q6-style hard-stop with full re-grill or §S-5c-style supplementary-acceptance amendment with the original gate failure recorded in the chronology. The §H3-scale-9 precedent applies symmetrically to §H4.
+
+### §H4-10. Pre-registration form (locked, no deferred lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds (induction > 0.3, τ_lift = 0.13496, τ_strict = 0.0372, (A.timing) reversal-rate ≥ 0.95, (A.count) max ≥ 5), bootstrap parameters (B = 1000, 95% percentile, per-prompt resampling), threshold-sensitivity parameters (± 25% in 5 increments), and tiered-censoring thresholds (full-fit ≥ 5, marginal 2-4, censored < 2) are pre-committed in this single amendment.
+
+A reviewer reading the chronology should see: §H1-C registered → §H2 sweep specification locked → Phase 2 sweep ran and §H2-5 gate passed at p = 0.00463 → §H2-9-R post-data reframe registered → §H3-scale registered for 1B → 1B sweep ran → §H3-scale REGR verdict recorded → §H3-scale-8-vis presentation supersede → architecture-axis distinction surfaced post-hoc on the 1B verdict → **§H4-scaling registers at 2.8B before any 2.8B compute** → 2.8B sweep runs → §H4 verdict recorded in `notebooks/h1c_ordering_test.ipynb` §H4 section. No spec change is anticipated between this amendment and the §H4 verdict.

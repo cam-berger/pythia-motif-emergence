@@ -1,8 +1,11 @@
 """Build notebooks/s_inhibition_full_sweep.ipynb.
 
-Phase 2 S-inhibition full-sweep notebook (40 cells × 3 sizes per §H2-1).
-40-cell extension of the Phase 1 6-cell preview (`s_inhibition_emergence_
-exploration.ipynb`, kept as historical artifact).
+S-inhibition full-sweep notebook: 40 cells × 4 Pythia sizes (70m, 160m, 410m, 1b)
+per §H2-1 grid. Original 3-size Phase 2 deliverable + 1B added in-place under
+§H3-scale (parquet artifacts split: `phase2_*_sweep.parquet` for original 3
+sizes, `phase3_1b_*_sweep.parquet` for 1B; the notebook loads both
+transparently). §S-1 path-patching Δ_h detector with τ_strict = 0.0372
+(§S-tau).
 """
 
 from __future__ import annotations
@@ -27,14 +30,12 @@ def build() -> nbf.NotebookNode:
     nb = nbf.v4.new_notebook()
     nb["cells"] = [
         md(
-            "# S-inhibition emergence — Phase 2 full sweep (40 cells × 3 sizes)\n"
+            "# S-inhibition emergence — full sweep (40 cells × 4 Pythia sizes)\n"
             "\n"
-            "**Phase 2 deliverable.** 40-cell extension of the Phase 1 6-cell "
-            "preview (`s_inhibition_emergence_exploration.ipynb`, kept as "
-            "historical artifact). Goldowsky-Dill 2023 path-patching detector "
-            "with frozen paths; locked threshold τ_strict = 0.0372 (§S-tau); "
-            "40 log-spaced checkpoints per §H2-1; prompt-bootstrap CIs on μ "
-            "per §H2-2.\n"
+            "Goldowsky-Dill 2023 path-patching detector with frozen paths "
+            "across Pythia-70m, 160m, 410m, 1b; locked threshold τ_strict = "
+            "0.0372 (§S-tau); 40 log-spaced checkpoints per §H2-1; prompt-"
+            "bootstrap CIs on μ per §H2-2.\n"
             "\n"
             "**Locked thresholds:**\n"
             "- Detection threshold: Δ_h ≥ τ_strict = 0.0372 (§S-tau).\n"
@@ -61,13 +62,23 @@ def build() -> nbf.NotebookNode:
             "    bootstrap_s_inhibition, summarize_bootstrap, THRESHOLD_SENSITIVITY_FRACTIONS,\n"
             ")\n"
             "\n"
-            "SIZES = ['70m', '160m', '410m']\n"
-            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green'}\n"
-            "TAU_STRICT = 0.0372"
+            "SIZES = ['70m', '160m', '410m', '1b']\n"
+            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red'}\n"
+            "TAU_STRICT = 0.0372\n"
+            "\n"
+            "def sweep_path(size: str) -> Path:\n"
+            "    if size == '1b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase3_1b_s_inhibition_sweep.parquet'\n"
+            "    return REPO / 'data' / 'exploration' / 'phase2_s_inhibition_sweep.parquet'\n"
+            "\n"
+            "def per_prompt_dir(size: str) -> Path:\n"
+            "    if size == '1b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase3_1b_s_inhibition_per_prompt'\n"
+            "    return REPO / 'data' / 'exploration' / 'phase2_s_inhibition_per_prompt'"
         ),
         md("## Load sweep data"),
         code(
-            "df = read_long(REPO / 'data' / 'exploration' / 'phase2_s_inhibition_sweep.parquet')\n"
+            "df = pd.concat([read_long(sweep_path(s)) for s in SIZES]).reset_index(drop=True)\n"
             "STEPS = sorted(df.step.unique().tolist())\n"
             "print(f'Total rows: {len(df):,}; sizes: {sorted(df[\"size\"].unique().tolist())}; n cells per size: {len(STEPS)}')"
         ),
@@ -99,7 +110,7 @@ def build() -> nbf.NotebookNode:
             "    per_prompt_by_step = {}\n"
             "    nm_layers_by_step = {}\n"
             "    for s in steps:\n"
-            "        npz = np.load(REPO / 'data' / 'exploration' / 'phase2_s_inhibition_per_prompt' / f'{size}_step{s}.npz')\n"
+            "        npz = np.load(per_prompt_dir(size) / f'{size}_step{s}.npz')\n"
             "        per_prompt_by_step[int(s)] = npz['per_prompt_delta']\n"
             "        nm_layers_by_step[int(s)] = npz['nm_heads'][:, 0].tolist()\n"
             "    # Sender layers: first column of (layer, head) for n_layers × n_heads.\n"
@@ -138,7 +149,7 @@ def build() -> nbf.NotebookNode:
             "ax.set_xlim(0.5, 200000)\n"
             "ax.set_xlabel('training step (symlog)')\n"
             "ax.set_ylabel(f'count of heads with Δ_h ≥ {TAU_STRICT}')\n"
-            "ax.set_title('S-inhibition emergence with bootstrap CI on μ (Phase 2 full sweep)')\n"
+            "ax.set_title('S-inhibition emergence with bootstrap CI on μ (4 Pythia sizes)')\n"
             "ax.legend(fontsize=9)\n"
             "ax.grid(alpha=0.3)\n"
             "plt.tight_layout()\n"
@@ -186,7 +197,7 @@ def build() -> nbf.NotebookNode:
         md(
             "## Verdict\n"
             "\n"
-            "Phase 2 deliverable for S-inhibition: 40-cell sweep complete; μ_{s,S-inhibition} extracted per (size). The S-inhibition emergence step provides the *third* term in the H1-C ordering test; joint verdict is in `h1c_ordering_test.ipynb`."
+            "S-inhibition full-sweep complete across 4 Pythia sizes; μ_{s,S-inhibition} extracted per (size). The S-inhibition emergence step provides the *third* term in the H1-C ordering test (registered, 3 sizes) and the (A.i)/(A.ii)/(A.iii) legs of §H3-scale (1B scale-extension); the joint verdict combining both is in `h1c_ordering_test.ipynb`."
         ),
     ]
     return nb
