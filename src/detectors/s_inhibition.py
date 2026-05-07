@@ -325,6 +325,7 @@ def s_inhibition_screen(
     batch_size: int = 50,
     nm_dla_batch_size: int = 8,
     return_per_prompt: bool = False,
+    nm_heads_override: list[tuple[int, int]] | None = None,
 ) -> SInhibitionResult:
     """Run the full S-inhibition detector screen.
 
@@ -359,13 +360,25 @@ def s_inhibition_screen(
     if senders is None:
         senders = [(L, H) for L in range(n_layers) for H in range(n_heads)]
 
-    # 1. Identify NMs via component-DLA top-k on clean prompts.
-    dla = component_dla(model, clean_prompts, batch_size=nm_dla_batch_size)
-    flat = dla.flatten()
-    top_idx = torch.argsort(flat, descending=True)[:k_nm]
-    nm_heads: list[tuple[int, int]] = [
-        (int(i.item()) // n_heads, int(i.item()) % n_heads) for i in top_idx
-    ]
+    # 1. Identify NMs via component-DLA top-k on clean prompts, OR use
+    # caller-supplied pinned NMs (HYPOTHESIS.md §H5-6: pin NMs across ablation
+    # conditions so the receiver geometry is fixed and any Δ_h change is
+    # attributable to the path through the pinned receivers, not to a shift
+    # in which heads are receivers).
+    if nm_heads_override is not None:
+        if len(nm_heads_override) != k_nm:
+            raise ValueError(
+                f"nm_heads_override length {len(nm_heads_override)} does not "
+                f"match k_nm={k_nm}"
+            )
+        nm_heads: list[tuple[int, int]] = [(int(L), int(H)) for L, H in nm_heads_override]
+    else:
+        dla = component_dla(model, clean_prompts, batch_size=nm_dla_batch_size)
+        flat = dla.flatten()
+        top_idx = torch.argsort(flat, descending=True)[:k_nm]
+        nm_heads = [
+            (int(i.item()) // n_heads, int(i.item()) % n_heads) for i in top_idx
+        ]
 
     # 2. Tokenize clean and corrupt; group by sequence length.
     clean_token_rows = [model.to_tokens(p.text, prepend_bos=True)[0] for p in clean_prompts]

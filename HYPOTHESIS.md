@@ -762,3 +762,251 @@ The §H4 scaling extension produces:
 This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds (induction > 0.3, τ_lift = 0.13496, τ_strict = 0.0372, (A.timing) reversal-rate ≥ 0.95, (A.count) max ≥ 5), bootstrap parameters (B = 1000, 95% percentile, per-prompt resampling), threshold-sensitivity parameters (± 25% in 5 increments), and tiered-censoring thresholds (full-fit ≥ 5, marginal 2-4, censored < 2) are pre-committed in this single amendment.
 
 A reviewer reading the chronology should see: §H1-C registered → §H2 sweep specification locked → Phase 2 sweep ran and §H2-5 gate passed at p = 0.00463 → §H2-9-R post-data reframe registered → §H3-scale registered for 1B → 1B sweep ran → §H3-scale REGR verdict recorded → §H3-scale-8-vis presentation supersede → architecture-axis distinction surfaced post-hoc on the 1B verdict → **§H4-scaling registers at 2.8B before any 2.8B compute** → 2.8B sweep runs → §H4 verdict recorded in `notebooks/h1c_ordering_test.ipynb` §H4 section. No spec change is anticipated between this amendment and the §H4 verdict.
+
+## Amendment 2026-05-07 — §H5-causal: causal-dependence ablation at 410m anchor
+
+**Posted after §H4-scaling registration (commit `0ae0e27`) and after the loader-bug fix (commit `369d418`) that restored the §H1-C / §H2-5 PASS verdict. Posted before any phase4 causal-experiment compute runs.** This amendment registers the inference-time causal-dependence test of the §H1-C compositional account at the Pythia-410m anchor checkpoint. It is reference-style; numerical thresholds are pre-committed in this single amendment.
+
+§H5-causal is a **separate scientific claim** from the §H1-C emergence ordering, the §H4-scaling head-count argument, or the §H3-scale REGR verdict. It tests whether the temporal emergence ordering observed in Phase 2 (μ_ind < μ_suc < μ_si at all three registered sizes) reflects an *inference-time* causal chain in the trained model, or merely a coincidence of training-time emergence rates. The two interpretations have different empirical signatures under ablation, and §H5 makes them distinguishable.
+
+### Scientific question (locked)
+
+Define `Δ_h^{si}(condition)` as the path-patching scalar of §S-1 evaluated at fixed S-inhibition sender h, under one of three model conditions:
+
+1. **clean** — unmodified model.
+2. **suc_ablated** — model with the top-5 successor heads (per `score_suc` at the same checkpoint) mean-ablated on `hook_z` over the 200-prompt IOI distribution.
+3. **ctrl_ablated** — model with 5 control heads mean-ablated, sampled from the score-bracket near-but-below τ_lift (specification below).
+
+§H5 asks whether `Δ_h^{si}(suc_ablated)` differs from `Δ_h^{si}(clean)` by more than the metric's noise floor as established by `Δ_h^{si}(ctrl_ablated)`. If yes: S-inhibition's inference-time computation routes through successor heads (compositional H1-C reading). If no: S-inhibition is causally independent of successor at convergence, and the Phase 2 temporal ordering does not reflect an architectural compositional chain.
+
+§H5 does **not** test training-time causation (whether successor's earlier emergence enabled S-inhibition's later emergence). That hypothesis would require fine-tuning-from-checkpoint experiments that are out of scope for the M5 Pro hardware budget.
+
+### Architectural prior (recorded for chronology, not gating)
+
+At Pythia-410m step143000, the registered top successor heads (L22H6, L22H2 — the only two clearing τ_lift = 0.13496 at the anchor) sit at normalized layer depth ~0.96, downstream of the registered top S-inhibition heads (L12H12, L13H13, L14H0 at normalized depth ~0.55). In a feedforward transformer, a head at L22 cannot causally affect an attention pattern at L12-14. The architectural prior is therefore **NULL at 410m**: forward-pass causal dependence is not possible by the layer ordering. §H5 records this prior explicitly so any non-null result is interpreted as evidence of indirect routing (e.g., via intermediate MLPs writing successor-derived signal back upstream through later forward passes; not literally possible in a single forward pass but hypothetically present via residual-stream patterns established earlier).
+
+The prior is recorded as context, not as a gate. The empirical experiment runs unconditionally and reports whatever it observes.
+
+### §H5-1. Scope (locked)
+
+Pythia-410m-deduped @ step143000 anchor only. The 5-checkpoint trajectory and 1B anchor extensions are explicitly **not** registered in this amendment; they will be registered in a separate §H5-causal-2 / §H5-causal-3 amendment block if and when the anchor result motivates them.
+
+The 200-prompt IOI set (Wang 2023, 100 BABA + 100 ABBA, seed=0) at `data/prompts/ioi_prompts.tsv` is the substrate. The §S-1 path-patching detector with frozen pin paths and N=200 prompts is the measurement primitive (locked, unchanged).
+
+### §H5-2. Ablation method (locked)
+
+**Mean-ablation on `hook_z`.** For each ablated head (l, h):
+
+1. Run a single forward pass over the 200 clean IOI prompts; cache `blocks.{l}.attn.hook_z` shape `(B, T, n_heads, d_head)`.
+2. Compute `mean_z[l, h, :, :]` shape `(T, d_head)` = mean across the batch dimension at each sequence position.
+3. Install a permanent forward hook at `blocks.{l}.attn.hook_z` that replaces `z[:, :, h, :]` with `mean_z[l, h, :, :]` (broadcast across batch).
+
+This Wang-2023-standard convention removes the head's prompt-specific signal while preserving the IOI-distribution baseline statistics at every position. Less aggressive than zero-ablation, less variance than resample-ablation. Permanent hooks persist through all subsequent `run_with_cache` and `run_with_hooks` calls inside the §S-1 detector, so the ablated heads are silenced through the clean forward, the ABC-corrupt forward, and every patched forward.
+
+Length-grouping caveat: the IOI prompt set has prompts of two distinct tokenized lengths (the BABA/ABBA structure differs in BPE under GPT-NeoX). Mean-ablation is computed within each length group separately. The result is two mean tensors per (l, h), each appropriate to its group's seq dimension.
+
+### §H5-3. Ablation set selection (locked)
+
+**Suc set:** the 5 highest-scoring successor heads at the anchor checkpoint per `score_suc(l, h)` evaluated by the §SU-1b lift-form detector on the 70-prompt successor probe. Tie-breaking rule: sort by `score_suc` descending, break ties by lower layer first, then lower head index.
+
+At Pythia-410m step143000 (verified pre-registration from `phase2_successor_sweep.parquet`):
+
+| rank | (layer, head) | score_suc | clears τ_lift = 0.13496? |
+|---|---|---|---|
+| 1 | L22H6 | 0.290 | yes |
+| 2 | L22H2 | 0.145 | yes |
+| 3 | L20H4 | 0.111 | no |
+| 4 | L22H10 | 0.085 | no |
+| 5 | L12H8 | 0.083 | no |
+
+Three of the five do not clear τ_lift; this is intentional. Per user override, k=5 is fixed for statistical power; the registered detector threshold no longer gates inclusion. The 5-head set is **locked at this list**, not re-derived from a possibly-different post-fix scan.
+
+### §H5-4. Control set selection (locked)
+
+**Score-bracket-matched random control.** For the same checkpoint:
+
+`CTRL_CANDIDATES = { (l, h) : score_suc(l, h) < τ_lift ∧ score_suc(l, h) ∈ [τ_lift − bracket_width, τ_lift) }`
+
+with `bracket_width = 0.05` initially. If `|CTRL_CANDIDATES| < 5`, widen `bracket_width` symmetrically by 0.025 increments and document the final widened bracket in the verdict parquet `widened_bracket_width` column. Sample 5 heads with `numpy.random.default_rng(seed=0).choice(...)` after sorting `CTRL_CANDIDATES` by (layer, head) for determinism.
+
+This control matches the suc set on score magnitude (just below threshold) but excludes any head identified as "successor" by the registered detector. If suc-ablation drops Δ_h while ctrl-ablation does not, the dependence is specific to successor heads rather than generic to "any near-threshold-magnitude head."
+
+### §H5-5. Measurement set (locked)
+
+The S-inhibition senders evaluated under each condition are pinned to the **top-3 by `Δ_h^{si}(clean)` at the anchor checkpoint**, identified once before any ablation runs and frozen across all conditions:
+
+- `(L=12, H=12)` — Δ_h ≈ 0.0847 in the registered Phase 2 sweep
+- `(L=13, H=13)` — Δ_h ≈ 0.0641
+- `(L=14, H=0)` — Δ_h ≈ 0.0362
+
+Only these 3 senders' Δ_h are recomputed under suc_ablated and ctrl_ablated conditions. The full 384-head screen is not re-run under ablation.
+
+### §H5-6. NM identity (locked)
+
+Name Mover heads (the receivers in the §S-1 path-patching protocol) are identified once on the **clean** model state via the §S-3 component-DLA top-4 rule, and **pinned across all three conditions**. Re-identifying NMs per condition would mix two interventions (changed receivers + changed senders); pinning isolates the test to "given the same receivers, does the sender→receiver path require successor heads to be live?"
+
+The NM identity at Pythia-410m step143000 is read from `data/exploration/s_inhibition_pythia_410m_anchor_per_nm.npz` (the §S-8 anchor inspection, committed pre-§H5).
+
+### §H5-7. Gate verdict (locked)
+
+For each of the 3 S-inhibition senders h, evaluate the per-prompt mean Δ_h under each condition with B=200 paired bootstrap over the 200 IOI prompts.
+
+| pattern | trigger (per-sender) | aggregation across 3 senders |
+|---|---|---|
+| **NULL** | `0.8 × clean ≤ suc_ablated ≤ 1.2 × clean` AND `0.8 × clean ≤ ctrl_ablated ≤ 1.2 × clean` | NULL if all 3 senders match NULL |
+| **DEP** | `suc_ablated ≤ 0.5 × clean` AND `0.8 × clean ≤ ctrl_ablated ≤ 1.2 × clean` | DEP if all 3 senders match DEP, or majority (≥2) with the third within ±20% noise band |
+| **GENERIC** | `suc_ablated ≤ 0.5 × clean` AND `ctrl_ablated ≤ 0.5 × clean` | GENERIC if any sender shows GENERIC pattern (metric not specific) |
+| **MIXED** | does not fit NULL / DEP / GENERIC at the per-sender level | MIXED if no aggregation rule above applies |
+
+DEP-gate threshold = 0.5 × clean (locked per user override; the IOI-literature default). Noise band ±20% × clean (locked). Aggregation rule: NULL > GENERIC > DEP > MIXED in priority — i.e., GENERIC overrides DEP if both could apply, and MIXED is the catch-all.
+
+The matched paper-headline string is pre-committed per pattern:
+
+| pattern | paper-headline string |
+|---|---|
+| NULL | "S-inhibition Δ_h is independent of successor heads at convergence in Pythia-410m. Direct mechanistic refutation of the forward-pass compositional reading of §H1-C." |
+| DEP | "S-inhibition causally depends on successor at Pythia-410m convergence; the §H1-C ordering reflects an inference-time chain. Surprising given the layer-depth asymmetry; warrants follow-up on the indirect routing." |
+| GENERIC | "Methodological note: Δ_h is not robust to ablation of any near-threshold head at this checkpoint; metric sensitivity is insufficient for the test. Verdict deferred pending re-tooling." |
+| MIXED | "Per-sender heterogeneous dependence; no global verdict on §H1-C compositional reading. Reported by sender." |
+
+### §H5-8. Bootstrap and statistical machinery (locked)
+
+- **B = 200** paired per-prompt bootstrap replicates per condition (lower than §H2-2's B=1000 because Δ_h is averaged over B=200 prompts already and we have only 3×3 = 9 cells). 95% percentile CI on Δ_h.
+- The "drop ratio" `Δ_h^{ablated} / Δ_h^{clean}` is computed as a paired ratio per bootstrap replicate; CI is on the ratio, not on the difference. Avoids pseudo-zero-inflation when clean Δ_h is small.
+- Random seed: `numpy.random.default_rng(seed=0)` for ctrl set selection; `numpy.random.default_rng(seed=1)` for the bootstrap. Locked.
+
+### §H5-9. Compute and scheduling (locked)
+
+End-to-end estimate at Pythia-410m step143000:
+
+- Mean-ablation precompute pass: ~30 sec (200 prompts × 1 forward, no caching of large activations).
+- Per condition × 3 S-inhibition senders × 200 prompts × 2 forwards (clean cache + corrupt cache, then 1 patched forward per sender): ~10 min total per condition.
+- 3 conditions × ~10 min = ~30 min wall.
+
+The 2.8B prefetch (PID-tracked separately) co-tenants the machine; §H5 is compute-bound on a single MPS device and the prefetch is I/O-bound, so contention is minimal. If MPS instability is observed (NaN delta_h, sign flips vs the pre-§H5 anchor result, or runtime > 2× projection), the runner pauses for re-grilling rather than silently proceeding — same §H2-6 escape hatch.
+
+### §H5-10. Notebook and parquet deliverables (locked)
+
+1. `notebooks/_run_phase4_causal_410m_anchor.py` — runner. Loads model, builds clean+corrupt prompts, computes mean-ablation reference, runs §S-1 detector under 3 conditions for the 3 pinned S-inhibition senders, writes per-prompt Δ_h.
+2. `data/exploration/phase4_causal_410m_anchor.parquet` — long-format per-prompt Δ_h, columns `(condition, si_sender_layer, si_sender_head, prompt_idx, delta_h)`.
+3. `data/exploration/phase4_causal_410m_anchor_summary.parquet` — per-(condition, sender) aggregate, columns `(condition, si_sender_layer, si_sender_head, delta_h_mean, drop_ratio_mean, ratio_ci_low, ratio_ci_high, ablate_set, widened_bracket_width, n_prompts)`.
+4. `data/exploration/phase4_causal_410m_anchor_verdict.parquet` — single-row gate verdict, columns `(pattern, n_senders, n_dep, n_null, n_generic, paper_headline)`.
+5. `data/exploration/phase4_causal_410m_anchor.log` — captured stdout from the runner (gitignored, written via `tee`).
+6. `notebooks/_build_causal_dependence.py` + `notebooks/causal_dependence.ipynb` — verdict notebook with the bootstrap-CI bar plot (clean / suc_ablated / ctrl_ablated × 3 senders), the per-sender pattern verdict, and the matched paper-headline string.
+
+Phase 2/3/4 sweep parquets are NOT modified. The §S-1 detector primitive in `src/detectors/s_inhibition.py` may be extended with an optional `nm_heads_override` kwarg to support pinned-NM evaluation under §H5-6; this is a backward-compatible extension and is documented in the experiment-code commit.
+
+### §H5-11. Procedural precedent (locked)
+
+§H2-8's spec-failure-during-phase policy applies. Pre-data smoke-test-surfaced flaws in this §H5 spec may be corrected by a focused supersede amendment provided the §SU-1b conditions hold. Post-data spec failures continue to require either Q6-style hard-stop with full re-grill or §S-5c-style supplementary-acceptance amendment with the original gate failure recorded in the chronology.
+
+### §H5-12. Pre-registration form (locked, no deferred lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds (DEP gate 0.5×, noise band ±20%, GENERIC threshold 0.5×, k=5 ablation set, k=5 control set, bracket_width = 0.05 initial, B=200 bootstrap), seeds (rng(0) for ctrl selection, rng(1) for bootstrap), the locked top-5 successor heads at the anchor, the locked top-3 S-inhibition senders, and the §H5-7 verdict aggregation rule are pre-committed in this single amendment.
+
+A reviewer reading the chronology should see: §H1-C registered → §H2 sweep → §H2-9-R reframe → §H3-scale 1B (REGR) → §H4-scaling 2.8B registration → loader-bug fix `369d418` (restored §H2-5 PASS) → **§H5-causal registers at 410m anchor before any phase4 causal compute** → 410m anchor runs → verdict recorded in `notebooks/causal_dependence.ipynb`. The 5-checkpoint trajectory and the 1B anchor extension, if executed, will be registered in separate amendments before their respective compute runs.
+
+## Amendment 2026-05-07 — §H5-causal-2: logit-diff metric for causal-dependence ablation at 410m anchor
+
+**Posted after §H5-causal anchor verdict (NULL pattern, commit `13c7627`) and before any phase4 logit-diff compute runs.** This amendment registers a follow-up causal-dependence experiment using a different measurement primitive — the IO−S logit difference at the END token, which reads the full forward-pass output. Motivated by a methodological caveat surfaced post-hoc on the §H5-causal NULL: the §S-1 path-patching protocol freezes intermediate `attn_out` and `mlp_out` to clean cache values and reads receiver attention patterns at the component-DLA top-4 NMs only. Heads at layers ≥ max(NM layer) cannot, by construction, affect the §S-1 metric. At Pythia-410m step143000 the registered top-5 successor heads sit at L12, L20, L22, L22, L22 and the NMs at L12, L14, L17, L20 — so 4 of 5 suc heads are structurally unread by §S-1.
+
+The §H5-causal NULL is therefore consistent with two readings:
+
+- (a) Genuine independence of S-inhibition / IOI from successor at inference time.
+- (b) Structural insensitivity of §S-1 to ablations at layers ≥ max(NM); the metric cannot detect successor's contribution even if it exists.
+
+§H5-causal-2 distinguishes (a) from (b) by replacing the §S-1 attention-pattern readout with a logit-diff-at-END readout, which depends on all layers' contributions through the unembedding. If suc-ablation drops logit-diff while ctrl-ablation does not, suc heads contribute to IOI via a path the §S-1 metric does not read — forcing a substantial reframe of the §H1-C compositional reading. If logit-diff is also independent, the genuine-independence reading is supported.
+
+§H5-causal-2 is **not** an emergence-claim test. It does not modify §H1-C, §H2-5, §H2-9-R, §H3-scale, or §H4-scaling. It is a refinement of §H5-causal's measurement primitive, registered before any logit-diff compute runs.
+
+### §H5-causal-2-1. Scope (locked)
+
+Pythia-410m-deduped @ step143000 anchor only. The same 200-prompt IOI distribution as §H5-causal (Wang 2023, 100 BABA + 100 ABBA, seed=0) is the substrate. The trajectory and 1B extensions remain explicitly out of scope for this amendment; if motivated by the §H5-causal-2 result they will be registered in separate amendment blocks.
+
+### §H5-causal-2-2. Metric (locked)
+
+For each clean IOI prompt with known IO and S token IDs:
+
+`logit_diff_p = logits[end_pos, IO_token_id_p] - logits[end_pos, S_token_id_p]`
+
+where `end_pos` is the last token position of the prompt, `logits` are the model's output at that position, and `IO_token_id_p` / `S_token_id_p` are read from the `IOIPrompt` dataclass populated by `tigges_ioi.load_ioi_prompts`. The aggregate metric is the mean across the 200 prompts: `Δlogit_clean = mean_p logit_diff_p`. Per-condition variants `Δlogit_suc_ablated`, `Δlogit_ctrl_ablated` are computed by re-running the forward pass with the corresponding mean-ablation hooks active.
+
+Per-prompt arrays are retained for the paired-bootstrap ratio test in §H5-causal-2-7.
+
+### §H5-causal-2-3. Suc set (locked, re-used verbatim from §H5-3)
+
+The suc set is **identical to §H5-3** at Pythia-410m step143000 — re-used verbatim, **NOT re-derived**, to preserve no-cherry-picking discipline:
+
+| rank | (layer, head) | score_suc |
+|---|---|---|
+| 1 | L22H6 | 0.290 |
+| 2 | L22H2 | 0.145 |
+| 3 | L20H4 | 0.111 |
+| 4 | L22H10 | 0.085 |
+| 5 | L12H8 | 0.083 |
+
+Tie-breaking rule (layer asc, head asc) is inherited verbatim. The set is locked at this list; the §H5-causal-2 runner reads it from the same `phase2_successor_sweep.parquet` source as §H5-causal and asserts the resulting top-5 matches the locked list bit-for-bit.
+
+### §H5-causal-2-4. Ctrl set (locked, re-used verbatim from §H5-4)
+
+The ctrl set is **identical to §H5-4** under the bracket-widening that already occurred during §H5-causal execution — re-used verbatim, NOT re-sampled:
+
+`bracket_width = 0.100` (widened from initial 0.05 because no ctrl candidates existed in [0.085, 0.135) outside the suc-5; the symmetric-widening rule of §H5-4 applied, final bracket [0.035, 0.135)). Sampled at `numpy.random.default_rng(seed=0)` over the deterministically-sorted bracket-candidate list:
+
+| (layer, head) | score_suc |
+|---|---|
+| L17H12 | 0.059 |
+| L20H6 | 0.038 |
+| L22H11 | 0.052 |
+| L23H10 | 0.036 |
+| L23H13 | 0.051 |
+
+The §H5-causal-2 runner asserts the re-derived ctrl set matches this locked list bit-for-bit. If the re-derivation diverges (e.g., due to a parquet content change), the runner halts and surfaces the divergence rather than silently using a different ctrl set.
+
+### §H5-causal-2-5. Ablation method (locked, identical to §H5-2)
+
+Mean-ablation on `hook_z[:, :, head, :]` per length group, replace with batch-mean. Permanent forward hook installed via `model.add_perma_hook` for each (layer, head) in the ablation set. Persists through the model forward pass that computes logits.
+
+### §H5-causal-2-6. Gate verdict (locked)
+
+Define `ratio_suc = Δlogit_suc_ablated / Δlogit_clean` and `ratio_ctrl = Δlogit_ctrl_ablated / Δlogit_clean`, with paired-bootstrap 95% CI per §H5-causal-2-7. Patterns:
+
+| pattern | trigger | paper-headline string |
+|---|---|---|
+| **NULL** | `ratio_suc ∈ [0.8, 1.2]` AND `ratio_ctrl ∈ [0.8, 1.2]`, both with 95% CI within those bands | "IOI logit-diff at Pythia-410m is independent of the registered top-5 successor heads. Combined with the §H5-causal NULL on the §S-1 metric, this is converging evidence that S-inhibition's circuit is causally disjoint from successor's at inference time. The temporal emergence ordering ind→suc→si is decoupled from any architectural causal chain." |
+| **DEP** | `ratio_suc < 0.5` with 95% CI excluding 0.5 AND `ratio_ctrl ∈ [0.8, 1.2]` | "Successor heads contribute causally to IOI logit-diff at Pythia-410m via a path the §S-1 metric does not read. The §H5-causal NULL is therefore an instance of metric insensitivity (b), not genuine independence (a). The §H1-C compositional reading is partially supported: successor → IOI is causal at inference time, but not via the registered S-inhibition mechanism. Substantial reframe of the §H1-C narrative required." |
+| **GENERIC** | `ratio_suc < 0.7` AND `ratio_ctrl < 0.7` | "Methodological note: IOI logit-diff is not robust to mean-ablation of any layer-22-cluster head at this checkpoint; metric sensitivity is insufficient. Verdict deferred pending re-tooling (e.g., per-head individual ablation, or non-mean ablation method)." |
+| **MIXED** | none of the above patterns fit cleanly (e.g., partial drops with CI overlap) | "Heterogeneous ablation effect on IOI logit-diff; no global verdict on suc → IOI dependence. Reported as numerical-only result with CI bands; deferred for follow-up." |
+
+Aggregation: there is one verdict (no per-sender split — the metric is a single scalar over the prompt distribution, not a per-sender path-patching scalar). The matched paper-headline string is the verdict.
+
+### §H5-causal-2-7. Bootstrap (locked, identical to §H5-8)
+
+B=200 paired per-prompt resampling, `numpy.random.default_rng(seed=1)`. CI on the ratio `Δlogit_ablated / Δlogit_clean`, percentile method (2.5 / 97.5). The pairing preserves the per-prompt correlation between clean and ablated runs (each replicate samples 200 indices with replacement and computes both ratios on the same indices).
+
+### §H5-causal-2-8. Compute and scheduling (locked)
+
+End-to-end estimate: ~1–2 min wall on Pythia-410m (3 forward passes over 200 prompts, no path-patching, no caching beyond the mean-ablation precompute). The 2.8B prefetch (PID-tracked separately) co-tenants the machine; both are minimal contention.
+
+### §H5-causal-2-9. Notebook and parquet deliverables (locked)
+
+1. `notebooks/_run_phase4_causal_410m_anchor_logitdiff.py` — runner. Reuses §H5-causal helpers (`select_top_suc`, `select_ctrl_set`, `precompute_mean_z_by_length`, `install_mean_ablation_hooks`, `bootstrap_drop_ratio`) verbatim; replaces the metric computation with logit-diff-at-END.
+2. `data/exploration/phase4_causal_410m_anchor_logitdiff.parquet` — long-format per-prompt logit-diff, columns `(condition, prompt_idx, logit_diff)`.
+3. `data/exploration/phase4_causal_410m_anchor_logitdiff_summary.parquet` — per-condition aggregate, columns `(condition, logit_diff_mean, drop_ratio_mean, ratio_ci_low, ratio_ci_high, ablate_set)`.
+4. `data/exploration/phase4_causal_410m_anchor_logitdiff_verdict.parquet` — single-row §H5-causal-2-6 gate verdict.
+5. `data/exploration/phase4_causal_410m_anchor_logitdiff.log` — captured stdout (gitignored).
+6. `notebooks/causal_dependence.ipynb` — extended in place with a §H5-causal-2 verdict section appended after the existing §H5-causal section. Includes one figure (clean / suc_ablated / ctrl_ablated logit-diff bars with CI). Existing §H5-causal cells preserved verbatim.
+
+Phase 2/3/4 sweep parquets, §H5-causal anchor parquets, and HYPOTHESIS.md prose-track sections are NOT modified by this amendment.
+
+### §H5-causal-2-10. Procedural precedent (locked)
+
+§H2-8's spec-failure-during-phase policy applies. Pre-data smoke-test-surfaced flaws may be corrected by a focused supersede amendment under the §SU-1b conditions. Post-data spec failures continue to require either Q6-style hard-stop with full re-grill or §S-5c-style supplementary-acceptance amendment with the original gate failure recorded in the chronology.
+
+The "no cherry-picking" discipline is enforced by the verbatim re-use of §H5-3 and §H5-4 sets: the §H5-causal-2 runner asserts that the re-derived suc set and ctrl set match the locked lists bit-for-bit, halting if not. This prevents re-sampling of the ctrl set under a different seed or re-deriving the suc set from a different parquet snapshot.
+
+### §H5-causal-2-11. Pre-registration form (locked, no deferred lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds (NULL band [0.8, 1.2], DEP gate 0.5 with CI exclusion, GENERIC threshold 0.7, B=200 bootstrap, seed=1), the verbatim re-used suc and ctrl sets from §H5-3 and §H5-4, the verbatim bracket_width=0.100 from the §H5-causal execution, and the matched paper-headline strings per pattern are pre-committed in this single amendment.
+
+A reviewer reading the chronology should see: §H1-C → §H2 → §H2-9-R → §H3-scale (1B REGR) → §H4-scaling (2.8B registration) → loader-bug fix `369d418` → §H5-causal registered → §H5-causal anchor runs (NULL verdict, commit `13c7627`) → structural-insensitivity caveat surfaces → **§H5-causal-2 registers at 410m anchor before any logit-diff compute** → §H5-causal-2 anchor runs → verdict recorded in `notebooks/causal_dependence.ipynb` §H5-causal-2 section.
