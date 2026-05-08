@@ -52,7 +52,18 @@ def build() -> nbf.NotebookNode:
             "A head can be in successor's top-K with a low absolute score (if "
             "the motif fails to emerge in that cell). The threshold-pass "
             "version is in the per-motif `_full_sweep` notebooks; this one "
-            "uses rank-based overlap to track *relative* identity churn."
+            "uses rank-based overlap to track *relative* identity churn.\n"
+            "\n"
+            "**2.8B exclusion.** The cross-motif Jaccard analysis requires "
+            "data for all 3 motifs at every (size, step) cell. Per "
+            "§H4-7-supersede (committed 2026-05-08), the 2.8B S-inhibition "
+            "sweep was halted at 8/40 cells under the §H4-7 per-cell-cost "
+            "escape hatch. 2.8B is therefore EXCLUDED from this notebook's "
+            "time-trajectory Jaccard analysis. The 5-size induction + "
+            "successor cross-size view is in `h1c_ordering_test.ipynb` "
+            "§H4-scaling DEFERRED section (parameter-size-vs-max-count "
+            "best-fit plot). The step143000 anchor data for all 3 motifs at "
+            "2.8B IS available and is used in `motif_attention_inspection.ipynb`."
         ),
         md("## Setup"),
         code(
