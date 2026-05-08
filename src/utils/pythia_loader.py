@@ -126,4 +126,15 @@ def load_pythia(
     # Document the checkpoint we actually loaded (for downstream provenance).
     model.cfg.tokenizer_name = model_name
     model.cfg.checkpoint_label = revision
+    # Sanity check: TransformerLens occasionally loads a stub tokenizer
+    # (vocab_size=2) for some Pythia sizes (observed at 2.8b where the
+    # checkpoint stores only pytorch_model.bin and not safetensors). If
+    # detected, replace with a directly-loaded AutoTokenizer from the same
+    # revision. This is a safety override; for sizes where TransformerLens
+    # loads correctly (1b, 410m, etc.) it's a no-op (vocab_size > 100).
+    tok = getattr(model, "tokenizer", None)
+    if tok is not None and getattr(tok, "vocab_size", 0) < 100:
+        from transformers import AutoTokenizer
+        good_tok = AutoTokenizer.from_pretrained(model_name, revision=revision)
+        model.tokenizer = good_tok
     return model
