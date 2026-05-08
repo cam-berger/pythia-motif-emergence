@@ -1010,3 +1010,57 @@ The "no cherry-picking" discipline is enforced by the verbatim re-use of §H5-3 
 This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds (NULL band [0.8, 1.2], DEP gate 0.5 with CI exclusion, GENERIC threshold 0.7, B=200 bootstrap, seed=1), the verbatim re-used suc and ctrl sets from §H5-3 and §H5-4, the verbatim bracket_width=0.100 from the §H5-causal execution, and the matched paper-headline strings per pattern are pre-committed in this single amendment.
 
 A reviewer reading the chronology should see: §H1-C → §H2 → §H2-9-R → §H3-scale (1B REGR) → §H4-scaling (2.8B registration) → loader-bug fix `369d418` → §H5-causal registered → §H5-causal anchor runs (NULL verdict, commit `13c7627`) → structural-insensitivity caveat surfaces → **§H5-causal-2 registers at 410m anchor before any logit-diff compute** → §H5-causal-2 anchor runs → verdict recorded in `notebooks/causal_dependence.ipynb` §H5-causal-2 section.
+
+## Amendment 2026-05-08 — §H4-7-supersede: 2.8B S-inhibition sweep halted, §H4 verdict DEFERRED
+
+**Posted after 2.8B chain partial-completion.** §H4-7 registered a per-cell-cost escape hatch: *"if measured per-cell cost on the first sweep cell exceeds the projection by more than 2×, the runner pauses for re-grilling rather than silently extending."* The 2.8B S-inhibition sweep reached steady-state per-cell wall time of ~57 minutes (3389–3401 s observed across cells 1–8 of the sweep), against the §H4-7 projection of ~6 min/cell. **Actual: ~10× projection, exceeding the 2× pause threshold by 5×.** Per the registered discipline, the chain was halted at user instruction.
+
+### What was completed
+
+- **§H4 anchor inspection** (§H4-4): all 3 sub-anchors completed at Pythia-2.8B-deduped @ step143000.
+- **Induction sweep** (`phase4_2_8b_induction_sweep.parquet`): full 40-cell sweep complete.
+- **Successor sweep** (`phase4_2_8b_successor_sweep.parquet`): full 40-cell sweep complete.
+- **S-inhibition sweep**: **8 of 40 cells complete**, all early-training (`step0, step1, step2, step4, step8, step16, step32, step64`). All 8 show top Δ_h ≈ 0.0000 — consistent with no S-inhibition emergence in this range. Per-prompt .npz cache files preserved at `data/exploration/phase4_2_8b_s_inhibition_per_prompt/`. Sweep parquet was NOT written (the runner writes parquet at end-of-loop only); the 8 cells are recoverable from the .npz cache for any future supplementary analysis.
+
+### What is deferred
+
+The §H4-2 / §H4-3 conjunctive gate operates on S-inhibition only:
+- **(A.timing)** `P(μ_si^2.8B < μ_si^410m) ≥ 0.95` — undeterminable: μ_si^2.8B requires logistic fit across the full count-vs-step curve, which requires the full 40-cell sweep.
+- **(A.count)** `max_count_si^2.8B ≥ 5` — undeterminable: max is computed across all 40 cells, and the emergence-relevant cells (steps 5000+) were not sampled.
+
+Per §H4-9 / §H2-8 spec-failure-during-phase policy, this is a **post-data spec failure under the registered escape hatch**. The §H4 verdict is therefore **DEFERRED** rather than PASS / TIMING-ONLY / COUNT-ONLY / NEITHER / TOOLING — none of the §H4-5 patterns describe a halt-on-time-budget. DEFERRED is a sixth pattern, registered here:
+
+| Pattern | Trigger | Pre-committed paper headline |
+|---|---|---|
+| **DEFERRED** | S-inhibition sweep halted before completion under §H4-7 escape hatch; (A.timing) and (A.count) undeterminable | "§H4-scaling verdict deferred at 2.8B: S-inhibition sweep halted at 8/40 cells (steps 0–64, all pre-emergence) under the §H4-7 per-cell-cost escape hatch (~57 min/cell observed vs ~6 min/cell projected). Induction and successor sweeps complete and analyzed; their cross-size emergence trajectories at 2.8B are reported as side observations. The §H4 conjunctive gate (A.timing AND A.count) is not evaluated and the §H4-5 PASS / TIMING-ONLY / COUNT-ONLY / NEITHER / TOOLING verdict is not assigned. Future re-attempts must register a fresh §H4-* amendment with revised per-cell-cost projections and budget — either by reduced grid (§H4-supersede), by accepting longer wall time, or by an alternate detector primitive that doesn't require 4096 patched forward passes per cell at d_model=2560." |
+
+DEFERRED is added to the §H4-5 priority ordering as the highest-priority *non-substantive* pattern alongside TOOLING:
+
+`DEFERRED > TOOLING > NEITHER > COUNT-ONLY > TIMING-ONLY > PASS`.
+
+### What is preserved as supplementary
+
+- **Induction at 2.8B**: full sweep, can be compared cross-size to {70m, 160m, 410m, 1b}. Reported in the analysis but does not contribute to a §H4 gate (§H4-1: "induction and successor saturate 'yes they emerge robustly' by 410m and at 1B; their cross-size scaling is not the substantive claim being tested"). Side observation only.
+- **Successor at 2.8B**: full sweep, same supplementary-only status.
+- **S-inhibition at 2.8B (early-training only, 8 cells)**: per-prompt .npz cache preserved. Top-head Δ_h ≈ 0 across all 8 cells — confirms the smaller-model finding that S-inhibition does not emerge in early training.
+
+### What this amendment does NOT do
+
+- It does NOT re-derive or weaken the §H4-2 gate predicates. The (A.timing) and (A.count) numerical thresholds remain locked. Any future re-attempt that produces full 40-cell S-inhibition data at 2.8B may be evaluated against the original gate without further amendment.
+- It does NOT amend the §H1-C / §H2-5 verdict (Track 1 emergence claim, registered, complete).
+- It does NOT amend the §H3-scale 1B REGR verdict (Track 2 1B head-count regression, sealed historical).
+- It does NOT amend the §H5-causal / §H5-causal-2 NULL verdicts (Track 3 inference-time causal-dependence, complete).
+- It does NOT amend the project-narrative two-/three-track structure. Track 2 (head-count-axis scaling) is now in a **DEFERRED** state with respect to its 2.8B leg; it is not abandoned.
+
+### Procedural precedent
+
+This amendment is the **first §H4-7 escape-hatch invocation in the project**. The escape hatch was pre-registered in §H4-7 specifically to handle this scenario (under-projected per-cell costs). The chronology — §H4-7 escape hatch registered before any 2.8B compute → 2.8B S-inhibition sweep observed at 10× projection → halt invoked → §H4-7-supersede registered post-halt with partial-data scope — preserves pre-registration discipline. The DEFERRED pattern is registered into §H4-5 in this amendment so future re-attempts (or different 2.8B sweep approaches) can match cleanly.
+
+### Next steps (registered for future work)
+
+A future §H4-2 re-attempt at Pythia-2.8B requires either:
+1. **A reduced-grid §H4-supersede amendment** registered before re-running the sweep, with a smaller cell count (e.g., 10 well-chosen cells in the emergence-likely range step5000–step50000) and a refined per-cell-cost projection.
+2. **Accepting a multi-day wall time** at the full 40-cell grid (~38 hours) — this requires no new amendment but requires the user to commit to the wall-time budget.
+3. **An alternate detector primitive** that doesn't require 4096 patched forward passes per cell at d_model=2560 — this would constitute a substantial methodological change requiring a fresh detector-validation chain (§S-1 through §S-tau analog).
+
+None of these are scheduled at the time of this amendment; the 2.8B leg is parked.
