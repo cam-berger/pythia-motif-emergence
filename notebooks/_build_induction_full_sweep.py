@@ -1,11 +1,14 @@
 """Build notebooks/induction_full_sweep.ipynb.
 
-Induction full-sweep notebook: 40 cells × 4 Pythia sizes (70m, 160m, 410m, 1b)
-per §H2-1 grid. Original 3-size Phase 2 deliverable + 1B added in-place under
-§H3-scale (the parquet artifacts remain split: `phase2_*_sweep.parquet` for
-the original 3 sizes and `phase3_1b_*_sweep.parquet` for 1B; the notebook
-loads both transparently). Bootstrap CIs on μ per §H2-2; threshold-sensitivity
-bracket per §H2-2.
+Induction full-sweep notebook: 40 cells × 5 Pythia sizes (70m, 160m, 410m,
+1b, 2.8b) per §H2-1 grid. Parquet artifacts split: `phase2_*_sweep.parquet`
+(3 sizes), `phase3_1b_*_sweep.parquet` (1B per §H3-scale-8), and
+`phase4_2_8b_*_sweep.parquet` (2.8B per §H4-8). The notebook loads all
+three transparently. Bootstrap CIs on μ per §H2-2.
+
+Note: 2.8B is included for *induction only* — the §H4-7-supersede halt
+applied only to the S-inhibition sweep at 2.8B; the induction sweep
+completed cleanly at 2.8B with max_count = 48 (highest of all 5 sizes).
 """
 
 from __future__ import annotations
@@ -30,9 +33,9 @@ def build() -> nbf.NotebookNode:
     nb = nbf.v4.new_notebook()
     nb["cells"] = [
         md(
-            "# Induction emergence — full sweep (40 cells × 4 Pythia sizes)\n"
+            "# Induction emergence — full sweep (40 cells × 5 Pythia sizes)\n"
             "\n"
-            "Olsson prefix-matching detector across Pythia-70m, 160m, 410m, 1b "
+            "Olsson prefix-matching detector across Pythia-70m, 160m, 410m, 1b, 2.8b "
             "(threshold > 0.3 per `PROJECT_BRIEF.md` §4); 40 log-spaced "
             "checkpoints from `step0` to `step143000` per `HYPOTHESIS.md` §H2-1; "
             "sequence-bootstrap CIs on μ per §H2-2; threshold-sensitivity bracket "
@@ -64,19 +67,23 @@ def build() -> nbf.NotebookNode:
             "    THRESHOLD_SENSITIVITY_FRACTIONS,\n"
             ")\n"
             "\n"
-            "SIZES = ['70m', '160m', '410m', '1b']\n"
-            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red'}\n"
+            "SIZES = ['70m', '160m', '410m', '1b', '2.8b']\n"
+            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red', '2.8b': 'tab:purple'}\n"
             "INDUCTION_THRESHOLD = 0.3\n"
             "\n"
             "def sweep_path(size: str) -> Path:\n"
-            "    \"\"\"phase2_*_sweep.parquet for {70m,160m,410m}; phase3_1b_*_sweep.parquet for 1b.\"\"\"\n"
+            "    \"\"\"phase2_*_sweep.parquet for {70m,160m,410m}; phase3_1b_*; phase4_2_8b_*.\"\"\"\n"
             "    if size == '1b':\n"
             "        return REPO / 'data' / 'exploration' / 'phase3_1b_induction_sweep.parquet'\n"
+            "    if size == '2.8b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase4_2_8b_induction_sweep.parquet'\n"
             "    return REPO / 'data' / 'exploration' / 'phase2_induction_sweep.parquet'\n"
             "\n"
             "def per_seq_dir(size: str) -> Path:\n"
             "    if size == '1b':\n"
             "        return REPO / 'data' / 'exploration' / 'phase3_1b_induction_per_seq'\n"
+            "    if size == '2.8b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase4_2_8b_induction_per_seq'\n"
             "    return REPO / 'data' / 'exploration' / 'phase2_induction_per_seq'"
         ),
         md(
@@ -166,7 +173,7 @@ def build() -> nbf.NotebookNode:
             "ax.set_xlim(100, 150000)\n"
             "ax.set_xlabel('training step (symlog)')\n"
             "ax.set_ylabel('count of heads with prefix-matching score > 0.3')\n"
-            "ax.set_title('Induction-head count emergence with bootstrap CI on μ (4 Pythia sizes)')\n"
+            "ax.set_title('Induction-head count emergence with bootstrap CI on μ (5 Pythia sizes)')\n"
             "ax.legend(fontsize=9)\n"
             "ax.grid(alpha=0.3)\n"
             "plt.tight_layout()\n"

@@ -1,11 +1,14 @@
 """Build notebooks/successor_full_sweep.ipynb.
 
-Successor full-sweep notebook: 40 cells × 4 Pythia sizes (70m, 160m, 410m, 1b)
-per §H2-1 grid. Original 3-size Phase 2 deliverable + 1B added in-place under
-§H3-scale (parquet artifacts split: `phase2_*_sweep.parquet` for original 3
-sizes, `phase3_1b_*_sweep.parquet` for 1B; the notebook loads both
-transparently). §SU-1b lift-form cross-category DLA detector with τ_lift =
-0.13496 (§SU-tau).
+Successor full-sweep notebook: 40 cells × 5 Pythia sizes (70m, 160m, 410m,
+1b, 2.8b) per §H2-1 grid. Parquet artifacts split: `phase2_*_sweep.parquet`
+(3 sizes), `phase3_1b_*` (1B per §H3-scale-8), `phase4_2_8b_*` (2.8B per
+§H4-8). The notebook loads all three transparently. §SU-1b lift-form
+cross-category DLA detector with τ_lift = 0.13496 (§SU-tau).
+
+Note: 2.8B is included for *successor only* — the §H4-7-supersede halt
+applied only to the S-inhibition sweep at 2.8B; the successor sweep
+completed cleanly at 2.8B with max_count = 14, emerged regime.
 """
 
 from __future__ import annotations
@@ -30,10 +33,10 @@ def build() -> nbf.NotebookNode:
     nb = nbf.v4.new_notebook()
     nb["cells"] = [
         md(
-            "# Successor emergence — full sweep (40 cells × 4 Pythia sizes)\n"
+            "# Successor emergence — full sweep (40 cells × 5 Pythia sizes)\n"
             "\n"
             "§SU-1b lift-form cross-category DLA detector across Pythia-70m, "
-            "160m, 410m, 1b; locked threshold τ_lift = 0.13496 (§SU-tau); 40 "
+            "160m, 410m, 1b, 2.8b; locked threshold τ_lift = 0.13496 (§SU-tau); 40 "
             "log-spaced checkpoints per §H2-1; prompt-bootstrap CIs on μ per "
             "§H2-2; threshold-sensitivity bracket ± 25%.\n"
             "\n"
@@ -62,18 +65,22 @@ def build() -> nbf.NotebookNode:
             "    bootstrap_successor, summarize_bootstrap, THRESHOLD_SENSITIVITY_FRACTIONS,\n"
             ")\n"
             "\n"
-            "SIZES = ['70m', '160m', '410m', '1b']\n"
-            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red'}\n"
+            "SIZES = ['70m', '160m', '410m', '1b', '2.8b']\n"
+            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red', '2.8b': 'tab:purple'}\n"
             "TAU_LIFT = 0.13496\n"
             "\n"
             "def sweep_path(size: str) -> Path:\n"
             "    if size == '1b':\n"
             "        return REPO / 'data' / 'exploration' / 'phase3_1b_successor_sweep.parquet'\n"
+            "    if size == '2.8b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase4_2_8b_successor_sweep.parquet'\n"
             "    return REPO / 'data' / 'exploration' / 'phase2_successor_sweep.parquet'\n"
             "\n"
             "def per_prompt_dir(size: str) -> Path:\n"
             "    if size == '1b':\n"
             "        return REPO / 'data' / 'exploration' / 'phase3_1b_successor_per_prompt'\n"
+            "    if size == '2.8b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase4_2_8b_successor_per_prompt'\n"
             "    return REPO / 'data' / 'exploration' / 'phase2_successor_per_prompt'"
         ),
         md("## Load sweep data"),
@@ -143,7 +150,7 @@ def build() -> nbf.NotebookNode:
             "ax.set_xlim(100, 150000)\n"
             "ax.set_xlabel('training step (symlog)')\n"
             "ax.set_ylabel(f'count of heads with lift ≥ {TAU_LIFT}')\n"
-            "ax.set_title('Successor emergence with bootstrap CI on μ (4 Pythia sizes)')\n"
+            "ax.set_title('Successor emergence with bootstrap CI on μ (5 Pythia sizes)')\n"
             "ax.legend(fontsize=9)\n"
             "ax.grid(alpha=0.3)\n"
             "plt.tight_layout()\n"

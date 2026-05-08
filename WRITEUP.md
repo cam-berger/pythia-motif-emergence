@@ -127,11 +127,13 @@ Five pass / fail patterns are pre-committed, each matched to a paper-headline in
 
 Multi-leg failures default to the most-severe pattern triggered, in priority order: `TOOLING > NEITHER > COUNT-ONLY > TIMING-ONLY > PASS`.
 
-### Status and next steps (as of 2026-05-07)
+### Status and next steps (as of 2026-05-08)
 
 - §H4-scaling amendment **committed** before any 2.8B compute (commit `0ae0e27`).
-- 2.8B prefetch + anchor + sweep + analysis: pending. Triggered explicitly by the user; no compute starts unilaterally.
-- Verdict to be recorded in `notebooks/h1c_ordering_test.ipynb` §H4 section once the 2.8B sweep completes.
+- 2.8B prefetch + anchor + induction sweep + successor sweep: **complete**. Verdict-relevant S-inhibition sweep was **halted at 8 of 40 cells** (steps 0–64, all early-training, all Δ_h ≈ 0) under the §H4-7 per-cell-cost escape hatch (~57 min/cell observed vs ~6 min/cell projected — 10× over budget, exceeding the 2× pause threshold by 5×).
+- §H4-7-supersede amendment registered the halt (committed 2026-05-08); §H4-5 failure-mode taxonomy extended with a **DEFERRED** pattern at top priority alongside non-substantive TOOLING.
+- §H4 conjunctive gate (A.timing AND A.count) **DEFERRED**: cannot be evaluated from 8 early-training cells. Track 2's 2.8B leg is parked, not abandoned. Re-attempt requires either a reduced-grid §H4-supersede, accepting the multi-day full-grid wall time, or a different detector primitive — none scheduled.
+- Side observations preserved: induction at 2.8B reaches max_count = 48 (highest of all 5 sizes); successor at 2.8B emerges cleanly (max_count = 14). Reported in `notebooks/h1c_ordering_test.ipynb` §H4-scaling DEFERRED section. These are NOT §H4 gate inputs (per §H4-1, induction and successor scaling is not the substantive §H4 claim) — they are reported as supplementary cross-size data on the head-count axis.
 
 ### Reproducibility pointers (Track 2)
 
