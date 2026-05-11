@@ -27,7 +27,7 @@ This paper does all three. We pre-register and test three converging tracks acro
 
 *(iv) Scale-dependence in Track 1.* The pre-registered joint sign-test gate **passes**: p ≈ 0.00463 is below the locked 0.005 threshold and the predicted ordering holds in all three sizes. But the supporting evidence is *not* uniformly strong across sizes — 4 of 9 (size, motif) cells right-censor or hit the upper logistic-fit sentinel, and the cleanest per-size confirmation is at 410M. We register this heterogeneity in the post-data interpretation reframe (§H2-9-R) and report both the joint-claim verdict and the scale-dependent decomposition. The reframe does *not* change the gate; it changes the emphasis in the writeup.
 
-*(v) Track 3 framing reframe (post-PASS).* §H4-supersede was registered pre-data as a "scaling appendix / secondary result"; the conservative framing was to ensure the paper would ship on Tracks 1 + 2 even if §H4-supersede DEFERED a second time. Post-PASS, §writeup-conv-2 (analog of §H2-9-R) upgrades the framing to "third converging substantive result" — the registered gate is unchanged, the falsification target is not weakened, but the paper headline now includes Track 3 as a converging result. The framing upgrade is registered post-data, before any prose was written claiming a third-track headline.
+*(v) Track 3 framing reframe (post-PASS).* §H4-supersede was registered pre-data as a "scaling appendix / secondary result"; the conservative framing was to ensure the paper would ship on Tracks 1 + 2 even if §H4-supersede DEFERRED a second time. Post-PASS, §writeup-conv-2 (analog of §H2-9-R) upgrades the framing to "third converging substantive result" — the registered gate is unchanged, the falsification target is not weakened, but the paper headline now includes Track 3 as a converging result. The framing upgrade is registered post-data, before any prose was written claiming a third-track headline.
 
 **Contributions.**
 
@@ -684,5 +684,4 @@ At every §H5 anchor: zero overlap between the locked-ablated suc top-5 and the 
 **Connecting to the §H5-causal-3-record 1B Metric B MIXED.** At Pythia-1B (the head-count regression with 128 heads), suc ∩ si has *zero* overlap across all 40 steps (Table I.1). If the 1B Metric B MIXED were a structural-reuse artifact — i.e., the suc ablation accidentally hit an SI-detected head — the structural data would show that overlap. It does not. The MIXED is therefore a property of 1B's narrow architecture making the IO−S logit-diff readout generically ablation-sensitive, not a hidden structural reuse. This is the §writeup-conv-2 reframe restated mechanistically.
 
 **Data product.** `data/exploration/structural_reuse_deep_dive.parquet` (170 rows): per-(size, step) overlap counts for all three pairwise intersections + triple intersection. Pure analytical extraction; no new compute.
-
 
