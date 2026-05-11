@@ -170,7 +170,7 @@ def build() -> nbf.NotebookNode:
             "                   linestyle='--', alpha=0.7,\n"
             "                   label=f'  μ = {bres.mu_point_estimate:.0f}')\n"
             "ax.set_xscale('symlog', linthresh=100)\n"
-            "ax.set_xlim(100, 150000)\n"
+            "ax.set_xlim(500, 150000)\n"
             "ax.set_xlabel('training step (symlog)')\n"
             "ax.set_ylabel('count of heads with prefix-matching score > 0.3')\n"
             "ax.set_title('Induction-head count emergence with bootstrap CI on μ (5 Pythia sizes)')\n"
