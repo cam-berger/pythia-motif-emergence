@@ -1264,3 +1264,87 @@ Phase 2, Phase 3 (1B), and §H4-scaling supplementary parquets (induction / succ
 This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds — (A.timing) reversal-rate ≥ 0.95, (A.count) max ≥ 5, τ_strict = 0.0372 (§S-tau), B = 1000, 95% percentile, per-prompt resampling, tiered-censoring full-fit ≥ 5 / marginal 2–4 / censored < 2 — are inherited verbatim from §H4-2 / §H4-3 / §H4-5, locked there before any 2.8B compute and preserved unchanged through §H4-7-supersede. The §H4-supersede-1 10-cell grid, the §H4-supersede-4 ~10 h compute estimate and ~115 min/cell escape-hatch threshold, the §H4-supersede-5 deliverable paths, and the inheritance of §H4-5 + §H4-7-supersede DEFERRED into the §H4-supersede taxonomy are pre-committed in this single amendment **before any §H4-supersede compute starts**.
 
 A reviewer reading the chronology should see: §H1-C → §H2 → §H2-5 PASS (p = 0.00463) → §H2-9-R reframe → §H3-scale (1B REGR) → §H4-scaling registration (2.8B, 40-cell grid) → 2.8B anchor / induction / successor sweeps complete → S-inhibition sweep halts at 8/40 (~57 min/cell vs ~6 min projected) → §H4-7 escape hatch invoked → §H4-7-supersede registered (DEFERRED) → §H5-causal-3-record (1B causal-dependence canonicalization, post-data) → §H5-causal-3-2.8b (2.8B causal-dependence pre-data lock) → **§H4-supersede registers at 2.8B before any §H4-supersede compute**, with the 10-cell grid and the inherited §H4-2 / §H4-5 gate locked here → §H4-supersede sweep runs (~10 h overnight) → §H4-supersede verdict recorded in `notebooks/h1c_ordering_test.ipynb` §H4-supersede section against the verbatim §H4-2 gate. No spec change is anticipated between this amendment and the §H4-supersede verdict.
+
+---
+
+## Amendment 2026-05-11 — §writeup-conv: post-data convention + framing reframe (non-numerical, analog of §H2-9-R)
+
+**Posted after §H4-supersede PASS verdict + §H5-causal-3-2.8b NULL × NULL verdict (both 2026-05-10/11).** This is a documentation-hygiene amendment, non-numerical, that locks downstream presentation conventions and rectifies two chronological notes in earlier amendment text. **No numerical thresholds, gate predicates, or detector specifications are modified.** All registered gates (§H1-C / §H2-5 PASS, §H5-causal NULL × NULL at 410m + 2.8B, §H4-supersede PASS) remain locked as registered. This amendment is the documentation analog of §H2-9-R: a post-data reframe that does not move any goalpost.
+
+### §writeup-conv-1. Track-numbering convention (locked)
+
+The amendment chain has drifted in its Track-N labeling. Earlier amendments (e.g., §H4-scaling line 654, §H4-supersede header line 1209) referenced Track 2 = Scaling and Track 3 = Causal-dependence in chronologically-organized framing. The paper-narrative document `WRITEUP.md` (and the downstream `README.md` status table) has settled on a reader-facing convention that orders by the paper's argumentative flow rather than registration chronology:
+
+- **Track 1 — Emergence** (§H1-C / §H2 / §H2-9-R reframe)
+- **Track 2 — Causal-disjointness** (§H5-causal / §H5-causal-2 / §H5-causal-3-record / §H5-causal-3-2.8b)
+- **Track 3 — Scaling (head-count axis)** (§H3-scale / §H4-scaling / §H4-7-supersede / §H4-supersede)
+
+§writeup-conv-1 locks this convention as the canonical Track-N → topic mapping going forward. Earlier amendment text that uses Track 2 = Scaling / Track 3 = Causal is **historically accurate as registered** but is superseded by §writeup-conv-1 for all downstream presentation (WRITEUP.md, README.md, notebook markdown cells, paper draft, LessWrong post). No earlier amendment text is edited retroactively; the §writeup-conv-1 lock is the canonical override.
+
+The reordering reflects the paper's narrative — Track 1 (emergence ordering observed) → Track 2 (the natural compositional reading is *falsified* at convergence) → Track 3 (head-count-axis scaling confirms the emergence pattern at 1024 heads). It does NOT reflect registration chronology, which is the order: §H1-C → §H2 → §H3-scale → §H4-scaling → §H5-causal → §H5-causal-2 → §H4-7-supersede → §H5-causal-3-record → §H5-causal-3-2.8b → §H4-supersede.
+
+### §writeup-conv-2. §H4-supersede framing reframe (post-PASS, locked)
+
+The §H4-supersede amendment header (line 1209) was registered pre-data and positioned §H4-supersede as a *"scaling appendix / secondary result, not a paper headline"* — a conservative framing to ensure the paper would ship on Tracks 1 + 2 even if §H4-supersede DEFERED a second time. The pre-data framing was the correct registration discipline: do not over-commit to a result that has not yet been observed.
+
+**Post-data observation (2026-05-11):** §H4-supersede PASSED on both legs — (A.timing) reversal_rate = 1.000 over B = 1000 paired bootstrap (gate ≥ 0.95) and (A.count) max_count_si^2.8B = 5 at step 29000 (gate ≥ 5). With both legs cleared cleanly, the paper-narrative framing in WRITEUP.md upgrades §H4-supersede from "scaling appendix" to "third converging substantive result". This is analogous to the §H2-9-R post-data reframe of §H1-C: the registered gate is unchanged, the falsification target is not weakened, but the paper's headline framing is upgraded after observing the result.
+
+The framing upgrade does NOT modify:
+- (A.timing) reversal_rate ≥ 0.95 gate predicate (locked §H4-2, inherited verbatim by §H4-supersede-2).
+- (A.count) max_count ≥ 5 gate predicate (same).
+- The §H4-5 + §H4-7-supersede failure-mode taxonomy (PASS / TIMING-ONLY / COUNT-ONLY / NEITHER / TOOLING / DEFERRED).
+- The §H4-supersede-1 10-cell grid `[5000, 7000, 10000, 14000, 20000, 29000, 41000, 49000, 59000, 70000]`.
+
+The framing upgrade DOES authorize:
+- WRITEUP.md / README.md / notebook prose referring to §H4-supersede as a "third converging substantive result" rather than "scaling appendix".
+- The paper's three-track headline structure (Track 1 + Track 2 + Track 3 all hitting registered targets).
+- Reporting §H4-supersede in the main paper text rather than appendix-only.
+
+A registered-trajectory caveat (post-data observation, also locked here): the §H4-supersede 2.8B count trajectory crosses (A.count) ≥ 5 transiently at step 29000 and dips back to 4 by step 70000 (trajectory: 1 → 2 → 2 → 3 → 3 → 5 → 4 → 4 → 4 → 4). The §H4-2 (A.count) gate is defined on `max` over the grid, not terminal-cell count, so PASS holds as registered. The dip caveat is registered here to ensure all downstream documents (WRITEUP / README / notebook §H4-supersede cell / paper / LessWrong) disclose it.
+
+### §writeup-conv-3. Chronology rectification (documentation correction, no compute or threshold change)
+
+Two chronological summaries in earlier amendment text contained errors of omission and ordering:
+
+1. **§H4-supersede preamble chronology summary (HYPOTHESIS.md line 1266)** stated: *"§H4-7-supersede registered (DEFERRED) → §H5-causal-3-record → §H5-causal-3-2.8b → §H4-supersede"*. This summary OMITTED §H5-causal (2026-05-07) and §H5-causal-2 (2026-05-07), which were both registered BEFORE §H4-7-supersede (2026-05-08). The correct chronology should include them between §H4-scaling (2026-05-07) and §H4-7-supersede (2026-05-08).
+
+2. **WRITEUP.md "Pre-registration chain" section (positions 11–12)** listed §H5-causal and §H5-causal-2 AFTER §H4-7-supersede (position 10). This is the inverse of the actual commit date order.
+
+§writeup-conv-3 records the canonical chronology by amendment dates (the dispositive record):
+
+1. §H1-C / pivot — pre-pilot.
+2. Phase 1.0 pilot, Path C locked (`PILOT_RESULTS.md`, 2026-05-05).
+3. Validation reframing amendment (2026-05-05, HYPOTHESIS.md line 62).
+4. §S-inhibition Phase 1.3 detector spec (2026-05-05 evening, line 101).
+5. §S-5b/c + §S-tau (2026-05-05 post-GPT-2-validation, line 159).
+6. §SU (2026-05-05 later evening, line 208).
+7. §SU-1b lift-form supersede (2026-05-06 early, line 289).
+8. §SU-tau τ_lift lock (2026-05-06, line 335).
+9. §H2 Phase 2 sweep spec (2026-05-06, line 363).
+10. §H2-9-R post-data reframe (2026-05-06 post-Phase-2, line 456).
+11. §H3-scale 1B scale-extension pre-reg (2026-05-06 post-grilling, line 524).
+12. §H3-scale-8-vis (2026-05-07, line 621).
+13. §H4-scaling pre-reg (2026-05-07, line 650).
+14. **§H5-causal** (2026-05-07, line 766).
+15. **§H5-causal-2** (2026-05-07, line 909).
+16. **§H4-7-supersede** DEFERRED registration (2026-05-08, line 1014).
+17. §H5-causal-3-record post-data 1B canonicalization (2026-05-10, line 1070).
+18. §H5-causal-3-2.8b pre-data 2.8B (2026-05-10, line 1105).
+19. §H4-supersede pre-data 2.8B reduced-grid (2026-05-10, line 1205).
+20. **§writeup-conv** (this amendment, 2026-05-11).
+
+The two chronological errors in earlier text (line 1266 omission and WRITEUP.md positions 11–12 inversion) are preserved as written for chronological auditability; §writeup-conv-3 is the canonical override. WRITEUP.md and any downstream cross-references should align to the §writeup-conv-3 chronology.
+
+### §writeup-conv-4. §H4-supersede-vis: 5-size view authorization for per-motif sweep notebooks (analog of §H3-scale-8-vis)
+
+§H3-scale-8-vis (2026-05-07) authorized integrating Pythia-1B as a 4th-size column into the per-motif `*_full_sweep.ipynb` notebooks alongside the registered 3 sizes (70m, 160m, 410m), with the strict caveat that the 1B column is presentation-only and does NOT extend the §H1-C registered emergence claim. §writeup-conv-4 extends the same authorization to **Pythia-2.8B as a 5th-size column** in the three per-motif sweep notebooks (`induction_full_sweep.ipynb`, `successor_full_sweep.ipynb`, `s_inhibition_full_sweep.ipynb`), subject to identical caveats:
+
+- The 2.8B column in `induction_full_sweep.ipynb` and `successor_full_sweep.ipynb` displays the full 40-cell sweep parquets (`phase4_2_8b_induction_sweep.parquet`, `phase4_2_8b_successor_sweep.parquet`), which were sealed at §H4-7-supersede.
+- The 2.8B column in `s_inhibition_full_sweep.ipynb` displays the §H4-supersede 10-cell reduced grid (`phase4_2_8b_s_inhibition_supersede_sweep.parquet`). The 8 cells from the §H4-7-supersede partial cache (steps 0–64, top Δ_h ≈ 0) are also displayed if useful for visual continuity at the left edge, marked as such. The remaining cells in the 40-cell §H2-1 grid that are absent from §H4-supersede's 10-cell grid are displayed as gaps in the count-vs-step trace, not interpolated.
+- All visual presentation respects the convention that 2.8B is **not part of the registered §H1-C emergence claim**. §H1-C remains locked to the 3 registered sizes (70m, 160m, 410m) per §H2-1, with §H2-9-R as the canonical reframe. 1B remains a head-count regression per §H4-1. 2.8B's emergence trajectory is reported as supplementary cross-size data on the head-count axis, with the §H4-supersede PASS verdict providing the substantive scaling-axis claim.
+
+§writeup-conv-4 does NOT modify §H1-C / §H2-5 / §H2-9-R / §H3-scale / §H4-scaling / §H4-supersede / §H5-causal / §H5-causal-2 / §H5-causal-3-record / §H5-causal-3-2.8b. The original 3-size figures, exactly as they were when §H1-C / §H2-5 passed at p = 0.00463, can be reconstructed by checking out the pre-§H3-scale-8-vis commit (the §H4-supersede-vis 5-size view is an additive presentation layer, not a replacement).
+
+### §writeup-conv-5. Pre-registration form (locked, documentation-only)
+
+This amendment is **reference-style and documentation-only**. No numerical thresholds, gate predicates, ablation methods, or detector specifications are introduced or modified. The §writeup-conv-1 track convention, §writeup-conv-2 framing reframe, §writeup-conv-3 chronology, and §writeup-conv-4 5-size visualization authorization are committed as a single documentation-hygiene amendment immediately after the §H4-supersede PASS verdict + §H5-causal-3-2.8b NULL × NULL verdict (both recorded 2026-05-11). The amendment is analogous to §H2-9-R: a post-data reframe that does not move any gate.

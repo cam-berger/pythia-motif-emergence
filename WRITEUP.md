@@ -334,23 +334,24 @@ pythia-motif-emergence/
 
 ### Pre-registration chain (chronology)
 
-A reviewer auditing pre-registration discipline should read the amendment chain in `HYPOTHESIS.md` in the following order:
+A reviewer auditing pre-registration discipline should read the amendment chain in `HYPOTHESIS.md` in **registration-date order** (the dispositive record, per §writeup-conv-3):
 
 1. **§H1-C / pivot decision rule** — registered before any pilot code.
-2. **Phase 1.0 pilot** — Path A vs Path C decision; Path C locked.
-3. **§S-1 through §S-tau** — S-inhibition detector specification + numerical threshold lock.
-4. **§SU-0 through §SU-tau** — Successor detector specification + numerical threshold lock (with §SU-1b score-form supersede).
-5. **§H2-1 through §H2-9** — Phase 2 sweep specification.
-6. **§H2-9-R** — Post-data scale-dependence reframe (does NOT change the registered gate).
-7. **§H3-scale (1-10)** — 1B scale-extension pre-registration.
-8. **§H3-scale-8-vis** — Visualization-layer supersede of the 3-size lock.
-9. **§H4-scaling (1-10)** — Head-count-axis scaling argument; supersedes §H3-scale-1's 1B target prospectively.
-10. **§H4-7-supersede** — DEFERRED pattern registered post-halt at 8/40 S-inhibition cells.
-11. **§H5-causal** — Track 2 Metric A (path-patching) at 410m, registered pre-data.
-12. **§H5-causal-2** — Track 2 Metric B (logit-diff) at 410m, registered pre-data.
-13. **§H5-causal-3-record** — Track 2 at 1B, **post-data canonicalization** (gap acknowledged).
-14. **§H5-causal-3-2.8b** — Track 2 at 2.8B, registered pre-data.
-15. **§H4-supersede** — Track 3 reduced-grid re-attempt at 2.8B, registered pre-data; scaling appendix only.
+2. **Phase 1.0 pilot** — Path A vs Path C decision; Path C locked (2026-05-05).
+3. **§S-1 through §S-tau** — S-inhibition detector specification + numerical threshold lock (2026-05-05).
+4. **§SU-0 through §SU-tau** — Successor detector specification + numerical threshold lock with §SU-1b score-form supersede (2026-05-05 / 05-06).
+5. **§H2-1 through §H2-9** — Phase 2 sweep specification (2026-05-06).
+6. **§H2-9-R** — Post-data scale-dependence reframe (2026-05-06).
+7. **§H3-scale (1-10)** — 1B scale-extension pre-registration (2026-05-06).
+8. **§H3-scale-8-vis** — Visualization-layer supersede of the 3-size lock (2026-05-07).
+9. **§H4-scaling (1-10)** — Head-count-axis scaling argument; supersedes §H3-scale-1's 1B target prospectively (2026-05-07).
+10. **§H5-causal** — Track 2 Metric A (path-patching) at 410m, registered pre-data (2026-05-07).
+11. **§H5-causal-2** — Track 2 Metric B (logit-diff) at 410m, registered pre-data (2026-05-07).
+12. **§H4-7-supersede** — DEFERRED pattern registered post-halt at 8/40 S-inhibition cells (2026-05-08).
+13. **§H5-causal-3-record** — Track 2 at 1B, **post-data canonicalization** (2026-05-10; gap acknowledged in the amendment).
+14. **§H5-causal-3-2.8b** — Track 2 at 2.8B, registered pre-data (2026-05-10).
+15. **§H4-supersede** — Track 3 reduced-grid re-attempt at 2.8B, registered pre-data (2026-05-10).
+16. **§writeup-conv** — Post-data documentation-hygiene amendment (2026-05-11): locks Track-numbering convention (Track 2 = Causal-disjointness, Track 3 = Scaling); reframes §H4-supersede from "scaling appendix" to "third converging substantive result" post-PASS; rectifies the chronology errors in earlier amendment text. Analog of §H2-9-R: non-numerical, post-data, does not move any gate.
 
 The git commit history corroborates this chronology, with one acknowledged exception (§H5-causal-3-record canonicalizes a 2026-05-07 worktree run after-the-fact; the paper discloses this gap).
 

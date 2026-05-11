@@ -1,11 +1,21 @@
 """Build notebooks/s_inhibition_full_sweep.ipynb.
 
-S-inhibition full-sweep notebook: 40 cells × 4 Pythia sizes (70m, 160m, 410m, 1b)
-per §H2-1 grid. Original 3-size Phase 2 deliverable + 1B added in-place under
-§H3-scale (parquet artifacts split: `phase2_*_sweep.parquet` for original 3
-sizes, `phase3_1b_*_sweep.parquet` for 1B; the notebook loads both
-transparently). §S-1 path-patching Δ_h detector with τ_strict = 0.0372
-(§S-tau).
+S-inhibition full-sweep notebook: 5 Pythia sizes (70m, 160m, 410m, 1b, 2.8b).
+- 70m / 160m / 410m: 40 cells per §H2-1 grid (`phase2_s_inhibition_sweep.parquet`).
+- 1b: 40 cells per §H2-1 grid (`phase3_1b_s_inhibition_sweep.parquet`) per §H3-scale-8-vis.
+- 2.8b: **10 cells** per §H4-supersede reduced grid
+  (`phase4_2_8b_s_inhibition_supersede_sweep.parquet`), authorized for
+  5-size visualization by §writeup-conv-4 (§H4-supersede-vis). The original 40-cell
+  §H4-scaling sweep was halted at 8/40 cells under §H4-7-supersede (DEFERRED);
+  §H4-supersede (2026-05-10) ran the reduced 10-cell grid
+  `[5000, 7000, 10000, 14000, 20000, 29000, 41000, 49000, 59000, 70000]`
+  and PASSed both (A.timing) and (A.count) gates on 2026-05-11.
+
+§S-1 path-patching Δ_h detector with τ_strict = 0.0372 (§S-tau).
+
+§writeup-conv-4 caveat: 2.8B is presentation-only and does NOT extend the
+§H1-C registered emergence claim. The registered Track-1 evidence is in the
+70m / 160m / 410m columns.
 """
 
 from __future__ import annotations
@@ -30,12 +40,18 @@ def build() -> nbf.NotebookNode:
     nb = nbf.v4.new_notebook()
     nb["cells"] = [
         md(
-            "# S-inhibition emergence — full sweep (40 cells × 4 Pythia sizes)\n"
+            "# S-inhibition emergence — full sweep (5 Pythia sizes)\n"
             "\n"
             "Goldowsky-Dill 2023 path-patching detector with frozen paths "
-            "across Pythia-70m, 160m, 410m, 1b; locked threshold τ_strict = "
-            "0.0372 (§S-tau); 40 log-spaced checkpoints per §H2-1; prompt-"
-            "bootstrap CIs on μ per §H2-2.\n"
+            "across Pythia-70m, 160m, 410m, 1b, 2.8b; locked threshold "
+            "τ_strict = 0.0372 (§S-tau).\n"
+            "\n"
+            "- **70m / 160m / 410m / 1b:** 40 log-spaced checkpoints per §H2-1.\n"
+            "- **2.8b:** **10 cells** per §H4-supersede reduced grid `[5000, 7000, 10000, 14000, 20000, 29000, 41000, 49000, 59000, 70000]`. The original §H4-scaling 40-cell sweep was halted at 8/40 cells under §H4-7-supersede (DEFERRED); §H4-supersede (2026-05-10) registered the reduced grid and PASSed both (A.timing) and (A.count) gates on 2026-05-11. The 2.8b column is authorized for 5-size visualization by §writeup-conv-4 (§H4-supersede-vis).\n"
+            "\n"
+            "Prompt-bootstrap CIs on μ per §H2-2 are computed for sizes with full 40-cell sweeps; the 2.8b column's μ is computed against the 10-cell §H4-supersede grid only (this is what §H4-supersede registered as the canonical 2.8b detection grid).\n"
+            "\n"
+            "**§writeup-conv-4 caveat:** 2.8b is presentation-only. The registered §H1-C Track-1 emergence claim remains locked to 70m / 160m / 410m per §H2-1.\n"
             "\n"
             "**Locked thresholds:**\n"
             "- Detection threshold: Δ_h ≥ τ_strict = 0.0372 (§S-tau).\n"
@@ -62,18 +78,23 @@ def build() -> nbf.NotebookNode:
             "    bootstrap_s_inhibition, summarize_bootstrap, THRESHOLD_SENSITIVITY_FRACTIONS,\n"
             ")\n"
             "\n"
-            "SIZES = ['70m', '160m', '410m', '1b']\n"
-            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red'}\n"
+            "SIZES = ['70m', '160m', '410m', '1b', '2.8b']\n"
+            "SIZE_COLOR = {'70m': 'tab:blue', '160m': 'tab:orange', '410m': 'tab:green', '1b': 'tab:red', '2.8b': 'tab:purple'}\n"
             "TAU_STRICT = 0.0372\n"
             "\n"
             "def sweep_path(size: str) -> Path:\n"
             "    if size == '1b':\n"
             "        return REPO / 'data' / 'exploration' / 'phase3_1b_s_inhibition_sweep.parquet'\n"
+            "    if size == '2.8b':\n"
+            "        # §writeup-conv-4 / §H4-supersede-vis: 2.8b uses the §H4-supersede 10-cell reduced grid.\n"
+            "        return REPO / 'data' / 'exploration' / 'phase4_2_8b_s_inhibition_supersede_sweep.parquet'\n"
             "    return REPO / 'data' / 'exploration' / 'phase2_s_inhibition_sweep.parquet'\n"
             "\n"
             "def per_prompt_dir(size: str) -> Path:\n"
             "    if size == '1b':\n"
             "        return REPO / 'data' / 'exploration' / 'phase3_1b_s_inhibition_per_prompt'\n"
+            "    if size == '2.8b':\n"
+            "        return REPO / 'data' / 'exploration' / 'phase4_2_8b_s_inhibition_supersede_per_prompt'\n"
             "    return REPO / 'data' / 'exploration' / 'phase2_s_inhibition_per_prompt'"
         ),
         md("## Load sweep data"),
@@ -159,7 +180,7 @@ def build() -> nbf.NotebookNode:
             "plt.show()"
         ),
         md(
-            "## Sender-head identity at final checkpoint (step143000)\n"
+            "## Sender-head identity at final checkpoint (step143000 where available)\n"
             "\n"
             "Per-size enumeration of every sender (layer, head) pair passing "
             "τ_strict = 0.0372 at step143000, sorted by Δ_h. Note: the "
@@ -171,30 +192,48 @@ def build() -> nbf.NotebookNode:
             "**70m note:** if the table is empty for 70m, that is the "
             "scale-dependence finding made concrete — S-inhibition does not "
             "emerge at the smallest size during training (max_count = 1 head, "
-            "right-censored at step143000)."
+            "right-censored at step143000).\n"
+            "\n"
+            "**2.8b note (§writeup-conv-4 / §H4-supersede-vis):** the §H4-supersede "
+            "10-cell grid stops at step 70000 — there is no step143000 cell in "
+            "this notebook's 2.8b column. We report the **latest available 2.8b "
+            "cell (step 70000)** as the closest analog of a terminal-anchor view. "
+            "For the registered §H5-causal-3-2.8b causal-dependence anchor at "
+            "step143000 (which uses a separate sealed S-inhibition anchor parquet, "
+            "not the §H4-supersede sweep), see `causal_dependence.ipynb`."
         ),
         code(
             "rows = []\n"
             "for size in SIZES:\n"
-            "    final = df[(df['size'] == size) & (df['step'] == 143000)]\n"
+            "    sub_size = df[df['size'] == size]\n"
+            "    if sub_size.empty:\n"
+            "        continue\n"
+            "    # 2.8b uses the §H4-supersede 10-cell grid (last cell = step 70000);\n"
+            "    # all other sizes use the §H2-1 40-cell grid (last cell = step 143000).\n"
+            "    target_step = 143000 if 143000 in set(sub_size['step'].unique()) else int(sub_size['step'].max())\n"
+            "    final = sub_size[sub_size['step'] == target_step]\n"
+            "    if final.empty:\n"
+            "        continue\n"
             "    n_layers = int(final['layer'].max() + 1)\n"
             "    passes = final[final['score'] >= TAU_STRICT].sort_values('score', ascending=False)\n"
+            "    step_note = '' if target_step == 143000 else f' (latest 2.8b cell; §H4-supersede grid stops at step 70000)'\n"
             "    if passes.empty:\n"
-            "        rows.append(dict(size=size, sender_layer=None, sender_head=None,\n"
+            "        rows.append(dict(size=size, step=target_step, sender_layer=None, sender_head=None,\n"
             "                         delta_h=float('nan'),\n"
             "                         norm_depth=float('nan'),\n"
-            "                         note='no senders above τ_strict (S-inhibition did not emerge at this scale)'))\n"
+            "                         note='no senders above τ_strict (S-inhibition did not emerge at this scale)' + step_note))\n"
             "        continue\n"
             "    for _, r in passes.iterrows():\n"
             "        rows.append(dict(\n"
             "            size=size,\n"
+            "            step=target_step,\n"
             "            sender_layer=int(r['layer']), sender_head=int(r['head']),\n"
             "            delta_h=float(r['score']),\n"
             "            norm_depth=int(r['layer']) / max(n_layers - 1, 1),\n"
-            "            note='',\n"
+            "            note=step_note.strip(' ()') if step_note else '',\n"
             "        ))\n"
             "id_df = pd.DataFrame(rows)\n"
-            "print('S-inhibition sender heads at step143000, by size (sorted by Δ_h within size):')\n"
+            "print('S-inhibition sender heads at last available cell per size (sorted by Δ_h within size):')\n"
             "print(id_df.to_string(index=False, float_format=lambda v: f'{v:.4f}'))"
         ),
         md(

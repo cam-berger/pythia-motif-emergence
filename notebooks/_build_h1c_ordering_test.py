@@ -65,7 +65,7 @@ def build() -> nbf.NotebookNode:
             "\n"
             "**Tooling validation.** [`tigges_ioi_replication.ipynb`](./tigges_ioi_replication.ipynb) — Tigges 2024 IOI emergence-curve replication on Pythia. Max abs-diff 0.066 < 0.10 vs Tigges 2024 at the 4 directly-shared steps. This is the make-or-break MPS-numerics check that gates every downstream patching result.\n"
             "\n"
-            "**Pivot from copy-suppression to S-inhibition.** [`copy_suppression_proof.ipynb`](./copy_suppression_proof.ipynb), [`copy_suppression_pythia_proof.ipynb`](./copy_suppression_pythia_proof.ipynb), [`copy_suppression_emergence_exploration.ipynb`](./copy_suppression_emergence_exploration.ipynb) — pre-pivot evidence that copy-suppression's CSPA proxy fails the GPT-2 gate on Pythia. The pivot to S-inhibition is documented in `PILOT_RESULTS.md` and `HYPOTHESIS.md` §S-0.\n"
+            "**Pivot from copy-suppression to S-inhibition.** [`copy_suppression_proof.ipynb`](./copy_suppression_proof.ipynb), [`copy_suppression_pythia_proof.ipynb`](./copy_suppression_pythia_proof.ipynb), [`copy_suppression_emergence_exploration.ipynb`](./copy_suppression_emergence_exploration.ipynb) — pre-pivot evidence that copy-suppression's CSPA proxy fails the GPT-2 gate on Pythia. The pivot to S-inhibition is documented in `PILOT_RESULTS.md` and the `HYPOTHESIS.md` Pivot hypothesis (H1-C) + the 2026-05-05 validation-reframing amendment block.\n"
             "\n"
             "**S-inhibition detector validation.** [`s_inhibition_proof.ipynb`](./s_inhibition_proof.ipynb) — GPT-2 small replication of Wang 2022 S-inhibition heads. The strict σ-criterion failed by 0.019σ; rank-based override accepted under §S-5b/c (Wang's 4 = ranks #1-#4 of 144). The reasoning is recorded in HYPOTHESIS.md.\n"
             "\n"
@@ -900,7 +900,7 @@ def build() -> nbf.NotebookNode:
             "because S-inhibition emerges before successor. Per §H3-scale-9, options for "
             "the writeup are (a) strict-reading: report verdict as REGR with the registered "
             "headline; or (b) §S-5c-style supplementary-acceptance amendment that records "
-            "the gate FAIL as REGR (preserving pre-reg discipline) and adds a §H3-scale-supp "
+            "the gate FAIL as REGR (preserving pre-reg discipline) and adds a §S-5c-style supplementary-acceptance "
             "section documenting the supplementary evidence with a refined headline. The "
             "amendment decision is deferred to the writeup phase — for now, the registered "
             "REGR verdict stands."
@@ -926,7 +926,7 @@ def build() -> nbf.NotebookNode:
             "\n"
             "DEFERRED is registered as a sixth §H4-5 pattern at top-of-priority "
             "alongside non-substantive TOOLING: `DEFERRED > TOOLING > NEITHER > "
-            "COUNT-ONLY > TIMING-ONLY > PASS`. Track 2's 2.8B leg is parked, "
+            "COUNT-ONLY > TIMING-ONLY > PASS`. Track 3's 2.8B leg is parked (under the §writeup-conv-1 convention: Track 3 = Scaling), "
             "not abandoned."
         ),
         code(
@@ -943,7 +943,7 @@ def build() -> nbf.NotebookNode:
             "for _, r in verdict_partial.iterrows():\n"
             "    print(f'  ({r[\"leg\"]:<8s}) value={r[\"value\"]:<14s} requirement: {r[\"requirement\"]}')\n"
             "print()\n"
-            "print('Track 2\\'s 2.8B leg is parked. Re-attempt requires either a')\n"
+            "print('Track 3\\'s 2.8B leg is parked (under §writeup-conv-1 Track-3 = Scaling). Re-attempt requires either a')\n"
             "print('reduced-grid §H4-supersede, accepting the multi-day full-grid')\n"
             "print('wall time, or a different detector primitive — none scheduled.')"
         ),
@@ -1022,9 +1022,9 @@ def build() -> nbf.NotebookNode:
             "print('the §H4-scaling argument; the parameter-axis fit above is reported on user request.')"
         ),
         md(
-            "### Total attention heads vs detected heads — §H4-canonical view\n"
+            "### Total attention heads vs detected heads — §H4-1 head-count-axis view\n"
             "\n"
-            "The §H4-canonical view: scaling on the **head-count axis**. Total "
+            "The §H4-1 head-count-axis view: scaling on the **head-count axis**. Total "
             "head counts per size:\n"
             "\n"
             "| size | layers × heads | total |\n"
@@ -1067,7 +1067,7 @@ def build() -> nbf.NotebookNode:
             "    ax.set_title(f'{motif} max_count vs total heads (5 Pythia sizes)')\n"
             "    ax.grid(alpha=0.3)\n"
             "    ax.legend(fontsize=9, loc='upper left')\n"
-            "fig.suptitle('Total attention heads vs detected motif heads — §H4-canonical head-count axis', y=1.02)\n"
+            "fig.suptitle('Total attention heads vs detected motif heads — §H4-1 head-count-axis head-count axis', y=1.02)\n"
             "plt.tight_layout()\n"
             "plt.show()\n"
             "\n"
@@ -1143,7 +1143,14 @@ def build() -> nbf.NotebookNode:
             "for step, c in counts_28b.items():\n"
             "    top = df_supersede[df_supersede.step==step].score.max()\n"
             "    bar = '█' * int(c)\n"
-            "    print(f'  step{int(step):6d}: count={c:3d}  top Δ_h={top:+.4f}  {bar}')"
+            "    print(f'  step{int(step):6d}: count={c:3d}  top Δ_h={top:+.4f}  {bar}')\n"
+            "\n"
+            "print()\n"
+            "print('§writeup-conv-2 caveat: the count crosses ≥ 5 transiently at step 29k')\n"
+            "print('and settles at 4 by step 70k (trajectory 1 → 2 → 2 → 3 → 3 → 5 → 4 → 4 → 4 → 4).')\n"
+            "print('§H4-2 (A.count) gate is defined on MAX over the grid (not terminal-cell count),')\n"
+            "print('so PASS holds as registered. Caveat is disclosed in HYPOTHESIS.md §writeup-conv-2,')\n"
+            "print('WRITEUP.md Track 3 section, and here.')"
         ),
         md(
             "### Bootstrap μ distribution (paired 2.8B vs 410m, B = 1000)"
