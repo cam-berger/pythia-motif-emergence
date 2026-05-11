@@ -1348,3 +1348,214 @@ The two chronological errors in earlier text (line 1266 omission and WRITEUP.md 
 ### §writeup-conv-5. Pre-registration form (locked, documentation-only)
 
 This amendment is **reference-style and documentation-only**. No numerical thresholds, gate predicates, ablation methods, or detector specifications are introduced or modified. The §writeup-conv-1 track convention, §writeup-conv-2 framing reframe, §writeup-conv-3 chronology, and §writeup-conv-4 5-size visualization authorization are committed as a single documentation-hygiene amendment immediately after the §H4-supersede PASS verdict + §H5-causal-3-2.8b NULL × NULL verdict (both recorded 2026-05-11). The amendment is analogous to §H2-9-R: a post-data reframe that does not move any gate.
+## Amendment 2026-05-11 — §H6-causal: induction-root causal-dependence ablation (pilot at 70M + 410M)
+
+**Posted after §H4-supersede PASS (2026-05-11) + §H5-causal-3-2.8b NULL × NULL (2026-05-11) + §writeup-conv (2026-05-11), and before any §H6-causal compute.** This amendment registers a new inference-time causal-dependence test orthogonal to §H5-causal-family. §H5 falsified the *successor → S-inhibition* link on two metrics at 410M and 2.8B (NULL × NULL). §H6 tests the un-tested branch: **does induction sit at the root of both downstream motifs?** If ablating top-K induction heads at convergence disrupts successor and/or S-inhibition readouts, the temporal emergence ordering (μ_ind < μ_suc < μ_si) is *at least partially* an inference-time architectural ordering rooted in induction; if all readouts remain NULL, the ordered emergence is fully decoupled from architectural causal structure (a strong universal claim).
+
+§H6-causal is a **separate scientific claim** from Track 1 (§H1-C / §H2-9-R), the §H5-causal-family suc → si branch of Track 2, and Track 3 (§H3-scale / §H4-scaling / §H4-supersede). Under §writeup-conv-1, §H6-causal **extends Track 2** with the second branch: ind → {suc, si}. Prior amendments are not modified.
+
+§H6-causal is **pilot-first**: Pythia-70M + Pythia-410M @ step143000 only are pre-registered here. Extension to {160M, 1B, 2.8B} is registered separately as §H6-causal-3, conditional on the §H6-causal-10 trigger.
+
+### §H6-causal-1. Scope (locked)
+
+- **Pilot anchors:** Pythia-70M-deduped @ step143000 AND Pythia-410M-deduped @ step143000. Two anchors, one ablation experiment per anchor.
+- **Three readouts run jointly per anchor** in a single ablation experiment:
+    - **Readout A** — aggregate `lift_dla` across the 70-prompt successor probe per §SU-1b, over the four category subsets {days, months, numerals, letters}.
+    - **Readout B** — §S-1 path-patching Δ_h on the locked top-3 SI senders at this anchor (per §H5-causal protocol).
+    - **Readout C** — IO−S logit-diff at the END token over the 200-prompt IOI set (per §H5-causal-2 protocol).
+- **Conditional extension to {160M, 1B, 2.8B}** — pre-registered procedurally in §H6-causal-10 below; per-size K values for the extended sizes are locked in §H6-causal-2 below (table) but the per-size suc / ctrl / SI / NM identities at extended sizes are derived at follow-up §H6-causal-3 amendment time.
+- The 200-prompt IOI distribution (Wang 2023, 100 BABA + 100 ABBA, seed=0) at `data/prompts/ioi_prompts.tsv` and the 70-prompt successor probe at `data/prompts/successor_prompts.tsv` are the substrates, both unmodified from §H5-causal / §SU-1b. No new prompt sets.
+
+### §H6-causal-2. Suc set — induction heads to ablate (procedure-locked, per-size K-scaling)
+
+**Top-K_size induction heads** at (size, step=143000) by Olsson prefix-match score (the §IND-1 / Phase 1.2 detector score, sealed in `data/exploration/induction_full_sweep.parquet` and analogous 1B / 2.8B parquets), with the §H5-3 tie-break inherited verbatim (score desc, layer asc, head asc), **minus** any heads in the exclusion clauses below.
+
+**Per-size K-scaling rule (locked).** K_size is set per anchor by the rule
+
+```
+K_size = min(20, max(5, ceil(0.33 × n_induction_detected_at_step143000_at_size)))
+```
+
+where `n_induction_detected` is the count of heads with Olsson prefix-match score ≥ 0.30 at (size, step=143000) in the sealed induction sweep parquet. The pre-data per-size K values, locked here from the sealed parquets, are:
+
+| Size | n_induction (step143k) | K_size |
+|---|---|---|
+| 70M | 6 | 5 (floor enforced; near-exhaustion at this size) |
+| 160M | 17 | 6 |
+| 410M | 19 | 7 |
+| 1B | 9 | 5 (floor enforced) |
+| 2.8B | 34 | 12 |
+
+These K values are part of the amendment lock (asserted bit-for-bit by the runners against the sealed parquets at runtime). The **ctrl set size matches the ablation K_size per size** (5 / 6 / 7 / 5 / 12). The pilot scope (§H6-causal-1) at 70M uses K=5 and at 410M uses K=7; the extended-size K values (160M, 1B, 2.8B) take effect only on §H6-causal-10 trigger.
+
+Rationale. 410M's induction-detected population is 19 heads; ablating only 5 (26%) is a small sample and might not detect a real causal effect if induction's contribution is distributed across many heads. The §H5 precedent ablated 5/7 = 71% of successor's detected population at 410M; the §H6 rule ablates a smaller fraction (33%) of induction's detected population to keep the floor=5 at narrow-architecture sizes (70M, 1B) while scaling meaningfully at wider ones. At 2.8B with 34 induction-detected heads, K=12 (35%) is substantial. The min(20, ·) cap is a defensive ceiling for hypothetical larger populations — not load-bearing at any current §H6 size.
+
+**Exclusion clauses.** The top-K_size induction list is filtered to exclude:
+
+1. The **locked SI-sender set** at this anchor (§H5-causal-3 per-size lock; for 410M this is `{(12,12), (13,13), (14,0)}` per §H5-5; for 70M derived deterministically from `s_inhibition_pythia_70m_anchor.parquet` at runtime and asserted in the verdict parquet).
+2. The **locked NM set** at this anchor (§H5-6 per-size lock; for 410M read from `s_inhibition_pythia_410m_anchor_per_nm.npz`; for 70M read from `s_inhibition_pythia_70m_anchor_per_nm.npz`, which is produced by the new §H6-6 prerequisite step).
+
+If exclusion reduces the available top-K_size below K_size, **widen the candidate pool one rank at a time** (top-(K+1), top-(K+2), …) until K_size non-conflicting induction heads are identified, recording `widened_top_k` in the verdict parquet for audit. **Halt-rule (hard minimum):** halt and report if `K_effective < 4` — i.e., fewer than 4 induction heads survive all exclusions even after exhausting the candidate pool. The hard minimum K_effective ≥ 4 is a separate concept from the soft floor K_locked = 5 (the per-size locked value from the K-scaling table): the soft floor is the *target* per-anchor K, while the hard minimum is the *operational red line* below which the §H6 ablation experiment is not informative. When `K_effective < K_locked` but `K_effective ≥ 4`, the runner proceeds (per Decision (a), see 70M caveat below) with a registered `structural_caveat_k_exhausted = True` flag in the verdict parquet; when `K_effective < 4` the runner halts. Halt on the hard-minimum trigger is treated as a registered DEFERRED-style outcome per §H4-7-supersede precedent: a `pattern = HALT-COEXTENSIVE` verdict row is written, no headline is assigned, and the §H6 amendment chain awaits a fresh sub-amendment before re-attempting. The prior 10-rank-widening cap is subsumed by the K_effective ≥ 4 hard minimum: a population that cannot supply 4 surviving heads is essentially co-extensive with SI's circuit at this anchor.
+
+**70M structural caveat (pre-data, registered; Decision (a) lock):** Only 6 induction heads clear the §IND-1 detection threshold at 70M step143000. The §H6-2 + §H6-2-bis 3-way exclusion (NM + SI-senders + suc-receivers) on this 6-head induction-detected population **exhausts to 4 surviving heads**. The K_locked = 5 floor cannot be reached without violating an exclusion clause. **Per Decision (a) (user-locked, this revision)**, the §H6 70M runner proceeds at **K_effective = 4** (with K_locked = 5 retained as the soft-floor target that was not reachable), with the verdict parquet column `structural_caveat_k_exhausted = True` and a logged-warning indicating the exhaustion. The cross-readout aggregate at 70M is evaluated on K_effective = 4 — interpretation of the 70M verdict acknowledges the smaller sample explicitly. Readouts A, B, and C are all uncontaminated under this rule (the 3-way exclusion is preserved); only the sample size is reduced. The ctrl set at 70M is correspondingly sized at K_effective = 4 (matching the ablation set per §H6-causal-3 / §H6-causal-5). The hard minimum K_effective ≥ 4 (§H6-2 halt-rule) is met — the 70M case **does not trigger HALT**; only K_effective < 4 (i.e., severe exhaustion) would HALT.
+
+Beyond the K-exhaustion caveat: the suc / ctrl distinction at 70M is less informative than at larger sizes because ctrl is sampled from the score-bracket *below* threshold (§H6-causal-3), so the bracket population is the "near-induction-but-not-detected" tail rather than a magnitude-comparable population. The verdict parquet records `n_induction_above_threshold = 6`, `K_locked = 5`, `K_effective = 4`, `structural_caveat_k_exhausted = True`, and the per-exclusion `n_excluded_*` counts at 70M for audit.
+
+### §H6-causal-2-bis. Suc-receiver-exclusion clause (locked)
+
+**§H6-2-bis. Suc-receiver-exclusion clause (locked).** In addition to NM + SI senders exclusions in §H6-2, exclude any head that is also in the locked top-5 successor-receiver set at this anchor (the suc top-5 used as Readout A's receivers per §H5-3 tie-break). This prevents contamination of Readout A, where the suc receivers are the readout targets — ablating one as part of the induction set would conflate the headline "does induction-ablation move suc lift?" with "does ablating a suc receiver move its own lift?"
+
+Rationale (pre-data, registered). At 70M, the locked top-5 successor-receiver set includes L4H0 / L4H1 (§H5-3 70M lock), adjacent layers to top induction heads. §H6-2 exclusion-widening alone could pull the ablation set into the suc-receiver pool, contaminating Readout A. The bis-clause ranks suc-receiver exclusion as a third equally-mandatory exclusion alongside NM and SI senders. The §H6-2 10-rank widening cap applies to the combined exclusion; the verdict parquet records `n_excluded_suc_receivers` per anchor for audit.
+
+### §H6-causal-3. Ctrl set (procedure-locked)
+
+Random sample of K_size heads via `rng = np.random.default_rng(0)` from the bracket `[INDUCTION_THRESHOLD − bw, INDUCTION_THRESHOLD)` with `bw = 0.05` initial and `+= 0.025` widening step (inherited verbatim from §H5-4 procedure with the score axis changed from `score_suc` to Olsson prefix-match score). The §H6-2 NM-and-SI-sender exclusions AND the §H6-2-bis suc-receiver exclusion apply to the ctrl candidate pool. `INDUCTION_THRESHOLD` is read from §IND-1 / Phase 1.2 (the registered induction detection threshold = 0.30); the runner writes the final `widened_bracket_width` to the verdict parquet for audit.
+
+The ctrl bracket is on Olsson score (not on τ_lift). The bracket procedure, the seed (0), and the widening-step (0.025) are inherited from §H5-4 verbatim; only the score axis, threshold, and the per-size sample size K_size change. If `|CTRL_CANDIDATES| < K_size` after maximum widening (e.g., the score axis is too sparse below threshold at 70M), the runner halts and writes `pattern = HALT-CTRL-EMPTY`; analogous to §H6-causal-2's HALT-COEXTENSIVE rule.
+
+### §H6-causal-4. Receivers — pinned per-anchor (locked)
+
+The receivers for each readout are inherited verbatim from §H5-causal-3 per-anchor locks:
+
+- **Readout A** (successor `lift_dla`): the top-5 successor heads at this anchor — i.e., the §H5-3 suc set, re-used **but here as receivers**, not as the heads being ablated. (At 70M and 410M, these are derived deterministically from `phase2_successor_sweep.parquet` per §H5-3, with §H5-3 tie-break. The 410M set is `[(22,6), (22,2), (20,4), (22,10), (12,8)]` per the §H5-3 lock; the 70M set is derived at runtime and asserted in the verdict parquet.) These heads are simultaneously the **suc-receiver-exclusion set** for §H6-2-bis. `lift_dla` is aggregated by mean across the 70 successor prompts within each of {days, months, numerals, letters} and then averaged across categories — identical aggregation rule to §SU-1b unchanged.
+- **Readout B** (§S-1 Δ_h): the top-3 SI senders and the top-4 NMs at this anchor, pinned across all conditions per §H5-5 / §H5-6. NMs are read from the sealed `*_anchor_per_nm.npz` artifact for each size and pinned across conditions — no re-derivation under ablation.
+- **Readout C** (IO−S logit-diff): no per-head receivers; the metric is a scalar over the 200-prompt IOI distribution per §H5-causal-2-2.
+
+The §H6 receiver sets are **identical** to the §H5 receiver sets at each anchor so the §H6 verdicts are directly comparable to the §H5 verdicts at the same size. The only differential between §H6 and §H5 is the identity of the heads being ablated (induction top-K_size vs successor top-5).
+
+### §H6-causal-5. Ablation method (locked, inherited verbatim from §H5-2)
+
+Mean-ablation on `hook_z[:, :, head, :]` per length group, replace with batch-mean from a single clean forward pass over the 200 IOI prompts (Readouts B, C) or 70 successor prompts (Readout A). Permanent forward hook via `model.add_perma_hook` per (layer, head); persists through every `run_with_cache` / `run_with_hooks`. §H5-2 length-grouping caveat unchanged. For Readout A the substrate is the successor probe (single length group per category), so the within-group rule degenerates to a single mean tensor per (l, h).
+
+Three conditions per anchor: **clean**, **suc_ablated** (induction top-K_size with §H6-2 + §H6-2-bis exclusions), **ctrl_ablated** (K_size score-bracket-matched controls, same exclusions). §H6 inherits the §H5 naming convention `suc_ablated` = "the ablation-set ablation" (NOT successor-head ablation) — preserved for code-level reuse of §H5-causal helpers without renaming. The verdict parquet records `ablate_kind = "induction_topK"` and `K_size`.
+
+### §H6-causal-6. NM identity, receivers, and the 70M anchor prerequisite (locked, Strategy B)
+
+For all anchors, the locked NM set used as Readout B receivers is the component-DLA top-4 NMs at the clean model per the §S-8 anchor-inspection protocol, persisted to `data/exploration/s_inhibition_pythia_{size}_anchor_per_nm.npz`.
+
+- **For 410M**, the §S-8 anchor inspection already exists and the file `s_inhibition_pythia_410m_anchor_per_nm.npz` is the sealed artifact pinned across conditions per §H5-6 (unchanged from §H5-causal).
+- **For 70M**, no pre-existing §S-8 anchor inspection exists. A new `_run_pythia_70m_anchor_s_inhibition.py` runner is registered to be executed BEFORE the §H6 70M compute; it produces `s_inhibition_pythia_70m_anchor_per_nm.npz` with the component-DLA top-4 NMs at clean 70M step143000. This pre-step is itself pre-registered with all numerical thresholds inherited verbatim from §S-1 / §S-tau / §S-6 / §S-7. The §H6 70M runner reads the resulting npz and asserts the NMs bit-for-bit at runtime.
+
+The §S-8 protocol is inherited unchanged: load Pythia-70M-deduped @ step143000, run §S-1 path-patching at the §S-tau anchor, compute component-DLA per head per §S-6 / §S-7, select top-4 by aggregate component-DLA at END with §H5-6 tie-break (DLA desc, layer asc, head asc). The npz schema mirrors the 410M file (keys: `nm_layer`, `nm_head`, `nm_dla`, `nm_rank`) so downstream readers consume it without code-path differentiation.
+
+The prerequisite is registered as a §H6-11 deliverable. Halt if fewer than 4 NMs clear the §S-7 floor (the §S-tau anchor at 70M is censored per §H1-C, so this is a pre-data risk worth flagging): write `pattern = HALT-NM-INSUFFICIENT` to `s_inhibition_pythia_70m_anchor_per_nm_halt.parquet` and pause §H6 70M compute for a sub-amendment.
+
+### §H6-causal-7. Three readouts, verdict bands (locked, inherited from §H5-7 / §H5-causal-2-6 / §SU-1b)
+
+For each readout, the per-readout pattern is one of {NULL, DEP, GENERIC, MIXED}, with thresholds inherited verbatim from the §H5 amendments. Ratios are computed paired per-prompt against the clean condition and bootstrapped per §H6-causal-9.
+
+- **Readout A — successor `lift_dla` (aggregate):**
+    - NULL if `ratio_suc_lift ∈ [0.8, 1.2]` AND `ratio_ctrl_lift ∈ [0.8, 1.2]`, both with 95% CI within the band.
+    - DEP if `ratio_suc_lift < 0.5` with CI excluding 0.5 AND `ratio_ctrl_lift ∈ [0.8, 1.2]`.
+    - GENERIC if both `ratio_suc_lift < 0.7` AND `ratio_ctrl_lift < 0.7`.
+    - MIXED otherwise.
+- **Readout B — §S-1 Δ_h (per-sender, then aggregate):** Per-sender classifier {NULL, DEP, GENERIC, MIXED} from §H5-7 verbatim (DEP_THRESHOLD = 0.5 × clean, NULL_BAND = ±0.20 × clean, GENERIC = both < 0.5). Aggregate across the 3 pinned SI senders via §H5-7 priority `GENERIC > NULL > DEP > MIXED` verbatim.
+- **Readout C — IO−S logit-diff (scalar):** §H5-causal-2-6 classifier verbatim — NULL band `[0.8, 1.2]`, DEP `< 0.5` with CI exclusion, GENERIC `< 0.7` for both ratios.
+
+**70M S-inhibition censoring caveat (pre-data, registered).** Per §H1-C / Phase 2, S-inhibition at 70M step143000 is censored (`max_count = 1` per §S-tau / §S-7). The §H5-5 procedure yields 3 heads at 70M, but magnitudes are at the noise floor; the ±0.20 × clean NULL band becomes effectively absolute (~10⁻³, comparable to bootstrap CI width). Pre-data expectation: Readout B at 70M will classify NULL or MIXED on noise alone regardless of true causal structure. The 70M verdict is therefore **driven primarily by Readouts A and C**; Readout B at 70M is recorded but not load-bearing for the cross-readout aggregate. The verdict parquet records `readout_B_below_noise_floor = True` at 70M.
+
+### §H6-causal-7-agg. Cross-readout aggregate (locked, 5 patterns, OR semantics for B/C)
+
+The three per-readout verdicts combine into a single cross-readout pattern per anchor. **OR semantics for the B/C aggregate are locked here**: `DEP_BC_only` fires when Readout B OR Readout C returns DEP (not require both). Rationale: B and C are converging metrics on the same underlying claim ("does induction-ablation disrupt S-inhibition"); either firing DEP is informative. A future sub-pattern `DEP_BC_strong` could be registered to distinguish AND-DEP from OR-DEP if needed; not registered here pre-data.
+
+| Cross-readout pattern | Trigger | Paper-headline string (pre-committed) |
+|---|---|---|
+| **NULL × NULL × NULL** | A=NULL AND B=NULL AND C=NULL | "Induction heads are NOT a root for either successor or S-inhibition at inference time in Pythia-{size} step143000. Combined with the §H5-causal-family NULL × NULL on the suc → si branch, the ordered temporal emergence (μ_ind < μ_suc < μ_si) is fully decoupled from inference-time architectural causal structure at this anchor. Strong direct-mechanistic refutation of the §H1-C compositional reading; the registered emergence pattern is consistent with convergent training dynamics, not with a forward-pass causal chain." |
+| **DEP on A only** | A=DEP AND B=NULL AND C=NULL | "Induction → successor is a real causal chain at inference time in Pythia-{size} step143000; induction → S-inhibition is not. Combined with the §H5-causal-family suc → si NULL × NULL, the tree story is partially confirmed on the suc branch but cleanly falsified on the si branch. Successor inherits its inference-time computation from induction; S-inhibition does not." |
+| **DEP_BC_only** | A=NULL AND (B=DEP OR C=DEP) (OR semantics, not AND) | "Induction → S-inhibition is a real causal chain at inference time in Pythia-{size} step143000; induction → successor is not. The §H1-C compositional reading is partially confirmed on the si branch. Surprising given the structural-reuse data (ind ∩ suc nearly empty), and supportive of the A12 deep-dive observation that ind ∩ si is non-empty at every size larger than 70M." |
+| **DEP on A AND (B or C)** | A=DEP AND (B=DEP OR C=DEP) | "Induction sits at the root of the full successor / S-inhibition tree at inference time in Pythia-{size} step143000. The temporal emergence ordering ind → {suc, si} reflects a true architectural ordering rooted in induction. The §H5-causal-family suc → si NULL stands — the two branches are parallel descendants of induction, not sequential." |
+| **MIXED / GENERIC anywhere (not matching the four patterns above)** | any readout = GENERIC OR MIXED, and none of the four clean patterns above match | "Per-readout heterogeneous dependence at Pythia-{size} step143000; no global verdict on §H6-causal at this anchor. Reported per-readout with CIs. Readout-sensitivity caveat applies — particularly relevant if Readout C drops generically as observed in §H5-causal-3-record at 1B." |
+
+**Verdict priority** when more than one pattern could match: `GENERIC > DEP-multiple > DEP-one > NULL³ > MIXED`. GENERIC on any readout overrides DEP / NULL (a generic-ablation-sensitive readout cannot distinguish induction-specific from any-head dependence). DEP on multiple readouts outranks DEP on a single readout. NULL × NULL × NULL is the substantive null. MIXED is the catch-all.
+
+**Documentation requirement for K_effective < K_locked (locked, sub-case to the 5-pattern taxonomy).** When `structural_caveat_k_exhausted = True` at a given anchor (i.e., the §H6-2 + §H6-2-bis 3-way exclusion drops K below the soft-floor K_locked but K_effective ≥ 4 so the runner proceeds), the cross-readout aggregate **still maps to one of the existing 5 patterns** (NULL_all, DEP_A_only, DEP_BC_only, DEP_A_and_BC, GENERIC/MIXED) — no new verdict pattern is introduced. However, the paper headline at any size where `structural_caveat_k_exhausted = True` MUST disclose **both K_effective and the structural reason** (the surviving-head count after exclusion plus the named exclusion clauses consumed). Concretely, the headline string is prefixed with: "[K_effective = {K_effective} < K_locked = {K_locked}; structural exhaustion of induction-detected population by §H6-2 + §H6-2-bis exclusions] " before the pre-committed pattern headline above. This is a documentation requirement, not a verdict-modification requirement: the substantive claim is unchanged; only the sample-size disclosure is mandatory. For the 70M pilot anchor under Decision (a), this prefix fires unconditionally on every headline string at 70M.
+
+### §H6-causal-8. (Intentionally vacated — content folded into §H6-causal-7-agg above.)
+
+Subsection number preserved for cross-reference stability with the prior amendment draft; the cross-readout aggregate now lives in §H6-causal-7-agg.
+
+### §H6-causal-9. Bootstrap and statistical machinery (inherited verbatim from §H5-8 / §H5-causal-2-7)
+
+B = 200 paired per-prompt bootstrap replicates per condition, per readout. Pairing preserves the per-prompt correlation between clean and ablated runs (each replicate samples N indices with replacement and computes both clean and ablated metrics on the same indices; N = 200 for Readouts B and C, N = 70 for Readout A). 95% percentile CI on each ratio (Readout A: ratio on aggregated lift_dla; Readout B: per-sender ratio on Δ_h; Readout C: ratio on mean logit-diff). RNG: `numpy.random.default_rng(seed=0)` for ctrl-set selection (§H6-causal-3); `numpy.random.default_rng(seed=1)` for the bootstrap (§H6-causal-9). Both seeds inherited verbatim from §H5-4 / §H5-8 / §H5-causal-2-7.
+
+### §H6-causal-9-compute. Compute estimate and escape hatch (locked)
+
+End-to-end estimate per anchor (all three readouts in one runner pass):
+
+- **Pythia-70M @ step143000:** ~30 min wall time for the main §H6 runner (small model, fast forward passes; Readout B's path-patching is the dominant cost at d_model = 512 but is still cheap). **Plus** the §H6-6 prerequisite step `_run_pythia_70m_anchor_s_inhibition.py` ≈ ~10–15 min wall time (single-condition §S-1 path-patching at 70M).
+- **Pythia-410M @ step143000:** ~5–7 h wall time (path-patching at d_model = 1024 dominates; Readout A's 70 prompts × 3 conditions is negligible incremental cost; Readout C's logit-diff is forward-pass-only ≈ 1–2 min). Conservative upper bound that includes the precompute pass for Readout A's mean-ablation reference, the bootstrap on all three readouts, and BATCH_SIZE = 25 path-patching. K_size = 7 at 410M (vs. 5 prior draft) adds a marginal ~10% to path-patching cost per condition since the mean-ablation hook applies head-mask-wise. The runner records wall time per readout in the verdict parquet.
+
+The §H4-7 / §H5-causal-3-2.8b-9 per-condition wall-time escape hatch applies: **if measured wall time on the first (clean) condition exceeds 2× the projected per-condition cost, the runner pauses for re-grilling**. At 70M the escape threshold is ~20 min; at 410M ~4 h. fp16 fallback inherited from §H4-7. `HF_HUB_OFFLINE = 1` at module top of all runners per §H4-7-supersede / §H5-causal-3-2.8b. Halt-on-escape produces a `pattern = HALT-COMPUTE-OVERRUN` verdict row; no headline assigned; sub-amendment required for re-attempt.
+
+### §H6-causal-10. Conditional extension to {160M, 1B, 2.8B} (procedurally locked; per-size identities deferred to §H6-causal-3 follow-up; K_size pre-locked in §H6-causal-2 table)
+
+Pilot anchors (§H6-causal-1) are 70M + 410M only. Extension to {160M, 1B, 2.8B} is **not pre-registered as compute**; it is registered procedurally with the per-size K values already locked in the §H6-causal-2 table.
+
+- **Trigger (locked, unchanged from prior pass):** pilot results show **DEP on any of the three readouts at 70M OR 410M with 95% CIs supporting the DEP classification under §H6-causal-7 / §H6-causal-7-agg** (ratio < 0.5 with CI excluding 0.5 for Readouts A or C; §H5-7 per-sender DEP aggregation for Readout B; non-NULL substantive pattern under §H6-causal-7-agg). The trigger is **unchanged by Decision (a)**: a DEP verdict at 70M under K_effective = 4 still fires the extension just as a DEP verdict at 410M under K_effective = K_locked = 7 would. At extended sizes (160M, 1B, 2.8B) K_effective is expected to equal K_locked because the induction-detected populations are larger (17 / 9 / 34 heads), but the `structural_caveat_k_exhausted` flag remains available and the K_effective ≥ 4 hard minimum still applies.
+- **Action on trigger:** post `§H6-causal-3` (analog of §H5-causal-3-2.8b) **before any extended-size compute**, with per-size suc, ctrl, SI, and NM identities locked from the sealed parquets and asserted bit-for-bit. Thresholds, ablation, bootstrap, escape hatch, and aggregate inherited verbatim from §H6-causal-1 through §H6-causal-9-compute. Per-size K values (160M: 6, 1B: 5, 2.8B: 12) inherited from the §H6-causal-2 table without re-derivation.
+- **Non-trigger:** extended-size sweep is **not registered**. Pilot result stands as a 2-size finding.
+
+This procedural-lock-with-deferred-numerical-lock pattern mirrors §H5-causal's original 410M-only scope. It is **not** a §H5-causal-2-style "trigger-on-NULL" pattern — §H6-causal-3 is registered to extend a DEP finding to additional sizes. The asymmetry is intentional: a NULL × NULL × NULL pilot result is already a strong universal claim (combined with §H5's NULL × NULL on the suc → si branch, it constitutes full causal-disjointness across the registered tree). A DEP pilot result is locally informative but requires cross-size replication to support a generalized claim.
+
+### §H6-causal-11. Notebook and parquet deliverables (locked)
+
+**Prerequisite step (registered, must complete BEFORE §H6 70M compute):**
+
+0. `notebooks/_run_pythia_70m_anchor_s_inhibition.py` — Pythia-70M §S-8 anchor inspection runner (Strategy B per §H6-6). Loads Pythia-70M-deduped @ step143000, runs §S-1 path-patching at the §S-tau anchor, computes component-DLA per §S-6 / §S-7, persists top-4 NMs to `data/exploration/s_inhibition_pythia_70m_anchor_per_nm.npz` (schema matches the 410M file: keys `nm_layer`, `nm_head`, `nm_dla`, `nm_rank`). Runner writes a `.log` (gitignored, via `tee`). On halt (fewer than 4 NMs above §S-7 floor), writes `s_inhibition_pythia_70m_anchor_per_nm_halt.parquet` with `pattern = HALT-NM-INSUFFICIENT` and §H6 70M compute is paused.
+
+**Main §H6 runners (per anchor; one runner produces the parquets for all three readouts in a single ablation experiment):**
+
+1. `notebooks/_run_phase4_h6_induction_70m_anchor.py` — Pythia-70M runner. Three readouts in one runner pass. Bit-for-bit assertion on locked suc set (derived at runtime from `phase2_successor_sweep.parquet`), locked SI senders (derived from `s_inhibition_pythia_70m_anchor.parquet`), locked NMs (read from `s_inhibition_pythia_70m_anchor_per_nm.npz` produced by deliverable 0 above), and the induction top-K with K_locked = 5 and K_effective = 4 after §H6-2 + §H6-2-bis 3-way exclusion (derived from `induction_full_sweep.parquet` with §H6-causal-2 procedure). Runner sets `structural_caveat_k_exhausted = True` and emits a logged warning per Decision (a). Hard-minimum check `K_effective ≥ 4` is asserted before any forward pass — failure halts with `pattern = HALT-COEXTENSIVE`.
+2. `notebooks/_run_phase4_h6_induction_410m_anchor.py` — Pythia-410M runner. Same three-readouts-in-one-pass structure; bit-for-bit assertion on the §H5-3 / §H5-5 / §H5-6 410M locks plus the runtime-derived induction top-K_size = 7 with §H6-2 + §H6-2-bis exclusions.
+3. Per anchor: three readout parquets (per-prompt long-format), three summary parquets (per-(condition, readout) aggregates with bootstrap CIs), and **one cross-readout verdict parquet** (single row: §H6-causal-7-agg pattern, paper headline, per-readout sub-verdicts, and caveats `n_induction_above_threshold`, `readout_B_below_noise_floor`, `widened_top_k`, `widened_bracket_width`, `n_excluded_suc_receivers`, `n_excluded_nm`, `n_excluded_si_senders`, `K_locked`, `K_effective`, `structural_caveat_k_exhausted` (bool, per size; fires when the §H6-2 + §H6-2-bis 3-way exclusion drops K below the locked floor — pre-data fires at 70M only per Decision (a)), `ablate_kind = "induction_topK"`). Naming: `phase4_h6_induction_{70m,410m}_anchor{,_lift,_logitdiff}{,_summary,_verdict}.parquet` and `phase4_h6_induction_{70m,410m}_anchor_h6causal_verdict.parquet`.
+4. `.log` per runner (gitignored, via `tee`).
+5. `notebooks/_build_causal_dependence.py` + `notebooks/causal_dependence.ipynb` extended in place with a §H6-causal section after §H5-causal-3-2.8b. Per-anchor figure: clean / suc_ablated / ctrl_ablated bar chart with CI bands for each readout. §H5 cells preserved verbatim.
+
+Phase 2, Phase 3, §H4-scaling, §H4-supersede, and §H5-causal-family parquets are NOT modified. The §S-1 path-patching primitive in `src/detectors/s_inhibition.py` is unchanged (the §H5-6 `nm_heads_override` kwarg is reused for §H6 Readout B and for the new 70M anchor npz from deliverable 0).
+
+### §H6-causal-12. Pre-registration form (locked, no deferred numerical lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds — DEP threshold 0.5 with CI exclusion, NULL band [0.8, 1.2] (Readouts A and C) / ±0.20 × clean (Readout B per-sender), GENERIC threshold 0.7 (Readouts A and C) / 0.5 (Readout B per §H5-7), B = 200 bootstrap, seed = 0 (ctrl rng) / seed = 1 (bootstrap rng), bracket_width_init = 0.05 with step 0.025 (§H6-causal-3), per-size K_size from the §H6-causal-2 table (70M=5, 160M=6, 410M=7, 1B=5, 2.8B=12), §H5-7 per-sender aggregation priority `GENERIC > NULL > DEP > MIXED` for Readout B, §H6-causal-7-agg cross-readout priority `GENERIC > DEP-multiple > DEP-one > NULL³ > MIXED`, OR-semantics for the B/C aggregate of DEP_BC_only, escape-hatch threshold 2× per-condition projection, halt-rule 10-rank-widening for §H6-causal-2 (including §H6-2-bis), halt-rule HALT-CTRL-EMPTY for §H6-causal-3, halt-rule HALT-NM-INSUFFICIENT for §H6-causal-6 — are inherited verbatim from §H5-causal / §H5-causal-2 / §H5-3 / §H5-4 / §H5-7 / §H5-causal-2-6 / §H5-8 / §H4-7 / §H4-7-supersede / §S-1 / §S-6 / §S-7 / §S-8, all locked there before this amendment, or locked in the §H6-causal-2 / §H6-causal-2-bis / §H6-causal-7-agg new-lock subsections of this amendment.
+
+The only **§H6-new numerical / procedural locks** are:
+
+- The identity of the ablation-set selection criterion (top-K_size induction by Olsson prefix-match score with NM, SI-sender, and suc-receiver exclusions — §H6-2 + §H6-2-bis).
+- The **per-size K-scaling rule** `K_size = min(20, max(5, ceil(0.33 × n_induction_detected)))` and the resulting locked per-size K_locked values (5 / 6 / 7 / 5 / 12 at 70M / 160M / 410M / 1B / 2.8B). Decision (a) (this revision) registers the 70M K_effective = 4 exception with `structural_caveat_k_exhausted = True`; K_locked is unmodified.
+- The §H6-causal-7-agg cross-readout aggregate taxonomy (5 patterns + priority + OR semantics for B/C) and its 5 pre-committed paper-headline strings, plus the K_effective < K_locked documentation-requirement prefix (this revision).
+- The §H6-causal-6 Strategy-B prerequisite step (new §S-8 anchor inspection at 70M produces `s_inhibition_pythia_70m_anchor_per_nm.npz`).
+- The §H6-causal-10 conditional-extension trigger (DEP on any readout at either pilot anchor with CI support).
+- The **§H6-2 hard-minimum halt-rule** `K_effective ≥ 4` (this revision; replaces the prior 10-rank-widening halt), with the soft-floor K_locked retained as a separate concept. The verdict parquet adds `structural_caveat_k_exhausted` (bool, per size) alongside the existing `widen_depth` / `n_excluded_*` columns.
+
+No deferred lock exists; all locks are committed before any §H6-causal compute. Chronology: §H1-C → §H2 → §H2-9-R → §H3-scale (1B REGR) → §H4-scaling → §H5-causal (NULL @ 410M) → §H5-causal-2 (NULL @ 410M) → §H4-7-supersede (DEFERRED) → §H5-causal-3-record (1B post-data) → §H5-causal-3-2.8b (NULL × NULL @ 2.8B) → §H4-supersede (PASS @ 2.8B) → §writeup-conv → **§H6-causal pilot registered at 70M + 410M**, with §H6-6 prerequisite step run BEFORE 70M compute and extension to {160M, 1B, 2.8B} deferred to §H6-causal-3 → pilot run → verdict in `causal_dependence.ipynb` §H6-causal section.
+
+§H2-8's spec-failure-during-phase policy applies. The §writeup-conv-1 track convention (Track 2 = Causal-disjointness) is canonical for §H6-causal in WRITEUP.md, README.md, paper-draft, and LessWrong-post.
+
+This amendment does NOT modify §H1-C / §H2-5, §H5-causal-family (suc → si branch, NULL × NULL @ 410M & 2.8B preserved), §H3-scale, §H4-7-supersede, §H4-supersede, or §writeup-conv. It extends Track 2 with the un-tested ind → {suc, si} branch, as a pilot before any §H6 compute.
+
+### Revision log (changes from prior draft)
+
+- **Decision 1 — Added §H6-causal-2-bis (suc-receiver-exclusion clause).** New sub-clause immediately after §H6-2 excludes any head also in the locked top-5 successor-receiver set at this anchor from the induction-ablation pool. Prevents contamination of Readout A at 70M (where suc receivers L4H0 / L4H1 sit in adjacent layers to top induction heads and could otherwise be pulled in by §H6-2 exclusion-widening). The exclusion is also propagated to the §H6-causal-3 ctrl candidate pool and the §H6-causal-5 condition definitions, and a new `n_excluded_suc_receivers` field is added to the verdict parquet schema in §H6-11.
+- **Decision 2 — Strategy B for 70M NM identity (§H6-causal-6 rewritten; new prerequisite deliverable in §H6-11).** §H6-causal-6 (renumbered from the prior draft's compute-estimate section, which moved to §H6-causal-9-compute) now registers a new `_run_pythia_70m_anchor_s_inhibition.py` runner as a §H6-11 deliverable-0 prerequisite that produces `s_inhibition_pythia_70m_anchor_per_nm.npz` before any §H6 70M compute, with all numerical thresholds inherited from §S-1 / §S-tau / §S-6 / §S-7 and a HALT-NM-INSUFFICIENT halt rule if fewer than 4 NMs clear the §S-7 floor at 70M.
+- **Decision 3 — OR semantics for B/C aggregate locked in §H6-causal-7-agg.** The cross-readout aggregate (renumbered from §H6-causal-7 to §H6-causal-7-agg; §H6-causal-7 now holds the per-readout verdict bands) explicitly states that `DEP_BC_only` fires when Readout B OR Readout C returns DEP (not AND). A future `DEP_BC_strong` is noted as a possible sub-pattern but is not registered pre-data. The §H6-causal-12 lock-summary lists OR semantics as a new §H6 lock.
+- **Decision 4 — Per-size K-scaling rule replaces fixed K=5 in §H6-causal-2.** §H6-causal-2 now uses `K_size = min(20, max(5, ceil(0.33 × n_induction_detected)))` yielding 70M=5, 160M=6, 410M=7, 1B=5, 2.8B=12. Ctrl set sizes (§H6-causal-3) match K_size per size. The pilot scope (§H6-causal-1) remains 70M + 410M only; pilot uses K=5 at 70M and K=7 at 410M (up from K=5 in prior draft at 410M). §H6-causal-9-compute notes the marginal ~10% path-patching cost increase at 410M from K=5→7. §H6-causal-10 inherits the table verbatim for the extended sizes on trigger.
+
+#### Cross-clause conflicts resolved during revision
+
+- The prior draft's §H6-causal-7 (cross-readout aggregate) and §H6-causal-8 (bootstrap) were renumbered to §H6-causal-7-agg and §H6-causal-9 respectively to make room for the new §H6-causal-6 (Strategy B prerequisite, replacing the old §H6-causal-6 receiver-tail text which is now in §H6-causal-4) and to keep the 12-sub-clause skeleton intact. §H6-causal-8 is intentionally vacated with a pointer to §H6-causal-7-agg to preserve cross-reference stability with any documents (paper-draft, WRITEUP.md) that already cite §H6-causal-7 / §H6-causal-8.
+- The fixed K=5 in the prior draft appeared in §H6-causal-2, §H6-causal-3, §H6-causal-5, §H6-causal-9-compute (compute estimate), §H6-causal-11 (deliverables 1 and 2), and §H6-causal-12 (lock summary); all six references have been updated to `K_size` with the per-size table, with the pilot values (70M=5, 410M=7) explicitly stated at each site.
+- The §H6-causal-12 lock-summary list of "§H6-new numerical / procedural locks" was expanded from 3 items to 5 to include the per-size K rule and the Strategy-B prerequisite step.
+
+### Revision log — final pass (user Decision (a) on 70M K-exhaustion)
+
+This is the **final revision** before commit to HYPOTHESIS.md. Appends to the prior pass; does not modify Decisions 1–4 above.
+
+- **Decision (a) — 70M K_effective = 4 accepted with structural-exhaustion flag (§H6-causal-2 + 70M structural caveat rewritten).** The §H6-2 + §H6-2-bis 3-way exclusion (NM + SI-senders + suc-receivers) on the 6-head induction-detected population at 70M exhausts to 4 surviving heads — K_locked = 5 cannot be reached without violating an exclusion clause. Per Decision (a), the §H6 70M runner proceeds at K_effective = 4 with `structural_caveat_k_exhausted = True` and a logged warning. Readouts A, B, and C remain uncontaminated (all 3 exclusions enforced); only the sample size is reduced. The 70M structural-caveat paragraph in §H6-causal-2 was rewritten to make the K_effective = 4 disclosure explicit (not a footnote).
+- **§H6-2 halt-rule rewritten: hard minimum K_effective ≥ 4 (replaces 10-rank-widening cap).** The new halt-rule is "halt if K_effective < 4 (hard minimum)". The soft floor K_locked = 5 (from the per-size K-scaling table) is preserved as a separate concept. When `K_effective < K_locked` but `K_effective ≥ 4`, the runner proceeds with `structural_caveat_k_exhausted = True`. When `K_effective < 4` the runner halts with `pattern = HALT-COEXTENSIVE`. The 70M K_effective = 4 case meets the hard minimum and **does not** HALT.
+- **§H6-causal-7-agg documentation-requirement sub-case (K_effective < K_locked).** Not a new verdict pattern — the cross-readout aggregate still maps to one of the existing 5 patterns. New requirement: the paper headline at any size where `structural_caveat_k_exhausted = True` MUST be prefixed with `[K_effective = {K_effective} < K_locked = {K_locked}; structural exhaustion of induction-detected population by §H6-2 + §H6-2-bis exclusions]`. For 70M under Decision (a), this prefix fires unconditionally.
+- **§H6-causal-11 verdict-parquet schema addition.** New column `structural_caveat_k_exhausted` (bool, per size) added alongside the existing `widen_depth` and `n_excluded_*` columns; fires when the §H6-2 + §H6-2-bis 3-way exclusion drops K below the locked floor. Pre-data fires at 70M only. Companion columns `K_locked` and `K_effective` (ints) are also explicit in the schema.
+- **§H6-causal-10 conditional-extension trigger unchanged.** Confirmed: DEP on any readout at 70M OR 410M still triggers the {160M, 1B, 2.8B} extension. A DEP verdict at 70M under K_effective = 4 still fires the extension. At extended sizes K_effective is expected to equal K_locked (larger populations: 17 / 9 / 34 heads), but the `structural_caveat_k_exhausted` flag and the K_effective ≥ 4 hard minimum remain available.
+
+#### Cross-clause renumbering required (final pass)
+
+None. The 5 sub-changes integrate into existing sub-clauses §H6-causal-2, §H6-causal-7-agg, §H6-causal-10, §H6-causal-11, and §H6-causal-12 without renumbering. Sub-clause numbering from the prior pass (12-skeleton with §H6-causal-2-bis and the vacated §H6-causal-8) is preserved bit-for-bit. The deliverable-0 prerequisite (§H6-causal-6 / §H6-11 deliverable 0) is unchanged.
+
