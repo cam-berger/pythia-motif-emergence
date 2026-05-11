@@ -1064,3 +1064,203 @@ A future §H4-2 re-attempt at Pythia-2.8B requires either:
 3. **An alternate detector primitive** that doesn't require 4096 patched forward passes per cell at d_model=2560 — this would constitute a substantial methodological change requiring a fresh detector-validation chain (§S-1 through §S-tau analog).
 
 None of these are scheduled at the time of this amendment; the 2.8B leg is parked.
+
+---
+
+## Amendment 2026-05-10 — §H5-causal-3-record: post-data documentation of §H5-causal extension to Pythia-1B
+
+**Posted as a chronology-canonicalization amendment, not a pre-registration.** Pythia-1B step143000 anchor compute under the §H5-causal / §H5-causal-2 protocols was executed in a feature worktree on 2026-05-07 (parquet timestamps confirm). At the time of that run, the canonical `HYPOTHESIS.md` on `main` ended at §H5-causal-2; no amendment registered the 1B extension before the compute. This amendment **records the verdicts as-found** so the canonical pre-reg chain matches the on-disk data, and explicitly marks the 1B result as **post-data documentation** rather than a registered finding. The pre-reg-discipline gap is noted and not papered over.
+
+### §H5-causal-3-record-1. What was run (post-data)
+
+- **Pythia-1B-deduped @ step143000** (head-count regression cell per §H4-1; chosen as the next-available size at which both successor and S-inhibition sweeps were complete).
+- **Metric A (§S-1 path-patching Δ_h)**: protocol identical to §H5-causal at 410m (mean-ablation on `hook_z` per length group, suc set = top-5 successor heads with §H5-3 tie-break, ctrl set = bracket-widening with seed=0 + NM-exclusion clause, NMs pinned to component-DLA top-4 from clean anchor, B=200 paired bootstrap with seed=1).
+- **Metric B (logit-diff at END)**: protocol identical to §H5-causal-2 at 410m.
+- Outputs: `phase4_causal_1b_anchor{,_summary,_verdict,_logitdiff,_logitdiff_summary,_logitdiff_verdict,_h5causal3_verdict}.parquet`.
+
+### §H5-causal-3-record-2. Recorded verdicts
+
+| Cell | Pattern | Key numbers |
+|---|---|---|
+| 1B Metric A (path-patching) | **NULL** (3/3 senders) | suc={L11H6, L14H2, L12H3, L15H7, L15H1}; ctrl={L11H1, L11H3, L11H4, L12H2, L13H0}; SI senders={L8H7, L9H1, L10H4}; NMs={L11H0, L11H5, L14H2, L11H2}; widened_bracket_width=0.125 |
+| 1B Metric B (logit-diff) | **MIXED** | ratio_suc = 0.790, ratio_ctrl = 0.797 — **both ablations drop ~21% similarly**. Read: no successor-specific dependence, but the logit-diff readout becomes generically ablation-sensitive at 1B |
+| 1B cross-metric | **MIXED** | "Heterogeneous Metric A and B verdicts at 1B; no global conclusion on suc → si causal dependence. Reported per-metric with per-sender CIs; deferred for follow-up." |
+
+### §H5-causal-3-record-3. Per-size structural caveat (post-data observation)
+
+At 1B step143000, suc-set head L14H2 is **also** in the pinned NM set L14H2 (dual-role). The §H5-causal protocol's downstream-NM filter (`nl > sl`) excludes a sender's own layer from its Metric A readout, so L14H2 as suc contributes to ablation but its corresponding NM is filtered out of the path-patching scalar — Metric A is structurally insensitive to L14H2's contribution at this checkpoint. Metric B reads at END and is fully sensitive. This caveat is registered here as a **per-size empirical observation**, not a methodological change to §H5-causal / §H5-causal-2.
+
+### §H5-causal-3-record-4. Pre-reg-discipline gap (acknowledged)
+
+The 1B compute was run before any 1B-specific amendment. The cleanest possible chronology would have been: §H5-causal at 410m → §H5-causal-2 at 410m → §H5-causal-3-1b amendment (pre-data) → §H5-causal-3 1B compute. What actually happened: §H5-causal at 410m → §H5-causal-2 at 410m → §H5-causal-3 1B compute on a worktree → §H5-causal-3-record canonicalization (this amendment). The downstream paper section that cites the 1B verdicts MUST disclose this — the 1B verdict is **converging confirmation that survives because the protocols (suc set derivation, ctrl set bracket-widening + seed, NM identification, ablation method, bootstrap) were all locked at 410m before 1B compute, leaving no degrees of freedom**, but it is not a pre-registered confirmation in the same sense as 410m. The same is true for the 1B locked-set assertions in the logitdiff runner: they were locked in the worktree, not in canonical HYPOTHESIS.md, until this amendment.
+
+### §H5-causal-3-record-5. Effect on the §H5-causal narrative
+
+The single-paper-headline claim at 410m was *"S-inhibition's circuit is causally disjoint from successor's at inference time; the temporal emergence ordering ind→suc→si is decoupled from any architectural causal chain."* The 1B result modifies this to: *"At 410m the disjointness holds across both metrics; at 1B Metric A (the §S-1 path-patching readout) replicates the NULL but Metric B (logit-diff) shows generic ablation sensitivity that does not distinguish suc from ctrl. The 410m converging-evidence claim is therefore size-specific; at 1B we have no successor-specific dependence (Metric A holds, ctrl drops the same as suc on Metric B) but cannot make a clean cross-metric NULL claim. Paper must report per-(size, metric) verdicts and explain the 1B Metric B sensitivity."*
+
+This amendment does NOT modify §H5-causal / §H5-causal-2 (the 410m result), §H1-C / §H2-5 (Track 1), the §H3-scale 1B REGR verdict, or the §H4-7-supersede DEFERRED record.
+
+---
+
+## Amendment 2026-05-10 — §H5-causal-3-2.8b: pre-registered extension of §H5-causal / §H5-causal-2 to Pythia-2.8B
+
+**Posted before any Pythia-2.8B-deduped step143000 ablation compute under §H5-causal / §H5-causal-2 protocols.** This amendment registers the extension of both metrics (Metric A = §S-1 path-patching, Metric B = logit-diff) to Pythia-2.8B-deduped step143000. All gate thresholds, ablation methods, bootstrap parameters, and the per-sender / per-metric verdict taxonomies are **inherited verbatim** from §H5-causal and §H5-causal-2. Only per-size derivation rules (suc, ctrl, SI senders, NMs) are stated here, with the per-size sets locked by deterministic re-derivation from sealed input parquets — no cherry-picking degree of freedom remains.
+
+### §H5-causal-3-2.8b-1. Scope (locked)
+
+- **Pythia-2.8B-deduped @ step143000** (head-count tier 1024 per §H4-1 table; this is the largest size in the project).
+- **Both metrics run**: Metric A (§S-1 path-patching Δ_h, per §H5-causal protocol) AND Metric B (logit-diff at END, per §H5-causal-2 protocol).
+- Inputs (all sealed prior to this amendment):
+    - `data/exploration/phase4_2_8b_successor_sweep.parquet` (40-cell sweep, complete per §H4-7-supersede record).
+    - `data/exploration/s_inhibition_pythia_2_8b_anchor.parquet` (full 1024-head Δ_h matrix at step143000, schema `(model, step, layer, head, metric, value)` with `metric="delta_h"` rows).
+    - `data/exploration/s_inhibition_pythia_2_8b_anchor_per_nm.npz` (component-DLA top-4 NMs at clean step143000).
+
+### §H5-causal-3-2.8b-2. Suc set (locked by §H5-3 procedure re-applied at 2.8B)
+
+Top-5 by `score_suc` at (size="2.8b", step=143000), ties broken by layer asc then head asc (verbatim §H5-3 tie-break). Deterministic re-derivation from `phase4_2_8b_successor_sweep.parquet` yields:
+
+```
+suc = [(15, 14), (28, 17), (27, 13), (13, 10), (29, 28)]
+scores = [2.126, 0.726, 0.303, 0.302, 0.281]
+```
+
+All 5 ≥ τ_lift = 0.13496. Runner asserts this list bit-for-bit; mismatch halts per §H2-8 spec-failure policy.
+
+### §H5-causal-3-2.8b-3. Ctrl set (procedure-locked, derived at runtime)
+
+§H5-4 procedure verbatim: random sample (`rng = np.random.default_rng(0)`) from bracket `[τ_lift - bw, τ_lift)` with `bw = 0.05` initial and `+= 0.025` widening step, NM-exclusion clause from §H5-causal-3-7 (worktree precedent) applied to forbid candidates that match any pinned NM. The runner derives the ctrl set at execution time and writes both the final `widened_bracket_width` and the chosen 5 heads to the verdict parquet for audit.
+
+The procedure is fully deterministic given the seed and the sealed input parquet; this amendment locks the *procedure*, not a pre-computed list, mirroring the §H5-causal (Metric A) 410m precedent.
+
+### §H5-causal-3-2.8b-4. SI senders (locked by §H5-5 procedure re-applied at 2.8B)
+
+Top-3 by Δ_h at clean step143000 from `s_inhibition_pythia_2_8b_anchor.parquet` (`metric="delta_h"` rows), ties broken by layer asc then head asc:
+
+```
+si_senders = [(11, 29), (11, 5), (13, 9)]
+scores = [0.148, 0.121, 0.105]
+```
+
+Runner asserts this list bit-for-bit.
+
+### §H5-causal-3-2.8b-5. NM identity (locked by §H5-6 — read from sealed npz)
+
+Component-DLA top-4 from the clean §S-8 2.8B anchor, pinned across all conditions:
+
+```
+nm_heads = [(11, 29), (17, 12), (22, 31), (13, 9)]
+```
+
+Read verbatim from `s_inhibition_pythia_2_8b_anchor_per_nm.npz`. This matches the §H5-causal 410m precedent (NMs read from sealed clean-state npz, not re-derived at ablation time).
+
+### §H5-causal-3-2.8b-6. Per-size structural caveat (pre-data observation, registered)
+
+At 2.8B step143000:
+- **NM-SI overlap**: L11H29 and L13H9 appear in BOTH the SI senders set AND the NM set. The §H5-causal downstream-NM filter (`nl > sl`) handles this:
+    - (11,29) as SI sender → downstream NMs = {(17,12), (22,31)} (2 of 4 NMs)
+    - (11,5) as SI sender → downstream NMs = {(17,12), (22,31), (13,9)} (3 of 4 NMs)
+    - (13,9) as SI sender → downstream NMs = {(17,12), (22,31)} (2 of 4 NMs)
+  All 3 SI senders retain at least 2 downstream NMs for the Metric A readout. Acceptable, but the per-sender readouts use different NM subsets — this is verbatim §H5-causal behaviour, not a deviation.
+- **Suc-NM layer overlap (structural insensitivity for Metric A)**: 3 of 5 suc heads — (27,13), (28,17), (29,28) — sit at layers > max(NM layer)=22, so their ablation does NOT propagate to any pinned NM through the Metric A path-patching readout. Only (15,14) and (13,10) have any downstream NM impact via Metric A. **Metric A is structurally insensitive to (27,13), (28,17), (29,28)**. Metric B reads at END and is fully sensitive to all 5 suc ablations. This is the same caveat A2 flagged for 1B (L14H2 dual-role); it is registered here as a per-size empirical observation, not a methodological change.
+
+### §H5-causal-3-2.8b-7. Gate verdict (inherited verbatim from §H5-7 and §H5-causal-2-6)
+
+- **Metric A**: per-sender classifier {NULL, DEP, GENERIC, MIXED} from §H5-7 (DEP_THRESHOLD=0.5, NULL_BAND=0.20); aggregate via §H5-7 priority `GENERIC > NULL > DEP > MIXED`.
+- **Metric B**: §H5-causal-2-6 classifier {NULL, DEP, GENERIC, MIXED} (NULL band [0.8, 1.2], DEP < 0.5, GENERIC threshold 0.7).
+- **Cross-metric** (mirrors §H5-causal-3-record for 1B): if both metrics NULL → cross-metric NULL (converging-evidence claim). If both DEP → cross-metric DEP. Any mixed → cross-metric MIXED with per-metric breakdown reported.
+
+Paper-headline strings for cross-metric NULL / DEP / MIXED at 2.8B are inherited from §H5-causal-2 / §H5-causal-3-record with size string substituted.
+
+### §H5-causal-3-2.8b-8. Bootstrap and statistical machinery (inherited verbatim from §H5-8)
+
+B = 200 paired per-prompt bootstrap, seed = 1, 95% percentile CI on drop ratio. Identical to 410m and 1B precedents.
+
+### §H5-causal-3-2.8b-9. Compute and scheduling (locked)
+
+- Metric A anchor: BATCH_SIZE = 10 (per §H4-7 precedent for path-patching at d_model = 2560; halved from 1B's 25). Estimated ~5-8 h wall time.
+- Metric B anchor: forward-pass-only, ~30-60 min wall time.
+- fp16 fallback registered per §H4-7 if fp32 OOMs.
+- HF_HUB_OFFLINE = 1 set at module top of all runners per §H4-7 / §H4-7-supersede precedent.
+- Per-cell-cost escape hatch (§H4-7 style) does NOT apply — Metric A here is a single-cell anchor, not a sweep; if it doesn't fit overnight on a single attempt, re-grilling happens at the next session.
+
+### §H5-causal-3-2.8b-10. Notebook and parquet deliverables (locked)
+
+- `notebooks/_run_phase4_causal_2_8b_anchor.py` — Metric A (path-patching) runner; mirrors `_run_phase4_causal_410m_anchor.py`. Reuses §H5-causal helpers (`bootstrap_drop_ratio`, `install_mean_ablation_hooks`, `precompute_mean_z_by_length`, `run_condition`, `classify_per_sender`, `aggregate_verdict`) via import from the 410m source; redefines `select_top_suc` / `select_ctrl_set` / `select_top_si` locally with SIZE="2.8b" / STEP=143000 to avoid the SIZE-closure bug.
+- `notebooks/_run_phase4_causal_2_8b_anchor_logitdiff.py` — Metric B (logit-diff) runner; mirrors `_run_phase4_causal_410m_anchor_logitdiff.py`. Same import + redefinition pattern; bit-for-bit assertion against the locked suc + SI + NM lists (no locked-set assertion on ctrl set, which is procedure-locked).
+- `data/exploration/phase4_causal_2_8b_anchor.parquet` + `_summary` + `_verdict` (Metric A).
+- `data/exploration/phase4_causal_2_8b_anchor_logitdiff.parquet` + `_summary` + `_verdict` (Metric B).
+- `data/exploration/phase4_causal_2_8b_anchor_h5causal3_verdict.parquet` — cross-metric verdict aggregator (analog of the 1B `h5causal3_verdict.parquet`).
+- New section in `causal_dependence.ipynb` reporting per-(size, metric) verdicts side-by-side (410m, 1B, 2.8B).
+
+### §H5-causal-3-2.8b-11. Pre-registration form (locked, no deferred lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds — DEP_THRESHOLD=0.5, NULL_BAND=0.20, NULL_LO/HI=[0.8,1.2], GENERIC_THRESHOLD=0.7, B=200, seed=0 (ctrl rng) / seed=1 (bootstrap rng), τ_lift=0.13496, τ_strict=0.0372, k_suc=5, k_si=3, k_nm=4, bracket_width_init=0.05, bracket_width_step=0.025 — are inherited verbatim from §H5-causal / §H5-causal-2 / §H5-3 / §H5-4 / §H5-5 / §H5-6 / §H5-7 / §H5-8 / §H5-causal-2-6 / §H5-causal-2-7, all locked before any 2.8B ablation compute. The per-size derived sets (suc, SI senders, NMs) above are computed deterministically from sealed pre-existing parquets / npz; the runner asserts bit-for-bit match and halts on mismatch per §H2-8. The §H5-causal-3-2.8b amendment is committed **before any §H5-causal-3-2.8b ablation compute starts**.
+
+A reviewer reading the chronology should see: §H5-causal at 410m → §H5-causal-2 at 410m → §H5-causal-3 1B compute on worktree → §H5-causal-3-record canonicalization (post-data) → **§H5-causal-3-2.8b registers at 2.8B before any 2.8B ablation compute, with locked sets and inherited gate** → 2.8B Metric A + Metric B runs (one overnight session) → §H5-causal-3-2.8b verdict recorded in `causal_dependence.ipynb`. No spec change is anticipated between this amendment and the §H5-causal-3-2.8b verdict.
+
+This amendment does NOT modify §H5-causal / §H5-causal-2 (the 410m result), §H5-causal-3-record (the 1B result), §H1-C / §H2-5, §H3-scale, or §H4-7-supersede.
+
+---
+
+## Amendment 2026-05-10 — §H4-supersede: reduced-grid re-attempt of §H4-scaling at Pythia-2.8B
+
+**Posted after §H4-7-supersede (DEFERRED verdict, 8/40 S-inhibition cells) and before any further Pythia-2.8B S-inhibition compute.** This amendment registers a reduced-grid re-attempt of the §H4-scaling gate at Pythia-2.8B-deduped, scoped to S-inhibition only. It is reference-style; all numerical thresholds are inherited verbatim from §H4-2 and §H4-5, and no further deferred lock is introduced. §H4-supersede follows option 1 of the §H4-7-supersede "Next steps" register: *"a reduced-grid §H4-supersede amendment registered before re-running the sweep, with a smaller cell count (e.g., 10 well-chosen cells in the emergence-likely range step5000–step50000) and a refined per-cell-cost projection."*
+
+**Paper status note (registered here):** §H4-supersede is positioned as a **scaling appendix / secondary result**, not a paper headline. The paper's main claims rest on Track 1 (§H1-C ordering + §H2-9-R reframe) and Track 3 (§H5-causal / §H5-causal-2 410m + §H5-causal-3-record 1B + §H5-causal-3-2.8b 2.8B). If §H4-supersede lands PASS / TIMING-ONLY / COUNT-ONLY / NEITHER, it is reported as an appendix scaling result. **If §H4-supersede DEFERS a second time** under its own per-cell-cost escape hatch (§H4-supersede-4), the paper ships unchanged on Tracks 1 + 3; a fresh §H4-** amendment for any third attempt is permitted but not required for submission. The §H4 leg does NOT block the paper.
+
+§H4-supersede is **S-inhibition only**. The 2.8B induction and successor full-sweep parquets (both 40 cells) are sealed supplementary artifacts per §H4-7-supersede and are not re-run. This amendment does NOT modify §H1-C / §H2-5 (Track 1, complete), the §H3-scale 1B REGR verdict (sealed historical), the §H5-causal / §H5-causal-2 NULL verdicts (Track 3 at 410m, complete), the §H5-causal-3-record 1B verdicts (Track 3 at 1B, canonicalized), the §H5-causal-3-2.8b 2.8B pre-reg (Track 3 at 2.8B, pending), or the §H4-7-supersede DEFERRED record (preserved verbatim). It exits the DEFERRED state for Track 2's 2.8B leg by registering a fresh, in-budget compute plan against the same locked gate predicates.
+
+### §H4-supersede-1. Scope (locked)
+
+The §H4-supersede re-attempt runs on **Pythia-2.8B-deduped** (`EleutherAI/pythia-2.8b-deduped`) at the following **10-cell checkpoint grid**, locked in this amendment before any §H4-supersede compute:
+
+```
+[5000, 7000, 10000, 14000, 20000, 29000, 41000, 49000, 59000, 70000]
+```
+
+Every step is drawn from the §H2-1 40-cell grid, so cross-size comparisons against {70m, 160m, 410m, 1b} are exact-step-matched at those 10 indices. The 10-cell choice is motivated by the emergence-likely range observed in the registered Phase 2 / §H3-scale 1B sweeps: the S-inhibition logistic midpoint μ_si falls between step ~7000 and step ~50000 at all registered sizes, with 410m's μ_si ≈ step 14000–29000 anchoring the upper edge of the (A.timing) reversal-rate test. Steps 5000 / 7000 bracket the early shoulder; 10000–29000 spans the mid-emergence region most informative for the 2.8B vs 410m timing comparison; 41000–70000 covers the late-saturation tail used to fit the upper plateau of the count-vs-step logistic. Pre-step-5000 cells are omitted: §H4-7-supersede recorded 8 cells over steps 0–64 with top Δ_h ≈ 0.0000, and those `.npz` caches are preserved and may be appended to the analysis logistic as fixed pre-emergence anchors if useful for fit stability. The upper bound (step 70000) extends slightly beyond the §H4-7-supersede "step5000–step50000" suggestion to provide one late-saturation cell past 410m's plateau; the cell budget remains 10. Per-cell `.npz` per-prompt caches are written to a new directory `data/exploration/phase4_2_8b_s_inhibition_supersede_per_prompt/`, distinct from the §H4-7-supersede partial-cache directory, so the 8 prior `.npz` files are preserved untouched.
+
+### §H4-supersede-2. Gate-predicate inheritance (verbatim from §H4-2)
+
+The §H4-supersede gate predicates are inherited **verbatim** from §H4-2 — no re-derivation, no weakening, no re-tuning. Both legs must hold for §H4-supersede to PASS:
+
+- **(A.timing) Bootstrap reversal-rate on emergence-step ordering, 2.8B vs 410m.** `P(μ_si^2.8B < μ_si^410m) ≥ 0.95` over B = 1000 paired per-prompt bootstrap replicates. Per §H2-2 machinery: each replicate resamples prompts with replacement, refits the count-vs-step logistic curve at both 2.8B and 410m, and records μ_si^2.8B and μ_si^410m. The reversal-rate is the empirical fraction of replicates in which μ_si^2.8B < μ_si^410m. Threshold ≥ 0.95 corresponds to a one-sided 5% test of the directional timing-axis scaling claim.
+
+- **(A.count) Absolute count threshold breaks 410m saturation.** `max_count_si^2.8B ≥ 5` over the §H4-supersede 10-cell sweep — full-fit regime entry per §H2-3. Max is taken across the 10 cells in §H4-supersede-1; pre-step-5000 cells from the §H4-7-supersede partial cache do not contribute (top Δ_h ≈ 0 there).
+
+### §H4-supersede-3. Failure-mode taxonomy inheritance (verbatim from §H4-5 + §H4-7-supersede DEFERRED)
+
+The §H4-supersede failure-mode taxonomy is inherited **verbatim** from §H4-5 (PASS, TIMING-ONLY, COUNT-ONLY, NEITHER, TOOLING) and §H4-7-supersede (DEFERRED), including the priority ordering:
+
+`DEFERRED > TOOLING > NEITHER > COUNT-ONLY > TIMING-ONLY > PASS`.
+
+The five §H4-5 substantive / tooling patterns and their pre-committed paper headlines apply unchanged to the §H4-supersede verdict. DEFERRED carries over as the highest-priority non-substantive pattern: if the §H4-supersede sweep itself triggers a §H4-7-style per-cell-cost escape hatch (defined per §H4-supersede-4 below), the verdict is DEFERRED a second time and the paper still ships on Tracks 1 + 3 per the paper-status note above; a third attempt is permitted but not required. Silent goalpost-moving remains forbidden by the §H2-9-R / §H3-scale-6 rule.
+
+### §H4-supersede-4. Compute estimate (locked)
+
+End-to-end estimate at Pythia-2.8B-deduped, 10-cell S-inhibition sweep:
+
+- **Per-cell cost baseline**: ~57 min/cell (steady-state across cells 1–8 of the §H4-7-supersede partial sweep, 3389–3401 s wall time). This is the *measured* cost, not the original §H4-7 projection of ~6 min/cell.
+- **Sweep wall time**: 10 × ~57 min ≈ **9.5 h**, rounded to **~10 h** as the overnight budget. Compared to a §H4-scaling full-grid re-attempt at 40 × ~57 min ≈ **~38 h**, §H4-supersede is ~4× cheaper and fits in a single overnight window.
+- **Bootstrap post-processing**: ~2 min (inherited from §H4-7).
+- **Prefetch**: not re-incurred — the 40-checkpoint snapshots from §H4-scaling are on disk and the §H4-supersede grid is a subset. Memory and `BATCH_SIZE=10` constraints inherited from §H4-7 apply unchanged.
+
+The §H4-7 per-cell-cost escape hatch applies to §H4-supersede with the **measured ~57 min/cell as the new baseline**: if §H4-supersede's first sweep cell exceeds ~115 min/cell (2× baseline), the runner pauses for re-grilling. fp16 model fallback if fp32 OOMs is inherited unchanged.
+
+### §H4-supersede-5. Notebook and parquet deliverables (locked)
+
+The §H4-supersede re-attempt produces:
+
+1. `notebooks/_run_phase4_2_8b_s_inhibition_supersede_sweep.py` — 10-cell S-inhibition sweep runner. Mirrors `_run_phase4_2_8b_s_inhibition_sweep.py` but iterates only over the §H4-supersede-1 grid and writes to a distinct parquet path. The original 40-cell runner is preserved unmodified for chronology.
+2. `data/exploration/phase4_2_8b_s_inhibition_supersede_sweep.parquet` — single new parquet, 10 rows. The abandoned `phase4_2_8b_s_inhibition_sweep.parquet` slot remains absent (per §H4-7-supersede: "Sweep parquet was NOT written").
+3. `data/exploration/phase4_2_8b_s_inhibition_supersede_per_prompt/` — new per-cell `.npz` cache directory, 10 files. Distinct from the §H4-7-supersede partial-cache directory, which remains preserved.
+4. `notebooks/_run_phase4_2_8b_supersede_analysis.py` — bootstrap + (A.timing) + (A.count) + §H4-supersede verdict analysis. Mirrors `_run_phase4_2_8b_analysis.py` and writes `phase4_2_8b_h4supersede_verdict.parquet`. Reported as a **scaling-appendix-grade result**, not a paper headline (per the amendment header).
+5. New section in `h1c_ordering_test.ipynb`: §H4-supersede verdict cell, parallel to the existing §H3-scale and §H4-scaling-DEFERRED verdict cells. Loads `phase4_2_8b_h4supersede_verdict.parquet`, displays the (A.timing) and (A.count) leg results, the matched §H4-5 failure-mode pattern (or DEFERRED if the §H4-supersede-4 escape hatch is invoked), and the matched paper headline. The §H4-7-supersede DEFERRED cell is preserved verbatim above the new §H4-supersede cell.
+
+Phase 2, Phase 3 (1B), and §H4-scaling supplementary parquets (induction / successor 2.8B) are NOT modified by this amendment.
+
+### §H4-supersede-6. Pre-registration form (locked, no deferred lock)
+
+This amendment is **reference-style with NO deferred numerical commit**. All numerical thresholds — (A.timing) reversal-rate ≥ 0.95, (A.count) max ≥ 5, τ_strict = 0.0372 (§S-tau), B = 1000, 95% percentile, per-prompt resampling, tiered-censoring full-fit ≥ 5 / marginal 2–4 / censored < 2 — are inherited verbatim from §H4-2 / §H4-3 / §H4-5, locked there before any 2.8B compute and preserved unchanged through §H4-7-supersede. The §H4-supersede-1 10-cell grid, the §H4-supersede-4 ~10 h compute estimate and ~115 min/cell escape-hatch threshold, the §H4-supersede-5 deliverable paths, and the inheritance of §H4-5 + §H4-7-supersede DEFERRED into the §H4-supersede taxonomy are pre-committed in this single amendment **before any §H4-supersede compute starts**.
+
+A reviewer reading the chronology should see: §H1-C → §H2 → §H2-5 PASS (p = 0.00463) → §H2-9-R reframe → §H3-scale (1B REGR) → §H4-scaling registration (2.8B, 40-cell grid) → 2.8B anchor / induction / successor sweeps complete → S-inhibition sweep halts at 8/40 (~57 min/cell vs ~6 min projected) → §H4-7 escape hatch invoked → §H4-7-supersede registered (DEFERRED) → §H5-causal-3-record (1B causal-dependence canonicalization, post-data) → §H5-causal-3-2.8b (2.8B causal-dependence pre-data lock) → **§H4-supersede registers at 2.8B before any §H4-supersede compute**, with the 10-cell grid and the inherited §H4-2 / §H4-5 gate locked here → §H4-supersede sweep runs (~10 h overnight) → §H4-supersede verdict recorded in `notebooks/h1c_ordering_test.ipynb` §H4-supersede section against the verbatim §H4-2 gate. No spec change is anticipated between this amendment and the §H4-supersede verdict.
