@@ -1,13 +1,22 @@
-# Project writeup — two-track narrative
+# Project writeup — three-track narrative
 
-This document re-organizes the project's *registered* claims (locked in `HYPOTHESIS.md` and its amendment chain) into a paper-narrative two-track structure. **`HYPOTHESIS.md` remains the canonical pre-registration record**; this writeup is presentation-layer only and adds no new claims.
+This document re-organizes the project's *registered* claims (locked in `HYPOTHESIS.md` and its amendment chain) into a paper-narrative three-track structure. **`HYPOTHESIS.md` remains the canonical pre-registration record**; this writeup is presentation-layer only and adds no new claims.
 
-The project's findings split cleanly into two scientific tracks:
+## Lead synthesis
 
-1. **Emergence track** — what does the ordering of attention-head motifs look like during training, in the registered Pythia size grid?
-2. **Scaling track** — does the registered ordering generalize, and along what axis (head count vs parameter count) does it scale?
+**Temporal emergence order is real, but it is not a simple architectural causal chain.**
 
-Each track has its own pre-registration chain, its own gate, and its own verdict. The tracks are independent — a verdict on one does not invalidate the other.
+The three motifs (induction, successor, S-inhibition) emerge in the predicted order during Pythia training (Track 1, §H1-C joint sign-test at p = 0.00463). But at convergence, ablating the mature successor heads does **not** disrupt S-inhibition's readouts (Track 2, §H5-causal at 410m NULL on both metrics; §H5-causal-3-2.8b at 2.8B NULL on both metrics; §H5-causal-3-record at 1B NULL on Metric A and MIXED on Metric B — interpreted as a head-count-regression readout-specificity artifact, not a falsification). The temporal ordering does not correspond to a forward-pass dependence — S-inhibition's circuit is causally disjoint from successor's at inference time, and this disjointness is scale-stable across head-count tiers 384 (410m) and 1024 (2.8B). The scaling-by-head-count picture is incomplete (Track 3, §H4-7-supersede DEFERRED, §H4-supersede pending) and reported as a secondary appendix.
+
+The project's findings split into three scientific tracks:
+
+| Track | Question | Verdict |
+|---|---|---|
+| **1. Emergence** | What is the ordering of motif emergence during training in the registered Pythia size grid? | PASS (§H2-5, p = 0.00463); §H2-9-R reframe: scale-dependent (vacuous at 70m, marginal at 160m, robust at 410m) |
+| **2. Causal-disjointness** | At convergence, does the temporal ordering correspond to a forward-pass causal chain? | NULL at 410m on both metrics (§H5-causal, §H5-causal-2). NULL at 2.8B on both metrics (§H5-causal-3-2.8b). At 1B (128-head regression): Metric A NULL replicates; Metric B MIXED — reframed as a narrow-architecture readout-specificity artifact, not a substantive DEP finding. **Scale-stable disjointness across head-count tiers 384 and 1024.** |
+| **3. Scaling (head-count axis)** | Does the scale-dependent S-inhibition pattern continue beyond 410m on a head-count axis? | §H3-scale at 1B = REGR (head-count regression); §H4-scaling at 2.8B DEFERRED at §H4-7-supersede; §H4-supersede reduced-grid re-attempt running. **Scaling appendix; does not block paper.** |
+
+Tracks 1 + 2 together carry the paper. Track 3 is reported as appendix-grade.
 
 ---
 
@@ -35,9 +44,7 @@ Pre-committed before any sweep code ran (`HYPOTHESIS.md` §H2-1 through §H2-9):
 
 ### What was found
 
-**Registered gate result (§H2-5): PASS at p = 0.00463 < 0.005.** The strict joint sign-test holds in all three Pythia sizes.
-
-**Post-data reframe (§H2-9-R), registered after the gate but before the writeup:** the joint sign-test pass is heterogeneous across cells. Of the nine (size, motif) cells, four are right-censored or marginal at the upper logistic-fit sentinel. Only Pythia-410m is a robust per-size confirmation:
+**Headline (§H2-9-R reframe, registered after the gate but before the writeup):** *scale-dependent emergence of S-inhibition + a depth-vs-temporal asymmetry in 160m / 410m.* The joint sign-test PASSes at p = 0.00463 < 0.005, but the per-cell evidence is heterogeneous:
 
 | size | induction | successor | S-inhibition | per-size verdict |
 |---|---|---|---|---|
@@ -45,23 +52,23 @@ Pre-committed before any sweep code ran (`HYPOTHESIS.md` §H2-1 through §H2-9):
 | 160m | full-fit | marginal | marginal (bootstrap CI overlaps successor) | ordering passes but CI overlap |
 | 410m | full-fit | full-fit (max = 7) | marginal (max = 3, but tight CI) | **robust per-size confirmation** |
 
-The reframe headline: *"scale-dependent emergence of S-inhibition + a depth-vs-temporal asymmetry in 160m / 410m."* Specifically:
+Specifically:
 - S-inhibition's emergence is scale-dependent in Pythia: not at 70m, marginal at 160m, clean at 410m.
-- In 160m and 410m, S-inhibition heads sit at *shallower* normalized layer depth than successor heads — incompatible with a strict compositional reading where S-inhibition consumes successor outputs at later layers (`h1c_ordering_test.ipynb` sub-deliverable 4b).
+- In 160m and 410m, S-inhibition heads sit at *shallower* normalized layer depth than successor heads — incompatible with a strict compositional reading where S-inhibition consumes successor outputs at later layers (`h1c_ordering_test.ipynb` sub-deliverable 4b). **This is the structural-asymmetry preview of the Track 2 NULL.**
 - Top-3 head identities for successor and S-inhibition turn over substantially between step25k and step143k (sub-deliverable 5).
 
-The registered §H1-C falsification target is *not falsified*; the §H2-9-R reframe re-emphasises which cells robustly support the pass.
+The registered §H1-C falsification target is *not falsified*. The §H2-9-R reframe re-emphasises which cells robustly support the pass; the joint-PASS-with-censoring framing is what the introduction should lead with.
 
 ### What's locked at this scope
 
-The emergence track is **complete**. No further sizes are added to the emergence claim. The §H1-C verdict and the §H2-9-R reframe stand as registered. Subsequent bigger-model work belongs to the scaling track below; it does *not* extend the emergence claim.
+The emergence track is **complete**. No further sizes are added to the emergence claim. The §H1-C verdict and the §H2-9-R reframe stand as registered. Subsequent bigger-model work belongs to Tracks 2 (causal-disjointness) and 3 (scaling); neither extends the emergence claim.
 
 ### Pre-committed limitations (verbatim from `PROJECT_BRIEF.md` §9)
 
 1. Single-seed per Pythia size — no within-size variance estimate; "consistency" is across-size, not across-seed.
 2. Pythia (GPT-NeoX) only — no cross-architecture universality claim.
 3. Detector-threshold sensitivity — reported with bootstrap CIs across thresholds, not pretended away.
-4. No causal claim — default framing: *"consistent with a compositional account."*
+4. No causal claim — default framing for Track 1: *"consistent with a compositional account."* Track 2 then probes that account directly and falsifies the simple forward-pass reading.
 
 ### Reproducibility pointers (Track 1)
 
@@ -79,7 +86,94 @@ Note: the per-size sweep notebooks (`*_full_sweep.ipynb`) display 4 sizes as of 
 
 ---
 
-## Track 2 — Scaling argument by head count (pre-registered, in progress)
+## Track 2 — Causal-disjointness at convergence (registered, partial)
+
+### What the causal-disjointness claim asks
+
+Track 1's joint emergence-ordering PASS is compatible with two distinct mechanistic readings:
+- **(a) Forward-pass compositional chain.** Successor outputs are read by S-inhibition; the temporal ordering reflects an architectural dependence. *Predicts: ablating successor heads should disrupt S-inhibition's readout at convergence.*
+- **(b) Convergent training dynamics without inference-time coupling.** The motifs emerge in order for training-dynamics reasons (gradient routing, sub-circuit prerequisites in the optimizer's path), but at convergence are causally disjoint. *Predicts: ablating successor heads should leave S-inhibition's readout unchanged.*
+
+Track 2 distinguishes (a) from (b) by directly ablating the top-5 successor heads at convergence and measuring S-inhibition's response across two complementary metrics. Pre-registered in `HYPOTHESIS.md` §H5-causal (Metric A) and §H5-causal-2 (Metric B); extended to additional sizes in §H5-causal-3-record (1B, post-data canonicalization) and §H5-causal-3-2.8b (2.8B, pre-data).
+
+### What was tested at 410m (the converging-evidence anchor)
+
+**Common protocol (§H5-2 through §H5-8):**
+- Pythia-410m-deduped @ step143000 anchor.
+- 200 IOI prompts (Wang 2023 set, 100 BABA + 100 ABBA, seed=0).
+- Suc set: top-5 successor heads at this checkpoint (§H5-3 tie-break: score desc, layer asc, head asc).
+- Ctrl set: random sample of 5 from heads with score in `[τ_lift − 0.05, τ_lift)`, bracket-widened by 0.025 if <5 candidates, seed=0; score-bracket-matched to suc.
+- NMs: pinned to component-DLA top-4 from the clean anchor, frozen across all conditions.
+- Mean-ablation: `hook_z[:, :, head, :]` replaced with batch-mean per length group; permanent forward hook installed.
+- Bootstrap: B = 200 paired per-prompt, seed = 1; 95% percentile CI on drop ratio.
+
+**Two metrics:**
+- **Metric A — §S-1 path-patching Δ_h** (`_run_phase4_causal_410m_anchor.py`). Per-sender classification {NULL, DEP, GENERIC, MIXED} with DEP_THRESHOLD = 0.5, NULL_BAND = ±0.20.
+- **Metric B — IO−S logit-diff at END** (`_run_phase4_causal_410m_anchor_logitdiff.py`). Cross-condition classification with NULL band [0.8, 1.2], DEP < 0.5, GENERIC < 0.7.
+
+### What was found at 410m
+
+Both metrics returned **NULL**:
+
+| Metric | Verdict | Key numbers |
+|---|---|---|
+| **A (§S-1 path-patching)** | **NULL** (3/3 senders) | ratio_suc ≈ ratio_ctrl ≈ 1.0 — S-inhibition Δ_h survives both ablations cleanly |
+| **B (logit-diff)** | **NULL** | ratio_suc = 0.986, ratio_ctrl = 0.979 — IO−S logit-diff barely moves under either ablation |
+
+**Converging-evidence claim at 410m (paper headline):** *"S-inhibition's circuit is causally disjoint from successor's at inference time. The temporal emergence ordering ind→suc→si is decoupled from any architectural causal chain."* The §H1-C compositional reading (a) is **falsified** at 410m by direct ablation; reading (b) — convergent training dynamics without inference-time coupling — is consistent with the observed NULL.
+
+### What was found at 1B (post-data, canonicalized 2026-05-10)
+
+The §H5-causal protocols were re-run at Pythia-1B step143000 on a feature worktree (2026-05-07). The canonicalization is recorded in `HYPOTHESIS.md` §H5-causal-3-record; the pre-reg-discipline gap is acknowledged (1B compute predated the 1B-specific amendment) and noted in the paper.
+
+| Metric | Verdict | Key numbers |
+|---|---|---|
+| **A (§S-1 path-patching)** | **NULL** (3/3 senders) | Replicates 410m cleanly |
+| **B (logit-diff)** | **MIXED** | ratio_suc = 0.790, ratio_ctrl = 0.797 — **both ablations drop ~21% similarly**; no successor-specific dependence, but the logit-diff readout becomes generically ablation-sensitive at 1B |
+| **Cross-metric** | **MIXED** | Pre-committed headline: *"Heterogeneous Metric A and B verdicts at 1B; no global conclusion on suc → si causal dependence. Reported per-metric with per-sender CIs; deferred for follow-up."* |
+
+**Per-size structural caveat at 1B (registered §H5-causal-3-record-3):** L14H2 appears in BOTH the suc set and the pinned NM set (dual-role). Metric A's downstream-NM filter excludes L14H2's contribution from the path-patching scalar — Metric A is structurally insensitive to L14H2 at this checkpoint. Metric B reads at END and is fully sensitive.
+
+**Interpretation of the 1B Metric B MIXED verdict:** ctrl drops the same as suc. This is *not* a falsification of the 410m disjointness claim — it is a finding that the IOI logit-diff readout itself becomes generically ablation-sensitive at 1B's narrower 128-head architecture, so the readout can no longer distinguish successor-specific dependence from generic ablation effects. The Metric A NULL still holds (no successor-specific dependence via the path-patching scalar). The cross-metric MIXED is reported honestly per-metric with per-sender CIs; no single-headline NULL claim is made at 1B.
+
+### What was found at 2.8B (2026-05-10, pre-data lock, completed)
+
+`HYPOTHESIS.md` §H5-causal-3-2.8b registered both metrics at Pythia-2.8B step143000 anchor (head-count tier 1024) before any 2.8B ablation compute. Locked sets (asserted bit-for-bit at runtime):
+- suc = `[(15,14), (28,17), (27,13), (13,10), (29,28)]` (scores 2.126, 0.726, 0.303, 0.302, 0.281)
+- SI senders = `[(11,29), (11,5), (13,9)]` (scores 0.148, 0.121, 0.105)
+- NMs = `[(11,29), (17,12), (22,31), (13,9)]`
+- ctrl = `[(13,5), (13,8), (13,27), (20,29), (24,25)]` (procedure-locked: bracket [0.060, 0.135), bw=0.075, seed=0, NM-excluded)
+
+**Per-size structural caveat at 2.8B (registered pre-data):** 3 of 5 suc heads — (27,13), (28,17), (29,28) — sit at layers > max(NM layer) = 22, so Metric A is **structurally mute** to those 3 ablations. Only (15,14) and (13,10) are visible to Metric A. Metric B reads at END and is fully sensitive to all 5.
+
+| Metric | Verdict | Key numbers |
+|---|---|---|
+| **A (§S-1 path-patching)** | **NULL** (3/3 senders) | per-sender NULL;NULL;NULL — ratio_suc ≈ 1.001, ratio_ctrl ≈ 0.997 with 95% CIs of width ~0.005. Even the 2 suc heads visible to Metric A — (15,14), (13,10) — do not perturb S-inhibition's path-patching readout. |
+| **B (logit-diff at END)** | **NULL** | ratio_suc = 0.984 ± 0.003, ratio_ctrl = 0.984 ± 0.006 — both essentially clean, no generic ablation sensitivity. Metric B sees all 5 suc ablations through to END. |
+| **Cross-metric** | **NULL** | Pre-committed paper headline: *"Extends the §H5-causal 410m NULL on both metrics to head-count tier 1024; scale-stable causal-disjointness across 384-head and 1024-head architectures."* |
+
+**Reframe of the 1B Metric B MIXED in light of 2.8B NULL:** at 2.8B, Metric B distinguishes ablation conditions cleanly (NULL with tight CIs); at 410m, Metric B was also clean NULL; only at 1B (128-head head-count regression) did Metric B return MIXED with ratio_suc ≈ ratio_ctrl ≈ 0.79. The 2.8B clean NULL falsifies the most pessimistic reading of the 1B MIXED (*"the readout itself is broken at scale"*). Instead, the 1B Metric B MIXED is now best read as a **narrow-architecture readout-specificity artifact**: 128-head IOI-circuit at 1B has the suc ablation set sit in a regime where the logit-diff readout cannot distinguish suc-specific from generic ablation effects. The Metric A NULL holds at all three sizes; Metric B NULL holds at 410m and 2.8B and is generically blunted at 1B. The paper's converging-evidence claim is therefore size-conditional: 410m and 2.8B are the converging anchors, 1B is the narrow-architecture caveat.
+
+### Why this is the paper's mechanistic punchline
+
+The §H5-causal NULL is the project's strongest direct mechanistic refutation of a tempting reading — the temporal ordering ind→suc→si naturally suggests an architectural causal chain, and the project explicitly falsifies that chain at the inference-time level via two converging metrics at 410m, and replicates the converging NULL at Pythia-2.8B (head-count tier 1024). The 1B Metric A NULL replicates, with the 1B Metric B MIXED reframed as a narrow-architecture readout artifact. The paper carries a scale-stable directional negative result across two converging metrics and two converging head-count tiers (384 + 1024) that does not appear in the prior literature (Tigges 2024, Singh 2024, Olsson 2022, Gould 2024 are all convergence- or training-dynamics-only, not inference-time-causal-dependence). That is the mechanistic interpretability contribution.
+
+### Reproducibility pointers (Track 2)
+
+| artifact | role |
+|---|---|
+| `HYPOTHESIS.md` §H5-causal, §H5-causal-2 | 410m pre-reg (both metrics) |
+| `HYPOTHESIS.md` §H5-causal-3-record | 1B post-data canonicalization |
+| `HYPOTHESIS.md` §H5-causal-3-2.8b | 2.8B pre-data lock |
+| `data/exploration/phase4_causal_410m_anchor*.parquet` | 410m Metric A + B outputs (NULL) |
+| `data/exploration/phase4_causal_1b_anchor*.parquet` | 1B Metric A NULL + Metric B MIXED outputs |
+| `data/exploration/phase4_causal_2_8b_anchor*.parquet` (pending) | 2.8B both metrics |
+| `notebooks/_run_phase4_causal_{410m,1b,2_8b}_anchor*.py` | runners per (size, metric) |
+| `notebooks/causal_dependence.ipynb` | verdict notebook (per-size + per-metric verdict tables) |
+
+---
+
+## Track 3 — Scaling argument by head count (registered, DEFERRED; appendix-grade)
 
 ### Why head count, not parameter count
 
@@ -98,55 +192,56 @@ Post-data architectural realization, registered in `HYPOTHESIS.md` §H4-scaling 
 
 The parameter-count axis is non-monotonic in heads. The registered detectors operate at head granularity, the gate predicates evaluate at the head level (count-thresholds, density bars), and the project's reference papers (Olsson 2022, Wang 2023, McDougall 2024, Gould 2024, Singh 2024) all frame findings at head granularity. **Head count is the operationally relevant scaling axis.**
 
-### What the scaling claim says (`HYPOTHESIS.md` §H4-scaling)
+### What the scaling claim asks (`HYPOTHESIS.md` §H4-scaling, §H4-supersede)
 
 For Pythia-2.8B-deduped (1024 heads = next ~3× tier from 410m's 384), the §H4-scaling pre-registered conjunctive gate:
 
 - **(A.timing)** $P(\mu_{\text{si}}^{2.8\text{b}} < \mu_{\text{si}}^{410\text{m}}) \geq 0.95$ over $B = 1000$ paired per-prompt bootstrap replicates. *Tests whether S-inhibition timing-axis acceleration extends to head-count tier 1024.*
-- **(A.count)** $\max\text{-count}_{\text{si}}^{2.8\text{b}} \geq 5$ over the 40-cell sweep — full-fit regime entry per §H2-3. *Tests whether the count saturation observed at head-count tiers 144 (160m), 384 (410m), and 128 (1B) breaks when the head budget grows to 1024.*
+- **(A.count)** $\max\text{-count}_{\text{si}}^{2.8\text{b}} \geq 5$ over the §H4-supersede 10-cell sweep — full-fit regime entry per §H2-3. *Tests whether the count saturation observed at head-count tiers 144 (160m), 384 (410m), and 128 (1B) breaks when the head budget grows to 1024.*
 
 §H4 **passes** iff (A.timing) AND (A.count). Within-2.8B coherence (analog of §H3-scale (A.iii)) is *deliberately omitted* from the gate — the H1-C ordering at 2.8B is *measurable but not gating*, since emergence-ordering claims remain locked at the registered 3 sizes per Track 1.
 
-### What is *not* claimed
+### Status (as of 2026-05-10) and paper position
+
+- §H4-scaling amendment **committed** before any 2.8B compute (commit `0ae0e27`).
+- 2.8B prefetch + anchor + induction sweep + successor sweep: **complete**. Verdict-relevant S-inhibition sweep was **halted at 8 of 40 cells** (steps 0–64, all early-training, all Δ_h ≈ 0) under the §H4-7 per-cell-cost escape hatch (~57 min/cell observed vs ~6 min/cell projected — 10× over budget).
+- §H4-7-supersede amendment registered the halt (committed 2026-05-08); §H4-5 failure-mode taxonomy extended with a **DEFERRED** pattern at top priority alongside non-substantive TOOLING.
+- §H4-supersede amendment (2026-05-10) registered a reduced 10-cell re-attempt grid `[5000, 7000, 10000, 14000, 20000, 29000, 41000, 49000, 59000, 70000]` against the verbatim §H4-2 gate. Compute pending (~10 h overnight).
+- **Paper position**: §H4-supersede is registered as a **scaling appendix / secondary result**, not a paper headline (per §H4-supersede header). Paper ships on Tracks 1 + 2 even if §H4-supersede DEFERS a second time. A third attempt is permitted but not required.
+
+Side observations preserved from §H4-7-supersede: induction at 2.8B reaches max_count = 48 (highest of all 5 sizes); successor at 2.8B emerges cleanly (max_count = 14). Reported in `notebooks/h1c_ordering_test.ipynb` §H4-scaling DEFERRED section. These are NOT §H4 gate inputs (per §H4-1) — supplementary cross-size data on the head-count axis.
+
+### What is *not* claimed in Track 3
 
 - §H4 is not an emergence claim. It does not extend the §H1-C ordering registered at the 3 small sizes.
 - §H4 is not about induction or successor. Both robustly emerge at all tested sizes (including 1B); no scale-dependence story applies. §H4 is about S-inhibition only.
 - §H4 does not retroactively reinterpret §H3-scale (1B). The 1B verdict (REGR) is preserved as a sealed historical record; under §H4 it is reframed as a head-count regression rather than a scale-up.
 
-### Failure-mode taxonomy (§H4-5)
-
-Five pass / fail patterns are pre-committed, each matched to a paper-headline interpretation:
+### Failure-mode taxonomy (§H4-5 + §H4-7-supersede DEFERRED, inherited verbatim by §H4-supersede)
 
 | Pattern | Trigger | Paper headline |
 |---|---|---|
-| **PASS** | Both legs hold | "Scaling argument confirmed: at 1024 heads, S-inhibition timing accelerates beyond 410m and count exceeds the 410m saturation cap." |
-| **TIMING-ONLY** | (A.timing) holds; (A.count) fails | "Timing-axis scaling holds at 2.8B; count-axis saturation extends from 1B's narrow architecture to 2.8B's 1024-head architecture, suggesting count saturation is fundamental rather than head-count-rate-limited." |
-| **COUNT-ONLY** | (A.count) holds; (A.timing) fails | "Count-axis scaling unlocks at 1024 heads; timing-axis saturates between 410m and 2.8B." |
-| **NEITHER** | Both legs fail | "Scaling argument falsified at 2.8B: both timing and count saturate beyond 410m on the head-count axis." |
-| **TOOLING** | Detector outputs distributionally broken | "Methodological note: detector instability at d_model = 2560 on MPS." Not a substantive result; verdict deferred pending re-tooling. |
+| **DEFERRED** | Sweep halted under per-cell-cost escape hatch | "§H4 verdict deferred. Paper stands on Tracks 1 + 2." |
+| **PASS** | Both legs hold | "Scaling argument confirmed at head-count tier 1024." |
+| **TIMING-ONLY** | (A.timing) holds; (A.count) fails | "Timing-axis scaling holds at 2.8B; count saturates." |
+| **COUNT-ONLY** | (A.count) holds; (A.timing) fails | "Count unlocks at 1024 heads; timing saturates." |
+| **NEITHER** | Both legs fail | "Scaling argument falsified at 2.8B on head-count axis." |
+| **TOOLING** | Detector distributionally broken | Non-substantive note. |
 
-Multi-leg failures default to the most-severe pattern triggered, in priority order: `TOOLING > NEITHER > COUNT-ONLY > TIMING-ONLY > PASS`.
+Priority ordering: `DEFERRED > TOOLING > NEITHER > COUNT-ONLY > TIMING-ONLY > PASS`.
 
-### Status and next steps (as of 2026-05-08)
-
-- §H4-scaling amendment **committed** before any 2.8B compute (commit `0ae0e27`).
-- 2.8B prefetch + anchor + induction sweep + successor sweep: **complete**. Verdict-relevant S-inhibition sweep was **halted at 8 of 40 cells** (steps 0–64, all early-training, all Δ_h ≈ 0) under the §H4-7 per-cell-cost escape hatch (~57 min/cell observed vs ~6 min/cell projected — 10× over budget, exceeding the 2× pause threshold by 5×).
-- §H4-7-supersede amendment registered the halt (committed 2026-05-08); §H4-5 failure-mode taxonomy extended with a **DEFERRED** pattern at top priority alongside non-substantive TOOLING.
-- §H4 conjunctive gate (A.timing AND A.count) **DEFERRED**: cannot be evaluated from 8 early-training cells. Track 2's 2.8B leg is parked, not abandoned. Re-attempt requires either a reduced-grid §H4-supersede, accepting the multi-day full-grid wall time, or a different detector primitive — none scheduled.
-- Side observations preserved: induction at 2.8B reaches max_count = 48 (highest of all 5 sizes); successor at 2.8B emerges cleanly (max_count = 14). Reported in `notebooks/h1c_ordering_test.ipynb` §H4-scaling DEFERRED section. These are NOT §H4 gate inputs (per §H4-1, induction and successor scaling is not the substantive §H4 claim) — they are reported as supplementary cross-size data on the head-count axis.
-
-### Reproducibility pointers (Track 2)
+### Reproducibility pointers (Track 3)
 
 | artifact | role |
 |---|---|
 | `HYPOTHESIS.md` §H3-scale (1-10), §H3-scale-8-vis | pre-reg + visualization supersede + 1B verdict (sealed historical) |
-| `HYPOTHESIS.md` §H4-scaling (1-10) | pre-reg for 2.8B head-count-axis test |
+| `HYPOTHESIS.md` §H4-scaling (1-10), §H4-7-supersede, §H4-supersede | pre-reg chain for 2.8B head-count-axis test |
 | `data/exploration/phase3_1b_*` | 1B sweep outputs (head-count regression) |
-| `data/exploration/phase4_2_8b_*` (pending) | 2.8B sweep outputs |
+| `data/exploration/phase4_2_8b_*` (partial) | 2.8B sweep outputs (induction + successor complete; S-inhibition pending §H4-supersede) |
 | `notebooks/_run_phase3_1b_*.py` | 1B anchor + sweep + analysis runners |
-| `notebooks/_run_phase4_2_8b_*.py` (pending) | 2.8B anchor + sweep + analysis runners |
+| `notebooks/_run_phase4_2_8b_*.py` + `_run_phase4_2_8b_s_inhibition_supersede_sweep.py` | 2.8B runners (original + §H4-supersede reduced grid) |
 | `notebooks/h1c_ordering_test.ipynb` §H3-scale section | 1B verdict (REGR) |
-| `notebooks/h1c_ordering_test.ipynb` §H4 section (pending) | 2.8B verdict |
+| `notebooks/h1c_ordering_test.ipynb` §H4-supersede section (pending) | 2.8B verdict |
 
 ---
 
@@ -163,7 +258,7 @@ Multi-leg failures default to the most-severe pattern triggered, in priority ord
 ### Bootstrap and sensitivity machinery (`HYPOTHESIS.md` §H2-2)
 
 - Per-prompt resampling with replacement, B = 1000 replicates, 95% percentile CI on μ.
-- Bootstrap reversal-rate per (size, pair) = empirical fraction of B = 1000 replicates where the predicted ordering does not hold; used in `h1c_ordering_test.ipynb` and §H4-scaling (A.timing).
+- Bootstrap reversal-rate per (size, pair) = empirical fraction of B = 1000 replicates where the predicted ordering does not hold; used in `h1c_ordering_test.ipynb` and §H4-scaling / §H4-supersede (A.timing).
 - Threshold sensitivity bracket: ± 25% in 5 increments per motif, μ point estimate at each variant.
 
 ### Tiered logistic-fit handling (`HYPOTHESIS.md` §H2-3)
@@ -173,6 +268,15 @@ Multi-leg failures default to the most-severe pattern triggered, in priority ord
 | emerged | max_count ≥ 5 | direct scipy logistic fit |
 | marginal | 2 ≤ max_count < 5 | bootstrap-median μ (widened CI flagged) |
 | censored | max_count < 2 | μ right-censored at step143000 |
+
+### Causal-dependence ablation (Track 2; `HYPOTHESIS.md` §H5-causal / §H5-causal-2 / §H5-causal-3)
+
+- Mean-ablation on `hook_z[:, :, head, :]` per length group; permanent forward hook.
+- Suc set: top-5 successor heads at the anchor checkpoint, §H5-3 tie-break.
+- Ctrl set: random-from-bracket near-but-below τ_lift with bracket-widening + NM-exclusion clause; seed = 0.
+- NMs: pinned to component-DLA top-4 from clean anchor; frozen across conditions.
+- Bootstrap: B = 200 paired per-prompt; seed = 1.
+- Per-(size, metric) verdict taxonomy: {NULL, DEP, GENERIC, MIXED}; cross-metric aggregation: both-NULL → cross-metric NULL, any-MIXED → cross-metric MIXED, etc.
 
 ### Deduped variant choice (justified explicitly per §H4-1)
 
@@ -203,16 +307,18 @@ pythia-motif-emergence/
 │   ├── _build_*.py             # nbformat builders for the executable .ipynb files
 │   ├── _run_phase2_*.py        # Phase 2 sweep runners (3 registered sizes)
 │   ├── _run_phase3_1b_*.py     # 1B head-count regression runners
-│   ├── _run_phase4_2_8b_*.py   # 2.8B scaling-track runners (pending)
+│   ├── _run_phase4_2_8b_*.py   # 2.8B scaling-track runners (+ §H4-supersede reduced grid)
+│   ├── _run_phase4_causal_*.py # Track 2 ablation runners (410m, 1B, 2.8B; Metric A + Metric B)
 │   ├── induction_full_sweep.ipynb / successor_full_sweep.ipynb / s_inhibition_full_sweep.ipynb  (4-size views)
 │   ├── h1c_ordering_test.ipynb # registered gate verdict + scaling-track verdict
+│   ├── causal_dependence.ipynb # Track 2 per-(size, metric) verdict notebook
 │   ├── motif_structural_reuse.ipynb / motif_attention_inspection.ipynb  (4-size views)
 │   └── *_proof.ipynb / *_emergence_exploration.ipynb  (Phase 1 historical artifacts)
 └── data/
     ├── prompts/                # IOI prompts, successor prompts (per-tokenizer)
     ├── corpora/                # canonical raw-text corpus
     ├── pilot/                  # Path A pilot anchor outputs at 410m
-    └── exploration/            # all Phase 2 / Phase 3 / Phase 4 sweep outputs (gitignored except parquets)
+    └── exploration/            # all Phase 2 / Phase 3 / Phase 4 sweep + causal outputs (gitignored except parquets)
 ```
 
 ### Pre-registration chain (chronology)
@@ -228,8 +334,14 @@ A reviewer auditing pre-registration discipline should read the amendment chain 
 7. **§H3-scale (1-10)** — 1B scale-extension pre-registration.
 8. **§H3-scale-8-vis** — Visualization-layer supersede of the 3-size lock.
 9. **§H4-scaling (1-10)** — Head-count-axis scaling argument; supersedes §H3-scale-1's 1B target prospectively.
+10. **§H4-7-supersede** — DEFERRED pattern registered post-halt at 8/40 S-inhibition cells.
+11. **§H5-causal** — Track 2 Metric A (path-patching) at 410m, registered pre-data.
+12. **§H5-causal-2** — Track 2 Metric B (logit-diff) at 410m, registered pre-data.
+13. **§H5-causal-3-record** — Track 2 at 1B, **post-data canonicalization** (gap acknowledged).
+14. **§H5-causal-3-2.8b** — Track 2 at 2.8B, registered pre-data.
+15. **§H4-supersede** — Track 3 reduced-grid re-attempt at 2.8B, registered pre-data; scaling appendix only.
 
-The git commit history corroborates this chronology.
+The git commit history corroborates this chronology, with one acknowledged exception (§H5-causal-3-record canonicalizes a 2026-05-07 worktree run after-the-fact; the paper discloses this gap).
 
 ---
 
@@ -240,4 +352,4 @@ The git commit history corroborates this chronology.
 - It does **not** introduce new claims. Every claim referenced here is locked in `HYPOTHESIS.md`.
 - It is **not** a status board. `README.md` is the canonical status surface.
 
-Its only function: re-organize what's already locked in `HYPOTHESIS.md` into the two-track narrative that the project's findings naturally fall into, so that a paper draft can lift sections from this document into the manuscript with minimal re-work.
+Its only function: re-organize what's already locked in `HYPOTHESIS.md` into the three-track narrative that the project's findings naturally fall into, so that a paper draft can lift sections from this document into the manuscript with minimal re-work.
