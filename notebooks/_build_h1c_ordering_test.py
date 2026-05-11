@@ -1079,6 +1079,126 @@ def build() -> nbf.NotebookNode:
             "    suc_max = int(mu_partial[(mu_partial['size']==s) & (mu_partial['motif']=='successor')]['max_count'].iloc[0])\n"
             "    print(f'{s:>5s}  {th:>5d}  {ind_max:>4d}  {ind_max/th*100:>4.1f}%  {suc_max:>4d}  {suc_max/th*100:>4.1f}%')"
         ),
+        # ============================================================
+        # §H4-supersede PASS verdict (Phase 4 2.8B reduced-grid re-attempt)
+        # Per §H4-supersede committed 2026-05-10; verdict computed 2026-05-11.
+        # The §H4-scaling DEFERRED section above is preserved verbatim for
+        # chronology — §H4-supersede exits the DEFERRED state via the
+        # registered reduced-grid path.
+        # ============================================================
+        md(
+            "---\n"
+            "\n"
+            "## §H4-supersede verdict — Pythia-2.8B reduced-grid re-attempt (PASS)\n"
+            "\n"
+            "Pre-registered in HYPOTHESIS.md §H4-supersede (committed before any §H4-supersede "
+            "compute, 2026-05-10). 10-cell S-inhibition sweep on the emergence-likely range "
+            "`[5000, 7000, 10000, 14000, 20000, 29000, 41000, 49000, 59000, 70000]`. Gate "
+            "predicates inherited **verbatim** from §H4-2 — (A.timing) reversal-rate ≥ 0.95 "
+            "AND (A.count) max_count_si^2.8B ≥ 5. Verdict taxonomy inherited verbatim from "
+            "§H4-5 + §H4-7-supersede DEFERRED:\n"
+            "\n"
+            "`DEFERRED > TOOLING > NEITHER > COUNT-ONLY > TIMING-ONLY > PASS`."
+        ),
+        code(
+            "verdict_supersede = pd.read_parquet(\n"
+            "    REPO / 'data' / 'exploration' / 'phase4_2_8b_h4supersede_verdict.parquet'\n"
+            ").iloc[0]\n"
+            "boot_mu = pd.read_parquet(\n"
+            "    REPO / 'data' / 'exploration' / 'phase4_2_8b_h4supersede_bootstrap_mu.parquet'\n"
+            ")\n"
+            "\n"
+            "print('=' * 78)\n"
+            "print(f'  §H4-supersede VERDICT  →  {verdict_supersede[\"pattern\"]}')\n"
+            "print('=' * 78)\n"
+            "print(f'  (A.count)  max_count_si^2.8B = {int(verdict_supersede[\"max_count_28b\"])}  (gate ≥ {int(verdict_supersede[\"a_count_gate\"])})  → '\n"
+            "      f'{\"PASS\" if verdict_supersede[\"a_count_pass\"] else \"FAIL\"}')\n"
+            "print(f'  (A.timing) reversal_rate     = {verdict_supersede[\"reversal_rate\"]:.4f}  '\n"
+            "      f'(gate ≥ {verdict_supersede[\"a_timing_gate\"]:.2f})  → '\n"
+            "      f'{\"PASS\" if verdict_supersede[\"a_timing_pass\"] else \"FAIL\"}')\n"
+            "print()\n"
+            "print(f'  μ_si^2.8B (point) = {verdict_supersede[\"mu_28b_point\"]:.1f}')\n"
+            "print(f'  μ_si^410m (point) = {verdict_supersede[\"mu_410m_point\"]:.1f}')\n"
+            "print(f'  Speedup factor    = {verdict_supersede[\"mu_410m_point\"]/verdict_supersede[\"mu_28b_point\"]:.2f}x')\n"
+            "print(f'  Bootstrap         = B={int(verdict_supersede[\"B\"])}, valid={int(verdict_supersede[\"valid\"])}, '\n"
+            "      f'fit_fail (2.8B={int(verdict_supersede[\"fit_fail_28b\"])}, 410m={int(verdict_supersede[\"fit_fail_410m\"])})')\n"
+            "print()\n"
+            "print('  Paper headline:')\n"
+            "for line in str(verdict_supersede['paper_headline']).split('. '):\n"
+            "    if line.strip(): print(f'    {line.strip()}.')"
+        ),
+        md(
+            "### §H4-supersede 2.8B count-vs-step trajectory (10 cells)"
+        ),
+        code(
+            "df_supersede = pd.read_parquet(\n"
+            "    REPO / 'data' / 'exploration' / 'phase4_2_8b_s_inhibition_supersede_sweep.parquet'\n"
+            ")\n"
+            "TAU_STRICT_28B = 0.0372\n"
+            "counts_28b = (df_supersede[df_supersede.score >= TAU_STRICT_28B]\n"
+            "              .groupby('step').size()\n"
+            "              .reindex(sorted(df_supersede.step.unique()), fill_value=0))\n"
+            "\n"
+            "print('§H4-supersede 2.8B S-inhibition count vs step (threshold τ_strict = 0.0372):')\n"
+            "for step, c in counts_28b.items():\n"
+            "    top = df_supersede[df_supersede.step==step].score.max()\n"
+            "    bar = '█' * int(c)\n"
+            "    print(f'  step{int(step):6d}: count={c:3d}  top Δ_h={top:+.4f}  {bar}')"
+        ),
+        md(
+            "### Bootstrap μ distribution (paired 2.8B vs 410m, B = 1000)"
+        ),
+        code(
+            "fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))\n"
+            "\n"
+            "ax = axes[0]\n"
+            "ax.hist(boot_mu['mu_28b'].dropna(), bins=40, alpha=0.6, label='2.8B', color='tab:blue')\n"
+            "ax.hist(boot_mu['mu_410m'].dropna(), bins=40, alpha=0.6, label='410m', color='tab:orange')\n"
+            "ax.set_xscale('log')\n"
+            "ax.set_xlabel('μ_si (training step, log scale)')\n"
+            "ax.set_ylabel('bootstrap replicate count')\n"
+            "ax.set_title('Bootstrap μ_si distributions — paired B=1000')\n"
+            "ax.legend(loc='best')\n"
+            "ax.grid(alpha=0.3)\n"
+            "\n"
+            "ax = axes[1]\n"
+            "delta = boot_mu['mu_410m'] - boot_mu['mu_28b']\n"
+            "ax.hist(delta.dropna(), bins=40, color='tab:green', alpha=0.7)\n"
+            "ax.axvline(0, color='red', lw=1.2, ls='--', label='delta=0 (no acceleration)')\n"
+            "ax.set_xlabel('μ_si^410m − μ_si^2.8B (training steps)')\n"
+            "ax.set_ylabel('bootstrap replicate count')\n"
+            "ax.set_title(f'Paired delta — reversal rate = {float(verdict_supersede[\"reversal_rate\"]):.3f}')\n"
+            "ax.legend(loc='best')\n"
+            "ax.grid(alpha=0.3)\n"
+            "\n"
+            "fig.suptitle(f'§H4-supersede (A.timing) bootstrap — verdict: {verdict_supersede[\"pattern\"]}', y=1.02)\n"
+            "plt.tight_layout()\n"
+            "plt.show()\n"
+            "\n"
+            "print(f'Reversal rate (P(μ_si^2.8B < μ_si^410m)) = {float(verdict_supersede[\"reversal_rate\"]):.4f}')\n"
+            "print(f'Gate: ≥ 0.95 → {\"PASS\" if verdict_supersede[\"a_timing_pass\"] else \"FAIL\"}')"
+        ),
+        md(
+            "### What this means for the paper\n"
+            "\n"
+            "With §H4-supersede PASS, the project now has three converging tracks (Tracks 1 + "
+            "2 + 3) all hitting their pre-registered targets:\n"
+            "\n"
+            "- **Track 1 (§H1-C):** emergence ordering ind→suc→si holds jointly across 3 "
+            "Pythia sizes (p = 0.00463), with §H2-9-R reframe to scale-dependent S-inhibition.\n"
+            "- **Track 2 (§H5-causal + §H5-causal-2 + §H5-causal-3):** causal-disjointness of "
+            "successor and S-inhibition at inference time is NULL on both metrics at 410m (384 "
+            "heads), Metric A NULL at 1B (128 heads, head-count regression — Metric B MIXED "
+            "interpreted as narrow-architecture readout artifact), and NULL on both metrics at "
+            "2.8B (1024 heads). Scale-stable across head-count tiers 384 + 1024.\n"
+            "- **Track 3 (§H4-supersede):** head-count-axis scaling of S-inhibition timing + "
+            "count PASSES at 2.8B. μ_si accelerates by ~2.7× from 410m's ~24k to 2.8B's ~9k, "
+            "and max_count crosses 5 at step 29k.\n"
+            "\n"
+            "The §H4-7-supersede DEFERRED chronology (preserved verbatim above) is part of "
+            "the audit trail. §H4-supersede exits the DEFERRED state via the registered "
+            "reduced-grid path."
+        ),
     ]
     return nb
 
