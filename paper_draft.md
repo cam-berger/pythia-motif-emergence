@@ -253,6 +253,8 @@ The cleanest H1-C-confirming size is also the cleanest *structurally separated* 
 
 The two readings consistent with this pattern are: (i) larger models have more attention heads to distribute roles across, so disjoint allocation is a capacity effect; or (ii) larger models develop *cleaner specialization* during training. The data here cannot distinguish the two; we flag this for future work in §6.
 
+**Cross-size, cross-step structural-reuse extension.** Beyond the step-143000 top-5 view, we compute the full (size, step) overlap trajectory for the three pairwise intersections at the *detection-population* level (all heads above their motif's locked threshold, not just top-5). The successor–S-inhibition pair is structurally disjoint across essentially every cell: 0/40 at 70M, 1/40 at 160M (head (8,9) at step 143000 only), 2/40 at 410M (head (13,13) at steps 41,000 and 70,000), 0/40 at 1B, 1/10 at 2.8B (head (13,8) at step 29,000 only). The induction–S-inhibition pair, by contrast, has a small recurring overlap at the larger sizes: (17,10) at 410M IS a Name Mover; (8,7) at 1B IS the top SI sender; (13,9) at 2.8B is induction-detected AND SI sender AND NM — a triple-role head. **At every §H5 anchor (410M / 1B / 2.8B step 143000), the locked top-5 successor heads and the SI-detected population intersect on zero heads; the locked top-3 SI senders and the suc-detected population also intersect on zero heads.** Track 2's NULL × NULL is therefore not "ablation-resistant" — it is the natural readout when two structurally disjoint populations are independently probed. Critically, the 1B Metric B MIXED (§4.7) cannot be a structural-reuse artifact: 1B has zero suc ∩ si overlap across all 40 steps, so the readout's loss of suc-specificity at 1B is an architecture property, not a sign that overlap heads are confounding the ablation. Full per-(size, step) tables in Appendix I.
+
 ### 4.6 Track 2 — §H5-causal at Pythia-410M: NULL × NULL on two converging metrics
 
 §4.3's depth-temporal asymmetry already suggests the §H1-C compositional reading is in trouble — successor heads at 410M sit at normalized depth 0.96, far *below* (in the forward pass, after) the S-inhibition heads at depth 0.52. But that observation is structural, not mechanistic: it shows the successor → S-inhibition compositional chain *cannot* be implemented as a clean layer-cascade in 410M, but does not rule out an indirect routing. §4.6–§4.8 test the chain directly by ablation.
@@ -638,5 +640,49 @@ We do not claim the absence of copy-suppression in Pythia at *all* scales — we
 | 410M | (22,6), (22,2), (20,4), (22,10), (12,8) | (12,12), (13,13), (14,0) | (12,12), (17,10), (14,0), (20,15) | (17,12), (20,6), (22,11), (23,10), (23,13) | 0.10 |
 | 1B | (11,6), (14,2), (12,3), (15,7), (15,1) | (8,7), (9,1), (10,4) | (11,0), (11,5), (14,2), (11,2) | (11,1), (11,3), (11,4), (12,2), (13,0) | 0.125 |
 | 2.8B | (15,14), (28,17), (27,13), (13,10), (29,28) | (11,29), (11,5), (13,9) | (11,29), (17,12), (22,31), (13,9) | (13,5), (13,8), (13,27), (20,29), (24,25) | 0.075 |
+
+## I. Structural-reuse deep dive (cross-size, cross-step)
+
+Extends §4.5's step-143000 top-5 view to the full (size, step) sweep at the detection-population level. For each cell, we count heads above each motif's locked threshold (induction > 0.30; successor lift_dla ≥ τ_lift = 0.13496; S-inhibition Δ_h ≥ τ_strict = 0.0372) and intersect the populations.
+
+**Table I.1 — successor ∩ S-inhibition overlap across training, per size:**
+
+| Size | Steps with suc ∩ si > 0 | Total steps | Heads ever in overlap (across all steps) |
+|---|---|---|---|
+| 70M | 0 | 40 | — |
+| 160M | 1 | 40 | (8, 9) [step 143000 only] |
+| 410M | 2 | 40 | (13, 13) [steps 41,000 and 70,000] |
+| 1B | **0** | 40 | — |
+| 2.8B | 1 | 10 | (13, 8) [step 29,000 only] |
+
+The suc–SI populations are structurally disjoint across every (size, step) cell. The single overlap events at 160M / 410M / 2.8B are isolated single-head, single-step events that do not coincide with any §H5 anchor.
+
+**Table I.2 — induction ∩ S-inhibition overlap across training, per size:**
+
+| Size | Steps with ind ∩ si > 0 | Total steps | Top recurring head |
+|---|---|---|---|
+| 70M | 0 | 40 | — |
+| 160M | 0 | 40 | — |
+| 410M | 3 | 40 | (17, 10) — IS a §H5 Name Mover |
+| 1B | 6 | 40 | (8, 7) — IS the top §H5-causal-3-record SI sender |
+| 2.8B | 5 | 10 | (13, 9) — triple-role: induction + SI sender + NM |
+
+Induction and S-inhibition share head populations at the larger sizes; the recurring overlap heads frequently serve as Name Movers or SI senders in the §H5 protocol. This is mechanistically expected: Name Movers' QK circuit attends from END to the IO position, which is a previous-occurrence-of-the-co-referent-name token — a QK pattern closely related to Olsson induction.
+
+**Table I.3 — Cross-reference of locked §H5 sets with detector populations at the §H5 anchors:**
+
+| Cell | suc_top5 ∩ si_pop | si_top3 ∩ suc_pop | si_top3 ∩ nm_top4 | ind_pop ∩ si_top3 | ind_pop ∩ nm_top4 |
+|---|---|---|---|---|---|
+| 410M step 143000 | [] | [] | (12,12), (14,0) | [] | (17,10) |
+| 1B step 143000 | [] | [] | [] | [] | (11,5) |
+| 2.8B step 143000 | [] | [] | (11,29), (13,9) | (13,9) | (13,9), (17,12) |
+
+At every §H5 anchor: zero overlap between the locked-ablated suc top-5 and the SI-detected population; zero overlap between the locked-readout SI top-3 and the suc-detected population. The Track 2 NULL × NULL is the expected readout when two structurally disjoint populations are independently probed.
+
+**Mechanistic reading.** Successor's OV writes the next-ordinal-direction; S-inhibition's OV writes a duplicate-name suppression signal that NMs consume to disambiguate IO from S. The two output directions are unrelated, so a single head's OV cannot productively write both simultaneously. The single fleeting suc ∩ si overlap at 410M (head (13,13) at steps 41k / 70k, suc-detected briefly during mid-training while it is also SI-detected) is interesting as a transient phenomenon — (13,13) is the second-ranked §H5 SI sender by step 143000, so it is doing SI work at convergence; the brief crossing of τ_lift in mid-training is consistent with role-distribution settling. Induction-and-SI overlap, by contrast, is robust at the larger sizes because the NM circuit implements a QK pattern that the Olsson detector also fires on (attend from END to position-after-previous-occurrence-of-the-co-referent-name).
+
+**Connecting to the §H5-causal-3-record 1B Metric B MIXED.** At Pythia-1B (the head-count regression with 128 heads), suc ∩ si has *zero* overlap across all 40 steps (Table I.1). If the 1B Metric B MIXED were a structural-reuse artifact — i.e., the suc ablation accidentally hit an SI-detected head — the structural data would show that overlap. It does not. The MIXED is therefore a property of 1B's narrow architecture making the IO−S logit-diff readout generically ablation-sensitive, not a hidden structural reuse. This is the §writeup-conv-2 reframe restated mechanistically.
+
+**Data product.** `data/exploration/structural_reuse_deep_dive.parquet` (170 rows): per-(size, step) overlap counts for all three pairwise intersections + triple intersection. Pure analytical extraction; no new compute.
 
 
