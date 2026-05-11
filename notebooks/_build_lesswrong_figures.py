@@ -271,45 +271,72 @@ def f4_head_count_axis() -> None:
         ss_tot = float(np.sum((ys - ys.mean()) ** 2))
         return 1.0 - ss_res / ss_tot if ss_tot > 0 else float("nan")
 
+    # Per-motif fit-exclusion policy: 1B is a §H4-1 head-count regression
+    # (128 heads, less than 410M's 384). Successor's count at 1B sits dramatically
+    # above the trend defined by the other four sizes — including 1B in the fit
+    # destroys R² (~0.30 on both poly1 and poly2). Excluding 1B from the
+    # successor fit isolates the head-count-axis trend across the four
+    # architectural scale-ups (70M, 160M, 410M, 2.8B). The 1B point is still
+    # rendered (hollow marker) so the regression is visible.
+    EXCLUDE_FROM_FIT = {"successor": ["1b"], "induction": []}
+
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.3))
     for ax, (name, counts_map, color) in zip(
         axes,
         [("induction", ind_counts, "tab:blue"), ("successor", suc_counts, "tab:green")],
     ):
-        ys = np.array([counts_map[s] for s in ordered], dtype=float)
-        c1 = np.polyfit(xs, ys, 1)
-        c2 = np.polyfit(xs, ys, 2)
-        y1p = np.polyval(c1, xs)
-        y2p = np.polyval(c2, xs)
-        r2_1, r2_2 = r2(ys, y1p), r2(ys, y2p)
+        ys_all = np.array([counts_map[s] for s in ordered], dtype=float)
+        excluded = EXCLUDE_FROM_FIT.get(name, [])
+        keep_mask = np.array([s not in excluded for s in ordered])
+        xs_fit = xs[keep_mask]
+        ys_fit = ys_all[keep_mask]
+
+        c1 = np.polyfit(xs_fit, ys_fit, 1)
+        c2 = np.polyfit(xs_fit, ys_fit, 2)
+        y1p = np.polyval(c1, xs_fit)
+        y2p = np.polyval(c2, xs_fit)
+        r2_1, r2_2 = r2(ys_fit, y1p), r2(ys_fit, y2p)
         fit_x = np.linspace(0, xs.max() * 1.05, 200)
         y1x = np.polyval(c1, fit_x)
         y2x = np.polyval(c2, fit_x)
 
-        ax.scatter(xs, ys, s=85, color=color, zorder=3, label=f"{name} max_count")
-        for s, x, y in zip(ordered, xs, ys):
+        # Plot points: filled for fit-included, hollow with outline for fit-excluded.
+        for s, x, y in zip(ordered, xs, ys_all):
+            if s in excluded:
+                ax.scatter([x], [y], s=110, facecolors="white", edgecolors=color,
+                           linewidths=2, zorder=3,
+                           label=f"{s} (excluded: §H4-1 head-count regression)")
+            else:
+                ax.scatter([x], [y], s=85, color=color, zorder=3,
+                           label=f"{name} max_count" if s == ordered[0] else None)
             ax.annotate(s, (x, y), textcoords="offset points", xytext=(7, 4), fontsize=9)
-        if r2_2 > r2_1 + 0.01:
+
+        n_pts = int(keep_mask.sum())
+        if r2_2 > r2_1 + 0.005:
             ax.plot(fit_x, y2x, "--", color=color, alpha=0.85,
-                    label=f"poly2 fit: R² = {r2_2:.3f}  (linear R² = {r2_1:.3f})", zorder=2)
+                    label=f"poly2 fit ({n_pts} pts): R² = {r2_2:.3f}  (linear R² = {r2_1:.3f})",
+                    zorder=2)
             ax.plot(fit_x, y1x, ":", color=color, alpha=0.35,
                     label="linear (reference)", zorder=1)
         else:
             ax.plot(fit_x, y1x, "--", color=color, alpha=0.85,
-                    label=f"linear fit: R² = {r2_1:.3f}  (poly2 R² = {r2_2:.3f})", zorder=2)
+                    label=f"linear fit ({n_pts} pts): R² = {r2_1:.3f}  (poly2 R² = {r2_2:.3f})",
+                    zorder=2)
             ax.plot(fit_x, y2x, ":", color=color, alpha=0.35,
                     label="poly2 (reference)", zorder=1)
         ax.set_xlabel("total attention heads per model")
         ax.set_ylabel(f"max_count of {name} heads above threshold")
-        ax.set_title(f"{name} max_count vs head count (5 Pythia sizes)")
+        title_suffix = f"({n_pts}-pt fit; {len(excluded)} excluded)" if excluded else "(5-pt fit)"
+        ax.set_title(f"{name} max_count vs head count {title_suffix}")
         ax.grid(alpha=0.3)
-        ax.legend(fontsize=9, loc="upper left")
-        print(f"  {name}: poly1 R² = {r2_1:.4f}  poly2 R² = {r2_2:.4f}  "
-              f"(winner = {'poly2' if r2_2 > r2_1 + 0.01 else 'linear'})")
+        ax.legend(fontsize=8, loc="upper left")
+        excl_str = f"  [excluded: {excluded}]" if excluded else ""
+        print(f"  {name} ({n_pts}-pt fit): poly1 R² = {r2_1:.4f}  poly2 R² = {r2_2:.4f}  "
+              f"(winner = {'poly2' if r2_2 > r2_1 + 0.005 else 'linear'}){excl_str}")
 
     fig.suptitle(
         "Total attention heads vs detected motif heads — §H4-1 head-count axis\n"
-        "(1B has 128 heads, fewer than 410M's 384 → head-count regression, not parameter-axis scale-up)",
+        "(successor fit excludes 1B per §H4-1 head-count-regression policy; 1B rendered hollow)",
         y=1.05,
     )
     plt.tight_layout()
