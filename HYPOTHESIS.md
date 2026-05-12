@@ -1611,3 +1611,52 @@ No new figure is committed by the runner; the verdict notebook (`causal_dependen
 ### §H6-causal-ksweep-7. Pre-registration form (locked)
 
 This amendment is reference-style; all thresholds inherited verbatim from §H6-causal / §H5-causal / §H5-causal-2 / §SU-1b. The only locks introduced here are: (a) the K set {5, 10, 15, 19}; (b) the 410M-only scope; (c) the deliverable file paths. No aggregate verdict, no new gate. The K-sweep is a characterisation experiment.
+
+---
+
+## Amendment 2026-05-11 — §H6-causal-ksweep-2.8b: K-dose-response sweep at Pythia-2.8B
+
+**Posted after §H6-causal-ksweep at 410M completion (2026-05-11 21:43, ~1.3 min wall time).** The 410M K-sweep showed `ratio_ind` and `ratio_ctrl` track each other across K ∈ {5, 7, 10, 15, 19}; at K=19 the control 19-head ablation has a *larger* effect on Readout A than the induction ablation. **No K reveals an induction-specific causal effect** at 410M, confirming the §H6 pilot's NULL across the dose-response.
+
+This amendment extends the K-sweep to Pythia-2.8B step143000 (head-count tier 1024) to test whether the 410M dose-response NULL replicates at the wider architecture. Same procedure, different K-set scaled to 2.8B's larger induction-detected population (34 heads).
+
+### §H6-causal-ksweep-2.8b-1. Scope (locked)
+
+Pythia-**2.8B**-deduped @ step 143000 only. Single anchor.
+
+### §H6-causal-ksweep-2.8b-2. K values (locked)
+
+```
+K ∈ {5, 12, 18, 25, 34}
+```
+
+Rationale (parallel to 410M):
+- **K = 5**: §H5-causal precedent (5/34 = 15%).
+- **K = 12**: K-scaling rule for 2.8B (`ceil(0.33 × 34) = 12`; 35%).
+- **K = 18**: ~half the induction-detected pool (53%).
+- **K = 25**: §H5's 71% fraction-of-detected-population analog (25/34 = 74%).
+- **K = 34**: all induction-detected heads at 2.8B (100% target). Two heads in the top-34 are excluded by §H6-2 NM clause (L13H9 is NM+SI dual-role; L17H12 is NM), so K_effective will be 32 with `structural_caveat_k_exhausted=True`. This is the analog of the 410M K=19 high-K row (which returned K_eff=18 of 19 attempted).
+
+### §H6-causal-ksweep-2.8b-3. Exclusion clauses, readouts, ctrl set procedure, bootstrap, classifiers
+
+All inherited verbatim from §H6-causal-ksweep at 410M. The 2.8B-specific locked receivers are inherited from §H5-causal-3-2.8b:
+- NMs: `[(11,29), (17,12), (22,31), (13,9)]`
+- SI senders: `[(11,29), (11,5), (13,9)]`
+- Suc receivers (Readout A targets): `[(15,14), (28,17), (27,13), (13,10), (29,28)]` per §H5-3 suc top-5 at 2.8B.
+
+The §H5-causal-3-2.8b-6 structural-insensitivity caveat (3 of 5 suc heads sit at layers > max(NM layer)=22) applies to Readout B only at 2.8B; it does NOT affect Readout A (lift readout at the suc heads themselves) or Readout C (logit-diff at END).
+
+### §H6-causal-ksweep-2.8b-4. Compute estimate (locked)
+
+Per the §H5-causal-3-2.8b runs (~1.2 min total for Metric A + Metric B at single-cell anchor) and the 410M K-sweep timing (~1.3 min for 9 conditions), the 2.8B K-sweep at 11 conditions is projected at ~5-15 min wall time. Per-condition wall escape hatch inherits from §H4-7 (halt at 2× projection).
+
+### §H6-causal-ksweep-2.8b-5. Deliverable (locked)
+
+`notebooks/_run_phase4_h6_induction_2_8b_ksweep.py` writes:
+- `data/exploration/phase4_h6_induction_2_8b_ksweep.parquet` — per-(K, condition, readout, prompt) values.
+- `data/exploration/phase4_h6_induction_2_8b_ksweep_verdict.parquet` — 5-row table.
+- `data/exploration/phase4_h6_induction_2_8b_ksweep.log` — captured stdout.
+
+### §H6-causal-ksweep-2.8b-6. Pre-registration form (locked)
+
+Reference-style; no new thresholds. The 2.8B K-sweep is paired with the 410M K-sweep for the dose-response cross-size comparison reported in `causal_dependence.ipynb`. If `ratio_ind` and `ratio_ctrl` continue to track each other across K at 2.8B (matching 410M), the §H6 NULL is **scale-stable across head-count tiers 384 and 1024 on the dose-response axis**, parallel to §H5-causal-3-2.8b's NULL × NULL on the per-metric-at-single-K axis.
