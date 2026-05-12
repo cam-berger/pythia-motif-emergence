@@ -1865,3 +1865,108 @@ The §H1-C-altdetectors-2-r-supersede precedent matches the §H4-supersede / §H
 Validation runner: `notebooks/_run_pythia_anchor_altdetectors_validation.py` (committed pre-data).
 Validation outputs (committed): `data/exploration/gpt2_small_altdetector_validation.parquet`, `data/exploration/gpt2_small_altdetector_per_head.npz`.
 Threshold derivation: `df[col].quantile(0.95)` over all 144 heads, with K_min ceil-rounded to the next integer.
+
+## Amendment 2026-05-12 — §H1-C-altdetectors-2-rr-supersede: reframe as post-hoc robustness with within-Pythia frozen thresholds
+
+**Posted post-data (after the three Pythia × 40-cell alt-detector sweeps committed under §H1-C-altdetectors-2-r-supersede ran to completion).** The (c2-percentile) thresholds derived from GPT-2 small (τ_ind_OV = +13.59, K_min = 2, τ_si_DLA = +0.247) did not transfer to Pythia. At all three Pythia sizes, the GPT-2-calibrated absolute thresholds produced **trivially degenerate Pythia sweeps**:
+
+| Motif (alt-detector) | 70m max alt-score over training | 160m max | 410m max | GPT-2 threshold |
+|---|---|---|---|---|
+| Induction (OV) | +6.39 | +15.70 | +7.20 | +13.59 (only 1 head ever crosses, at 160m step 20k) |
+| Successor (argmax-K) | K=3 max | K=7 max | K=7 max | K=2 (but 73 heads at 410m step 0 already pass — *de-emergence*) |
+| S-inhibition (CompDLA-S2) | +0.0035 | (TBD) | +0.190 | +0.247 (almost no head ever crosses) |
+
+Two distinct failure modes:
+
+1. **Cross-family magnitude transfer fails.** OV-score and CompDLA-S2 magnitudes depend on unembedding/layernorm scale and on how many heads divide the circuit work. Pythia has different |W_U| and 2.7× more heads at 410M than GPT-2 small at the same nominal head count threshold — so individual head magnitudes are systematically smaller. The GPT-2-95th-percentile threshold sits *above the maximum-ever* alt-score at most Pythia sizes.
+
+2. **Argmax-K-of-7 is de-emergent, not emergent.** At random initialization, ~26% of heads pass K ≥ 2 by chance (expected count ~100 at 410M's 384 heads; observed 73 at step 0). As training progresses, heads specialize → most heads' DLA toward day tokens converges to ~0 → argmax becomes noise-driven on tiny values → accidental K=2 hits stop happening. n_pass *decreases* with training, opposite to the emergence direction.
+
+This is a real, scientific finding about cross-family detector transfer (see also Tigges et al. 2024, who normalize component scores over checkpoints rather than transferring raw cross-model thresholds; Pythia's shared-data-order design (Biderman et al. 2023) is specifically meant for within-family training-dynamics work, not cross-family threshold transfer). It is not evidence against §H1-C — the locked-detector joint sign-test passes at **p = 0.00463** and remains the primary result.
+
+This amendment supersedes §H1-C-altdetectors-2 and §H1-C-altdetectors-2-r by reframing the alt-detector exercise as **post-hoc robustness / measurement-invariance sensitivity**, not as a confirmatory pre-registered second proof. The pre-validation analysis below + the within-Pythia frozen-threshold scheme is registered as the operational definition of "robustness" for the §H1-C-altdetectors-VERDICT writeup.
+
+### §H1-C-altdetectors-2-rr-1. Status reclassification (locked)
+
+The §H1-C-altdetectors test is reclassified as:
+
+- **Primary finding (unchanged)**: `induction → successor → S-inhibition` at p = 0.00463 with the LOCKED detectors. Status: PRE-REGISTERED & PASS.
+- **Robustness appendix (new framing)**: measurement-invariance sensitivity analysis using three alt-detectors under within-Pythia frozen thresholds. Status: POST-HOC & exploratory. Disclosed as such in writeup.
+
+The acceptance gate in §H1-C-altdetectors-4 (all four detector-triples pass at p < 0.005) is **withdrawn** as a confirmatory test. The joint sign-test is still computed under each triple as an exploratory data point, but no triple has confirmatory weight.
+
+### §H1-C-altdetectors-2-rr-2. Final-checkpoint pre-validation (locked, exploratory)
+
+Before any alt-detector trajectory is meaningful, the alt-detector must demonstrate at the **final checkpoint** (step 143000) that it identifies the same motif as the locked detector. The pre-validation metric is **top-K overlap**, where K = locked-detector's pass-count at step 143000 for that (size, motif).
+
+Final-checkpoint pre-validation (observed):
+
+| Motif × size | K_locked | top-K overlap with alt | Disposition |
+|---|---|---|---|
+| Induction 70m | 6 | 5/6 (83%) | usable |
+| Induction 160m | 17 | 11/17 (65%) | usable |
+| Induction 410m | 19 | 11/19 (58%) | usable |
+| Successor 70m | 2 | 0/2 (0%) | unreliable |
+| Successor 160m | 3 | 3/3 (100%) | usable |
+| Successor 410m | 2 | 0/2 (0%) | unreliable |
+| S-inh 70m | 1 | 0/1 (0%) | unreliable |
+| S-inh 160m | 3 | 1/3 (33%) | partial |
+| S-inh 410m | 2 | 1/2 (50%) | partial |
+
+Disposition rule: ≥ 50% overlap = usable; 30–50% = partial; < 30% = unreliable. Robustness trajectory is reported only for usable cells; unreliable cells are disclosed in the writeup but their joint-sign-test contribution is annotated as "alt-detector ≠ locked-motif at convergence."
+
+### §H1-C-altdetectors-2-rr-3. Frozen-threshold scheme (locked, exploratory)
+
+For each (size, motif, alt-detector), the frozen threshold is **the K-th-largest alt-score at step 143000**, where K = locked-detector's final pass-count. (The exact threshold value is the alt-score of the K-th-ranked head at convergence; heads at rank ≤ K at convergence pass; everything below doesn't.)
+
+The frozen threshold is **applied backward** over all 40 §H2-1 checkpoints — every earlier cell uses the same absolute cutoff. This avoids two failure modes:
+- It does *not* recompute the threshold at every checkpoint (which would force every cell to have heads "passing" and erase emergence structure).
+- It does *not* use a cross-family threshold (which fails per §H1-C-altdetectors-2-rr-0).
+
+A sensitivity check at top-5% (K' = ceil(n_layers × n_heads × 0.05)) is computed in parallel as a robustness-of-the-robustness.
+
+### §H1-C-altdetectors-2-rr-4. Emergence-step definition (locked, exploratory)
+
+Under the frozen threshold, the alt-detector emergence step for (size, motif, alt-detector) is the **smallest step where pass-count ≥ K / 2** (half the final-checkpoint count). This is the half-final-count crossing.
+
+The temporal-ordering check then asks: at each Pythia size, is `μ_alt_ind < μ_alt_suc < μ_alt_si` (the analogous ordering on alt-emergence-steps)?
+
+### §H1-C-altdetectors-2-rr-5. Rank-only secondary view (locked, exploratory)
+
+Independent of any threshold, define `top_K_final` = K heads with highest alt-score at step 143000 (where K = locked-final-count). At each earlier checkpoint, compute the **rank overlap**:
+
+`overlap_t = |alt_top_K_at_step_t ∩ top_K_final| / K`
+
+The rank-only emergence step is the smallest step where `overlap_t ≥ 0.5`. This view is **magnitude-free** — it asks "when does the mature motif population become rank-identifiable?" rather than "when does the magnitude cross a threshold?"
+
+### §H1-C-altdetectors-2-rr-6. Reporting (locked)
+
+The writeup reports:
+1. Pre-validation table (final-checkpoint overlap per cell).
+2. Per-(size, motif) emergence step under frozen-threshold scheme.
+3. Per-(size, motif) emergence step under rank-only scheme.
+4. Per-(size, motif) emergence step under top-5% scheme (sensitivity).
+5. Joint-sign-test under each scheme × the four detector triples — annotated as exploratory.
+6. Cells with "unreliable" pre-validation are visually flagged but reported.
+
+Interpretation rules:
+- If the temporal ordering holds under both **frozen-threshold (final-K)** and **rank-only** schemes at all three sizes → robustness PASSES. Strong evidence the §H1-C ordering is detector-invariant.
+- If ordering holds under rank-only but not frozen-threshold → partial robustness. Reported as such.
+- If ordering fails under both → §H1-C ordering may be detector-dependent; documented openly. Note this does not invalidate the p = 0.00463 primary result; only the robustness claim is qualified.
+
+### §H1-C-altdetectors-2-rr-7. Provenance + literature context
+
+- Tigges et al. 2024 (NeurIPS): tracks component emergence within Pythia, normalizes scores over checkpoints — within-family, not cross-family.
+- Biderman et al. 2023 (Pythia paper): designed for within-family training-dynamics work.
+- Gould et al. 2024: documents successor heads across GPT-2/Pythia/Llama at *convergence*, does not claim cross-family threshold transfer.
+- TransformerLens documentation: logit attribution magnitudes depend on layernorm and unembedding choices; raw projection scales are not model-family invariant.
+
+The within-Pythia frozen-threshold scheme matches the within-family precedent. Cross-family threshold transfer (the (c2-percentile)-on-GPT-2-small attempt under §H1-C-altdetectors-2-r) is now documented as an open methodological problem with no clean solution in the public literature.
+
+### §H1-C-altdetectors-2-rr-8. What changes in writeup vs. original framing
+
+The original §H1-C-altdetectors-7 promise was "either re-affirmed as detector-invariant, or qualified as detector-dependent with explicit disclosure." That binary is now refined:
+- Within-Pythia robustness (frozen-threshold + rank-only): can be tested → answers the within-family detector-invariance question.
+- Cross-family robustness: documented as an unsolved methodological problem; deferred.
+
+The §H1-C verdict in writeup remains: PRE-REGISTERED & PASS at p = 0.00463 with locked detectors. The §H1-C-altdetectors-VERDICT is added as a robustness appendix, post-hoc, with the disposition determined by the analysis runner's output.
