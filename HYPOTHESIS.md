@@ -1801,3 +1801,67 @@ Pythia alt-detector sweeps: 3 alternatives × 3 sizes × 40 cells. Per-cell wall
 This amendment is reference-style for the detector procedures, gate predicates, sweep grids, and Pythia-side application. The three threshold values (τ_ind_OV, K_min, τ_si_DLA) are deferred-locked: their derivation procedure (min alt-score across reference set in GPT-2 small per §H1-C-altdetectors-2) is locked here, but the numerical values are derived from GPT-2 small post-pre-data-commit and registered in a small follow-up amendment (`§H1-C-altdetectors-2-locked`) before any Pythia application. This deferred-lock pattern matches the §SU-tau / §S-tau precedent.
 
 A reviewer reading the chronology should see: §H1-C registered → §H2 sweep specification → §H2-5 PASS at p = 0.00463 with the LOCKED detectors → §H2-9-R scale-dependence reframe → §H5 + §H6 causal-disjointness findings → §H1-C-altdetectors registers the cross-readout consistency test → GPT-2 validation locks the three alt thresholds → Pythia sweeps under each alt detector → §H2-5 joint sign-test re-run under each alt-detector-triple. The §H1-C verdict is then either re-affirmed as detector-invariant, or qualified as detector-dependent with explicit disclosure.
+
+## Amendment 2026-05-12 — §H1-C-altdetectors-2-r-supersede: replace (c1-uniform) with (c2-percentile) threshold rule
+
+**Posted post-GPT-2-small-validation, pre-Pythia-sweep.** The §H1-C-altdetectors-2 (c1-uniform) rule — alt-threshold = min alt-score across heads passing the locked detector in GPT-2 small — yielded **trivially permissive thresholds** on the GPT-2 small validation run (see `data/exploration/gpt2_small_altdetector_validation.parquet` produced by `notebooks/_run_pythia_anchor_altdetectors_validation.py`):
+
+| Motif | (c1-uniform) threshold | Mechanism of failure |
+|---|---|---|
+| Induction (τ_ind_OV) | −21.186 | Reference set (QK prefix-match > 0.30, 15 heads) is contaminated by Negative-Name-Movers (L10H7 OV=−21.19, L11H10 OV=−13.16) that have induction-pattern QK but suppress the induction prediction at OV. Min is dominated by NNM. |
+| Successor (K_min) | 0 | Reference set (lift_dla ≥ 0.13496, 8 heads) includes lift-passing heads (L6H5) that argmax 0 of 7 day-of-week transitions. The argmax-K-of-7 protocol is much stricter than the lift_dla cross-category aggregate. No head in GPT-2 small exceeds K=3 of 7. |
+| S-inhibition (τ_si_DLA) | −0.098 | Reference set (Δ_h ≥ 0.0372, 3 heads) includes L8H6 whose CompDLA-at-S2 is −0.098: S-inhibition is mechanistically a suppression operation, so the head's direct contribution to (IO − S) at S2 can be negative. |
+
+The (c1-uniform) rule failed because the locked detectors and the alt detectors do not have a clean inclusion relationship: the locked detectors are **behavioral screens** (broad), and the alt detectors are **mechanism verifications** (strict and narrow). They identify overlapping but non-identical head populations in GPT-2 small. Taking the **min** alt-score across the locked-reference-set is dominated by edge-case heads where the alt-detector strongly disagrees with the locked detector — yielding thresholds so permissive that ~100% of heads pass at any Pythia checkpoint, which would make the §H2-5 joint sign-test re-run statistically uninformative.
+
+This supersede amendment registers a corrected threshold rule **before any Pythia application of the alt detectors** (no data has been collected under the new rule at the time of this lock). The original §H1-C-altdetectors amendment (which specified the alt-detector procedures and acceptance gate) remains in force; only §H1-C-altdetectors-2 (threshold-locking rule) is superseded here.
+
+### §H1-C-altdetectors-2-r-1. (c2-percentile) rule (locked)
+
+For each alt-detector, the threshold is the **95th percentile** of the alt-score distribution pooled across all heads in GPT-2 small. This matches the §SU-3 precedent (95th-percentile-of-pooled-null for the locked successor threshold) and produces meaningful, roughly-comparable head counts across alt-detectors (~7–9 heads each at GPT-2 small).
+
+Concretely:
+
+| Motif | Alt-threshold | Derivation | Locked numerical value |
+|---|---|---|---|
+| Induction | τ_ind_OV | 95th percentile of OV-score across 144 GPT-2 small heads | **+13.592629** |
+| Successor | K_min | ceil(95th percentile of K-score across 144 GPT-2 small heads) | **2** (raw 95th-pct=2.0; K_score ∈ {0,…,7} integer-valued; ceil to next integer if non-integer) |
+| S-inhibition | τ_si_DLA | 95th percentile of CompDLA-at-S2 across 144 GPT-2 small heads | **+0.247095** |
+
+Numerical values are derived in `data/exploration/gpt2_small_altdetector_validation.parquet`. A Pythia head passes the alt-detector iff its alt-score ≥ the locked threshold (strict-greater-than for QK induction is unchanged; alt-detectors all use ≥).
+
+### §H1-C-altdetectors-2-r-2. Pass-count + cross-tab sanity at GPT-2 small (locked, informative)
+
+At the (c2-percentile) thresholds, GPT-2 small head-counts are:
+
+- Alt-induction (OV ≥ +13.59): **8 heads pass**
+- Alt-successor (K ≥ 2): **9 heads pass**
+- Alt-S-inhibition (CompDLA-S2 ≥ +0.247): **8 heads pass**
+
+Cross-tab with locked detectors on GPT-2 small (out of 144 heads):
+
+| Motif | Both pass | Only locked | Only alt | Neither |
+|---|---|---|---|---|
+| Induction | 8 | 7 | 0 | 129 |
+| Successor | 2 | 6 | 7 | 129 |
+| S-inhibition | 2 | 1 | 6 | 135 |
+
+Induction shows alt ⊂ locked (alt is a strict mechanism-verified subset). Successor and S-inhibition show substantial divergence — alt and locked identify substantially different head populations. This is the right shape for a detector-invariance test: the Pythia §H2-5 re-run will be diagnostic rather than trivial.
+
+### §H1-C-altdetectors-2-r-3. Reason this is a supersede, not a violation
+
+The original §H1-C-altdetectors-2 (c1-uniform) rule's pre-registration was wrong about how to operationalize alt-thresholds for cross-readout consistency. The failure is in the **threshold rule** (a methodological-detail), not in the **acceptance gate or scientific claim**. The acceptance gate (§H1-C-altdetectors-4: all four detector-triples pass the joint sign-test at p < 0.005) is unchanged. No data has been collected under either (c1-uniform) or (c2-percentile) thresholds for Pythia — both are pre-registered before any Pythia compute. The supersede is registered openly with full disclosure of the (c1-uniform) failure mode and the GPT-2-small validation evidence.
+
+The §H1-C-altdetectors-2-r-supersede precedent matches the §H4-supersede / §H5-causal-3-supersede pattern: a method-detail correction registered before data collection, with the original rule retained in the chronology and the supersede traceable to its motivation.
+
+### §H1-C-altdetectors-2-r-4. Effect on later sections (locked)
+
+- §H1-C-altdetectors-3 (Pythia application): unchanged in scope. Apply each alt-detector at Pythia-{70M, 160M, 410M} × all 40 §H2-1 cells; for each (size, motif, step) cell, count heads with alt-score ≥ the (c2-percentile) threshold.
+- §H1-C-altdetectors-4 (acceptance gate): unchanged. Joint sign-test re-run under four triples; all four must pass p < 0.005 for full survival.
+- §H1-C-altdetectors-5–7: unchanged.
+
+### §H1-C-altdetectors-2-r-5. Provenance
+
+Validation runner: `notebooks/_run_pythia_anchor_altdetectors_validation.py` (committed pre-data).
+Validation outputs (committed): `data/exploration/gpt2_small_altdetector_validation.parquet`, `data/exploration/gpt2_small_altdetector_per_head.npz`.
+Threshold derivation: `df[col].quantile(0.95)` over all 144 heads, with K_min ceil-rounded to the next integer.
