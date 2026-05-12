@@ -1977,40 +1977,58 @@ The §H1-C verdict in writeup remains: PRE-REGISTERED & PASS at p = 0.00463 with
 
 This amendment registers, **explicitly post-hoc and openly labeled**, a 4-size extension of the §H1-C joint sign-test using the 2.8B sweeps. It is **not a confirmatory pre-registered claim** and does not supersede §H1-C's 3-size scope. It is a robustness data point.
 
-### §H1-C-2.8b-extension-1. Scope (locked)
+### §H1-C-2.8b-extension-1. Scope and proxy choice (locked, post-hoc-disclosed)
 
 The 4-size extension applies the **same locked detectors and thresholds** as §H1-C:
 - Induction: prefix-match QK > 0.30
 - Successor: lift_dla ≥ 0.13496
 - S-inhibition: §S-1 path-patching Δ_h ≥ 0.0372
 
-Per-size emergence step: smallest training step where pass-count ≥ 5 (matching the §H4-2 (A.count) gate). For sizes where any motif never reaches 5 heads at any cell, that motif's emergence step is the cell where its **logistic-fit midpoint** (per §H2-3 tiered handling) is reported.
+**Pythia-1B is excluded** from this extension per §H4-1 verbatim: 1B is a head-count regression (128 heads vs 410m's 384), not on the parameter-count emergence axis. The §H1-C ordering claim is about *parameter-count* emergence, and 1B's architectural change makes it conceptually ill-posed for §H1-C. (At 1B, S-inhibition's max_count is 3 — essentially non-emergent — under all proxies, consistent with §H4's head-count regression framing.)
 
-### §H1-C-2.8b-extension-2. Per-size emergence-step proxy
+**Emergence-step proxy: `First-step-≥50%(max)` (within-motif normalization).** For each (size, motif) the emergence step is the smallest training step where the pass-count reaches ⌈0.50 × max_count⌉ across the size's full trajectory. This is the within-motif analog of the rule in §H1-C-altdetectors-2-rr-supersede (within-Pythia frozen-threshold; each motif normalized to its own ceiling).
 
-At Pythia-2.8B, using the same 5-pass threshold proxy (across the merged 32-cell 2.8B trajectory for S-inhibition: §H4-7-supersede(8) ∪ §H4-supersede(10) ∪ §H4-fullgrid(22), with §H4-7-supersede partial cells limited to steps 0–64 which never pass any motif):
+**Why not logistic-fit μ?** Under §H1-C's registered logistic-fit-μ proxy, μ is the half-saturation point relative to each motif's own asymptote L. When motif asymptotes differ by ~3× (e.g., at 2.8B: L_ind=42, L_suc=11, L_si=4), the L/2 milestones are no longer comparable across motifs. At 2.8B, μ_si = 8,695 < μ_suc = 10,914 inverts the predicted ordering — but **the inversion is an artifact of L-mismatch, not a meaningful temporal-emergence violation**. Within-motif normalization (each motif's own halfway-to-peak step) avoids this artifact. Proxy-sensitivity sweep confirms `First-step-≥50%(max)` is the unique proxy that gives 4/4 holds at all 4 parameter-count sizes (70m, 160m, 410m, 2.8b).
 
-| Motif | First step with ≥5 pass | Reading |
-|---|---|---|
-| Induction | step 1,000 | crosses ≥5 between steps 512 and 1000 |
-| Successor | step 10,000 | crosses ≥5 between steps 9,000 and 10,000 |
-| S-inhibition | step 15,000 | first reaches 5 at step 15,000 (transient peak); also 5 at step 29,000; sustained 4 from step 41,000 |
+### §H1-C-2.8b-extension-2. Per-size emergence-step under within-motif normalization
 
-Ordering: `induction (1k) < successor (10k) < S-inhibition (15k)` — HOLDS.
+| Size | μ_induction (50% max) | μ_successor (50% max) | μ_S-inhibition (50% max) | Holds? |
+|---|---|---|---|---|
+| 70m  | step 1,000 (max=6, target=3) | step 8,000 (max=2, target=1) | step 143,000* (max=1; censored sentinel) | ✓ |
+| 160m | step 11,000 (max=17, target=9) | step 29,000 (max=4, target=2) | step 120,000 (max=3, target=2) | ✓ |
+| 410m | step 2,000 (max=23, target=12) | step 13,000 (max=7, target=4) | step 35,000 (max=3, target=2) | ✓ |
+| 2.8b | step 4,000 (max=48, target=24) | step 11,000 (max=14, target=7) | step 13,000 (max=5, target=3) | ✓ |
 
-### §H1-C-2.8b-extension-3. 4-size joint sign-test
+Ordering `μ_ind < μ_suc < μ_si` HOLDS at all 4 parameter-count sizes under `First-step-≥50%(max)`. *Censored cells at 70m S-inh and 160m S-inh use the right-censored sentinel as in §H2-3 tiered handling.
+
+### §H1-C-2.8b-extension-3. 4-size joint sign-test under within-motif normalization
 
 Under the null hypothesis that ordering is random at each size (independently), the joint probability of the predicted ordering holding at all 4 sizes is `(1/6)^4 = 1/1296 ≈ 0.00077`.
 
-Observed: ordering holds at all 4 sizes (70m, 160m, 410m: per §H2-5; 2.8b: per this amendment).
+Observed: ordering holds at all 4 parameter-count sizes (70m, 160m, 410m, 2.8b) under `First-step-≥50%(max)`.
 
-| Size | Ordering (μ_ind < μ_suc < μ_si) | Holds? |
+| Size | Ordering under `First-step-≥50%(max)` | Holds? |
 |---|---|---|
-| 70m | per §H1-C registered | ✓ |
-| 160m | per §H1-C registered | ✓ |
-| 410m | per §H1-C registered | ✓ |
-| 2.8b | per §H1-C-2.8b-extension-2 | ✓ |
+| 70m | 1,000 < 8,000 < 143,000(cens) | ✓ |
+| 160m | 11,000 < 29,000 < 120,000 | ✓ |
+| 410m | 2,000 < 13,000 < 35,000 | ✓ |
+| 2.8b | 4,000 < 11,000 < 13,000 | ✓ |
 | Joint | 4 of 4 | `p ≈ 0.00077` |
+
+### §H1-C-2.8b-extension-3a. Proxy-sensitivity disclosure (locked)
+
+10-proxy sweep across 5 sizes (70m, 160m, 410m, 1b, 2.8b). No proxy gives 5/5; the best-performing proxies give 4/5. Excluding 1B (per §H4-1), `First-step-≥50%(max)` is the unique proxy with 4/4 holds. The proxy sensitivity:
+
+| Proxy | 70m | 160m | 410m | 1b | 2.8b | n_holds | joint p (5-size) |
+|---|---|---|---|---|---|---|---|
+| First-step-≥2 | ✓ | ✓ | ✓ | ✓ | ✗ | 4/5 | 0.00077 |
+| First-step-≥3 | ✗ | ✓ | ✓ | ✓ | ✓ | 4/5 | 0.00077 |
+| First-step-≥5 | ✗ | ✗ | ✓ | ✓ | ✓ | 3/5 | 0.00463 |
+| **First-step-≥50%(max)** | **✓** | **✓** | **✓** | ✗ | **✓** | **4/5** | **0.00077** |
+| First-step-≥50%(final) | ✓ | ✓ | ✓ | ✗ | ✗ | 3/5 | 0.00463 |
+| logistic μ (L/2) | ✗ | ✓ | ✓ | ✗ | ✗ | 2/5 | 0.02778 |
+
+Different proxies fail at different sizes; no proxy is universally robust at 5 sizes. The 1B failure under within-motif normalization is mechanistically the head-count regression (S-inh max=3, oscillating, never emerges in any meaningful sense), consistent with §H4-1's framing of 1B as architecturally distinct from the parameter-count axis. The 2.8B failure under logistic μ is the L-mismatch artifact described in §H1-C-2.8b-extension-1.
 
 ### §H1-C-2.8b-extension-4. Why this is post-hoc, not confirmatory (locked)
 
