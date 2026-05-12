@@ -406,6 +406,24 @@ Only the **alt-induction OV detector is consistently usable across all 3 sizes**
 
 **Honest robustness verdict.** The §H1-C ordering survives measurement substitution **when the substituting detector is pre-validated as measuring the same motif at convergence**. It does not survive simultaneous substitution by three detectors that fail pre-validation at most sizes. This is a measurement-invariance result, not a temporal-claim result. The primary §H1-C verdict (p = 0.00463 with locked detectors) is unchanged; the robustness exercise establishes that the ordering is most plausibly a real temporal-emergence phenomenon — not a detector-specific artifact — when probed by alternative detectors that have demonstrated final-checkpoint agreement with the locked detectors. The cross-family threshold transfer attempt (the original §H1-C-altdetectors-2-r approach) is documented as an unsolved methodological problem.
 
+### 4.13 §H1-C-2.8b-extension — 4-size ordering consistency (post-hoc)
+
+The §H1-C joint sign-test was pre-registered at 3 Pythia sizes. The Pythia-2.8B sweeps for all three motifs exist (collected for Tracks 2 + 3) and are not pre-registered for use in §H1-C. A post-hoc 4-size extension is reported here for completeness — **not as a stronger §H1-C result**, but as a robustness data point. The §H1-C-2.8b-extension amendment (HYPOTHESIS.md §H1-C-2.8b-extension) registers the post-hoc framing explicitly.
+
+Per-size first-≥5-pass emergence step at Pythia-2.8B (locked detectors, threshold-pass count over the merged 32-cell 2.8B trajectory: §H4-7-supersede ∪ §H4-supersede ∪ §H4-fullgrid):
+
+| Motif | First step with ≥ 5 pass | Ordering position |
+|---|---|---|
+| Induction (QK > 0.30) | step 1,000 | earliest |
+| Successor (lift_dla ≥ 0.13496) | step 10,000 | middle |
+| S-inhibition (Δ_h ≥ 0.0372) | step 15,000 | latest |
+
+Ordering `induction < successor < S-inhibition` HOLDS at 2.8B as well. 4-size joint consistency: ordering holds at 70m, 160m, 410m (pre-registered §H1-C) and at 2.8b (post-hoc); joint p ≈ (1/6)^4 ≈ 0.00077 under the same null-of-random-ordering. This is reported as a post-hoc consistency check, not a confirmatory test. The primary §H1-C verdict remains p = 0.00463 at the 3 pre-registered sizes.
+
+### 4.14 Figure F6 — motif emergence vs. training loss
+
+A visualization combining the three motif pass-count trajectories with EleutherAI's published training loss (pulled from the public W&B project; concatenated across the 2.8B restart-chain; remapped wandb \_step → published-checkpoint-step where applicable). Each Pythia size gets one stacked panel; primary y-axis = motif pass-count; secondary y-axis = training cross-entropy loss; x-axis = log training step. The figure makes the loss-descent / motif-emergence alignment legible without requiring the reader to compose two separate plots. Stored at `notebooks/figures/F6_loss_vs_emergence.png`; reproducible via `notebooks/_build_loss_vs_emergence_figure.py` from `data/exploration/pythia_training_loss_wandb.parquet`.
+
 ## 5. Limitations
 
 These were pre-committed in the hypothesis document; we extend them for Tracks 2 + 3.

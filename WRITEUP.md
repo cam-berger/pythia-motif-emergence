@@ -112,6 +112,16 @@ A post-hoc robustness exercise asks whether the §H1-C ordering survives substit
 
 **Verdict.** Single-substitution with the well-pre-validated alt-induction OV detector preserves the ordering at 2/3 sizes under all schemes. All-alt failure is mechanically attributable to compounded measurement noise from poorly-pre-validated alt-detectors at the cells where overlap < 50%. Pre-validation overlap predicts the pass-rate. **Primary §H1-C verdict (p = 0.00463, locked detectors) unchanged.** Robustness exercise establishes that the ordering most plausibly reflects a real temporal-emergence phenomenon — not a detector-specific artifact — when probed by alternative detectors that demonstrate final-checkpoint agreement with the locked detectors. See paper §4.12 for the full appendix.
 
+### Track 1 robustness — §H1-C-2.8b-extension (post-hoc 4-size consistency)
+
+A post-hoc 4-size extension of §H1-C using the Pythia-2.8B sweeps collected for Tracks 2 + 3 (HYPOTHESIS.md §H1-C-2.8b-extension). The 2.8B coverage was never registered for §H1-C — its existence is a byproduct of Tracks 2/3. The extension is reported here as a **consistency data point, not a stronger result**.
+
+Per-size first-≥5-pass emergence step at 2.8B (locked detectors, merged 32-cell trajectory): induction step 1,000 < successor step 10,000 < S-inhibition step 15,000 — ordering HOLDS. 4-size joint consistency `p ≈ (1/6)^4 ≈ 0.00077` reported as **post-hoc**, not a confirmatory replacement for the pre-registered 3-size joint sign-test (which remains the primary verdict at p ≈ 0.00463).
+
+### Figure F6 — motif emergence vs. training loss
+
+`notebooks/figures/F6_loss_vs_emergence.png` (built by `notebooks/_build_loss_vs_emergence_figure.py`): 5 stacked panels (one per Pythia size), each showing the three motif pass-count trajectories overlaid with the published training cross-entropy loss curve (pulled from EleutherAI's public W&B project; remapped wandb step → checkpoint step where applicable). The emergence cliff for each motif aligns with a specific point on the loss descent — induction rises as loss drops through ~3-4, successor follows around ~2.5-3, S-inhibition emerges last around ~2.0-2.5. Visual confirmation of the ordering at all 5 sizes (including the §H4-1B head-count regression visible in panel 4).
+
 | artifact (robustness) | role |
 |---|---|
 | HYPOTHESIS.md §H1-C-altdetectors, -2-r-supersede, -2-rr-supersede | amendment chain (pre-data, then post-data reframe) |

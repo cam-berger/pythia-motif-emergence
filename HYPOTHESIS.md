@@ -1970,3 +1970,72 @@ The original §H1-C-altdetectors-7 promise was "either re-affirmed as detector-i
 - Cross-family robustness: documented as an unsolved methodological problem; deferred.
 
 The §H1-C verdict in writeup remains: PRE-REGISTERED & PASS at p = 0.00463 with locked detectors. The §H1-C-altdetectors-VERDICT is added as a robustness appendix, post-hoc, with the disposition determined by the analysis runner's output.
+
+## Amendment 2026-05-12 — §H1-C-2.8b-extension: post-hoc 4-size ordering test using Pythia-2.8B sweeps
+
+**Posted post-data, openly post-hoc.** The §H1-C joint sign-test was pre-registered at 3 Pythia sizes (70m, 160m, 410m). The Pythia-2.8B sweeps for all three motifs were collected for Tracks 2 and 3 (induction + successor sweeps committed 2026-05-07 for §H5-causal-3-2.8b preparation; S-inhibition from §H4-supersede 2026-05-10/11 + §H4-fullgrid 2026-05-12). The 2.8B coverage was never collected with §H1-C as the target — its existence is a byproduct of Track 2/3 compute.
+
+This amendment registers, **explicitly post-hoc and openly labeled**, a 4-size extension of the §H1-C joint sign-test using the 2.8B sweeps. It is **not a confirmatory pre-registered claim** and does not supersede §H1-C's 3-size scope. It is a robustness data point.
+
+### §H1-C-2.8b-extension-1. Scope (locked)
+
+The 4-size extension applies the **same locked detectors and thresholds** as §H1-C:
+- Induction: prefix-match QK > 0.30
+- Successor: lift_dla ≥ 0.13496
+- S-inhibition: §S-1 path-patching Δ_h ≥ 0.0372
+
+Per-size emergence step: smallest training step where pass-count ≥ 5 (matching the §H4-2 (A.count) gate). For sizes where any motif never reaches 5 heads at any cell, that motif's emergence step is the cell where its **logistic-fit midpoint** (per §H2-3 tiered handling) is reported.
+
+### §H1-C-2.8b-extension-2. Per-size emergence-step proxy
+
+At Pythia-2.8B, using the same 5-pass threshold proxy (across the merged 32-cell 2.8B trajectory for S-inhibition: §H4-7-supersede(8) ∪ §H4-supersede(10) ∪ §H4-fullgrid(22), with §H4-7-supersede partial cells limited to steps 0–64 which never pass any motif):
+
+| Motif | First step with ≥5 pass | Reading |
+|---|---|---|
+| Induction | step 1,000 | crosses ≥5 between steps 512 and 1000 |
+| Successor | step 10,000 | crosses ≥5 between steps 9,000 and 10,000 |
+| S-inhibition | step 15,000 | first reaches 5 at step 15,000 (transient peak); also 5 at step 29,000; sustained 4 from step 41,000 |
+
+Ordering: `induction (1k) < successor (10k) < S-inhibition (15k)` — HOLDS.
+
+### §H1-C-2.8b-extension-3. 4-size joint sign-test
+
+Under the null hypothesis that ordering is random at each size (independently), the joint probability of the predicted ordering holding at all 4 sizes is `(1/6)^4 = 1/1296 ≈ 0.00077`.
+
+Observed: ordering holds at all 4 sizes (70m, 160m, 410m: per §H2-5; 2.8b: per this amendment).
+
+| Size | Ordering (μ_ind < μ_suc < μ_si) | Holds? |
+|---|---|---|
+| 70m | per §H1-C registered | ✓ |
+| 160m | per §H1-C registered | ✓ |
+| 410m | per §H1-C registered | ✓ |
+| 2.8b | per §H1-C-2.8b-extension-2 | ✓ |
+| Joint | 4 of 4 | `p ≈ 0.00077` |
+
+### §H1-C-2.8b-extension-4. Why this is post-hoc, not confirmatory (locked)
+
+The 2.8B sweeps existed before this amendment was registered. Adding 2.8B to §H1-C now is a **garden of forking paths**: we know the data already supports the ordering before we register the test. This amendment is therefore **not a confirmatory pre-registered claim** and is **not** counted toward §H1-C's verdict. The primary §H1-C result remains the pre-registered 3-size joint sign-test at p = 0.00463.
+
+The 4-size extension is reported as a **post-hoc robustness data point** with the following honest framing:
+- The ordering pattern was registered pre-data at 3 sizes; the 4th-size extension is consistent with the pattern but does not strengthen the pre-registration credibility.
+- The 4-size joint p ≈ 0.00077 is **not** a "stronger §H1-C result" — it's the joint probability that all 4 sizes match a pattern *that was registered at 3 sizes pre-data*. The 4-size joint test is post-hoc by construction.
+- It is reported in the paper's robustness section (alongside §H1-C-altdetectors), not in the primary results.
+
+### §H1-C-2.8b-extension-5. Reporting (locked)
+
+Added to:
+1. `notebooks/h1c_ordering_test.ipynb` — new section "§H1-C-2.8b-extension (post-hoc)" with the 4-size table + the merged 2.8B emergence trajectory.
+2. `paper_draft.md` — robustness paragraph in §4.12 noting the 4-size consistency.
+3. `WRITEUP.md` — Track 1 robustness subsection updated to include the 4-size data point.
+
+The phrase used in writeups: *"a post-hoc 4-size extension using the Tracks 2/3 Pythia-2.8B sweeps shows the same ordering holds at 2.8B as well, with a joint 4-size sign-test consistency of p ≈ 0.00077."*
+
+### §H1-C-2.8b-extension-6. Provenance
+
+Source parquets:
+- `data/exploration/phase4_2_8b_induction_sweep.parquet` (40 cells; committed 2026-05-07 for §H5-causal-3-2.8b)
+- `data/exploration/phase4_2_8b_successor_sweep.parquet` (40 cells; committed 2026-05-07)
+- `data/exploration/phase4_2_8b_s_inhibition_supersede_sweep.parquet` (10 cells; §H4-supersede)
+- `data/exploration/phase4_2_8b_s_inhibition_fullgrid_sweep.parquet` (22 cells; §H4-fullgrid)
+
+Analysis: in-notebook computation in `h1c_ordering_test.ipynb` new section.
