@@ -1660,3 +1660,144 @@ Per the §H5-causal-3-2.8b runs (~1.2 min total for Metric A + Metric B at singl
 ### §H6-causal-ksweep-2.8b-6. Pre-registration form (locked)
 
 Reference-style; no new thresholds. The 2.8B K-sweep is paired with the 410M K-sweep for the dose-response cross-size comparison reported in `causal_dependence.ipynb`. If `ratio_ind` and `ratio_ctrl` continue to track each other across K at 2.8B (matching 410M), the §H6 NULL is **scale-stable across head-count tiers 384 and 1024 on the dose-response axis**, parallel to §H5-causal-3-2.8b's NULL × NULL on the per-metric-at-single-K axis.
+
+---
+
+## Amendment 2026-05-11 — §H4-fullgrid: complete the 40-cell §H4-scaling S-inhibition sweep at Pythia-2.8B
+
+**Posted after §H4-supersede PASS (2026-05-11) and as a paper-strengthening completion of the §H4-scaling chain.** §H4-supersede ran a 10-cell reduced grid at steps {5000, 7000, 10000, 14000, 20000, 29000, 41000, 49000, 59000, 70000} and PASSed both legs (A.timing reversal_rate = 1.000; A.count max_count = 5 at step 29000). The §H4-7-supersede partial cache from the original 40-cell halt holds 8 cells at steps {0, 1, 2, 4, 8, 16, 32, 64} (all top Δ_h ≈ 0). Combined existing: **18 of 40 §H2-1 grid cells**. The remaining **22 cells** at 2.8B are the deliverable of this amendment.
+
+§H4-fullgrid is a paper-strengthening completion of the §H4-scaling 40-cell schedule. It does NOT modify the §H4-supersede PASS verdict (sealed as the registered Track 3 result). It re-evaluates the §H4-2 conjunctive gate on the merged 40-cell data and resolves the count-trajectory dip caveat (§writeup-conv-2) by adding the late-saturation tail (steps 84000–143000).
+
+### §H4-fullgrid-1. Scope (locked)
+
+Pythia-**2.8B**-deduped @ the following **22 cells**:
+
+```
+[128, 256, 512,
+ 1000, 2000, 3000, 4000,
+ 6000, 8000, 9000,
+ 11000, 12000, 13000, 15000, 16000, 17000,
+ 24000, 35000,
+ 84000, 100000, 120000, 143000]
+```
+
+These are exactly the §H2-1 40-cell grid minus the 18 cells already on disk (8 §H4-7-supersede partial + 10 §H4-supersede). The merged 40-cell artifact uses union of all three sources.
+
+### §H4-fullgrid-2. Gate inheritance + re-evaluation (locked)
+
+The §H4-2 conjunctive gate is inherited **verbatim**:
+- (A.timing) `P(μ_si^2.8B < μ_si^410m) ≥ 0.95` over B = 1000 paired per-prompt bootstrap.
+- (A.count) `max_count_si^2.8B ≥ 5` over the full 40-cell sweep.
+
+Re-evaluation on the merged 40-cell data is the registered acceptance criterion. Two possible outcomes:
+- **PASS re-confirmation**: the §H4-supersede 10-cell verdict is robust to the full grid; the count-trajectory dip caveat is resolved by the late-tail data.
+- **FAIL re-evaluation**: the §H4-supersede 10-cell PASS was a window-selection artifact; this triggers a §H4-fullgrid-amendment-N follow-up to investigate.
+
+The §H4-supersede 10-cell sealed verdict stands as historical record regardless of the §H4-fullgrid outcome.
+
+### §H4-fullgrid-3. Dip-trajectory analysis (locked deliverable)
+
+The §H4-supersede count trajectory `1 → 2 → 2 → 3 → 3 → 5 → 4 → 4 → 4 → 4` crosses (A.count) ≥ 5 at step 29000 and dips back to 4 by step 70000. The §H4-fullgrid late-tail cells {84000, 100000, 120000, 143000} resolve whether the count:
+- **Recovers to 5** by step 143000 — the dip was a mid-emergence fluctuation.
+- **Sustains at 4** through convergence — the dip is the steady-state for 2.8B's 1024-head architecture.
+- **Drops below 4** — the count saturates further, indicating §H4-supersede was a transient peak.
+
+The §writeup-conv-2 count-trajectory caveat is updated post-data based on the late-tail observation.
+
+### §H4-fullgrid-4. Compute estimate (locked)
+
+22 cells × ~57 min/cell = **~21 hours wall time** at the measured §H4-7-supersede per-cell cost. Two overnight runs (cells 1–11, then cells 12–22). §H4-7-style per-cell-cost escape hatch inherits: halt if any cell exceeds ~115 min/cell (2× baseline).
+
+### §H4-fullgrid-5. Deliverables (locked)
+
+1. `notebooks/_run_phase4_2_8b_s_inhibition_fullgrid_sweep.py` — 22-cell sweep runner.
+2. `data/exploration/phase4_2_8b_s_inhibition_fullgrid_sweep.parquet` — 22-row parquet at the new cells (1024 heads × 22 cells).
+3. `data/exploration/phase4_2_8b_s_inhibition_fullgrid_per_prompt/` — per-cell `.npz` cache directory for the 22 new cells.
+4. `notebooks/_run_phase4_2_8b_fullgrid_analysis.py` — merges 8 §H4-7-supersede + 10 §H4-supersede + 22 §H4-fullgrid cells into a single 40-cell parquet (`phase4_2_8b_s_inhibition_40cell_merged.parquet`); re-runs the §H4-2 gate; produces the count-trajectory dip-resolution report.
+5. New section in `h1c_ordering_test.ipynb` §H4-fullgrid verdict cell.
+
+### §H4-fullgrid-6. Pre-registration form (locked)
+
+Reference-style, all numerical thresholds inherited verbatim from §H4-2 / §H4-3 / §H4-5. No new locks beyond the 22-cell list, the merged-parquet schema, and the dip-resolution analysis procedure. Pre-committed before any §H4-fullgrid compute.
+
+A reviewer reading the chronology should see: §H4-scaling → §H4-7-supersede DEFERRED → §H4-supersede PASS → §H4-fullgrid (this amendment) completes the original 40-cell schedule and re-evaluates the gate on the full grid. Three nested registered artifacts: (1) the 8-cell partial cache (§H4-7-supersede), (2) the 10-cell reduced grid PASS (§H4-supersede), (3) the merged 40-cell re-gate (§H4-fullgrid).
+
+---
+
+## Amendment 2026-05-11 — §H1-C-altdetectors: cross-readout consistency of detectors at the §H1-C registered sizes
+
+**Posted as a §H1-C strengthening exercise after §H5-causal NULL × NULL + §H6-causal NULL/artifact-MIXED/NULL findings.** The §H5 + §H6 causal-disjointness results comprehensively falsify the inference-time causal-chain reading of the temporal-emergence ordering. The §H1-C joint sign-test at p = 0.00463 < 0.005 remains as the registered verdict for the temporal claim, but the claim's *interpretation* is now constrained: the ordering reflects training-dynamics, not architectural causation.
+
+A residual question: **is the temporal ordering an artifact of the specific detectors chosen, or does it survive alternative operational definitions of each motif?** This amendment registers a cross-readout consistency exercise to address that question. For each motif, an alternative detector (taken from published prior art) is locked, applied to GPT-2 small to derive a threshold, then applied to Pythia 70M / 160M / 410M at all 40 §H2-1 cells. The §H2-5 joint sign-test is then re-run under each alternative-detector-triple.
+
+If the joint sign-test passes (p < 0.005) under each of the three alternatives, the **temporal-ordering claim is detector-invariant** — a much stronger version of §H1-C. If any alternative produces a different ordering at any size, the claim is **detector-dependent** and disclosed as such.
+
+### §H1-C-altdetectors-1. Alternative detectors (locked)
+
+For each motif, the alternative detector is published prior art that is mechanistically distinct from the locked detector:
+
+**Induction** (locked: Olsson 2022 prefix-matching score, threshold > 0.30 — the QK criterion only).
+Alternative: **Olsson 2022 OV-circuit verification (the missing half of the two-criterion definition).** Per-head OV-score = mean, over second-half positions in 50 random-token-repetition sequences (length 100; repeat at position 50; same prompts as the locked QK detector), of the head's direct-logit-attribution magnitude on the prior-occurrence-next-token direction. Mechanically distinct: tests the OV side of induction rather than the QK side.
+
+**Successor** (locked: §SU-1b lift_dla cross-category, threshold τ_lift = 0.13496).
+Alternative: **L (2023) argmax-K-of-7 (graded version of the GPT-2 small validation protocol).** For each head, count how many of the 7 day-of-week transitions (`Mon→Tue, Tue→Wed, ..., Sun→Mon`) the head's direct-logit-attribution correctly argmaxes the target day. Per-head K_score ∈ {0, 1, ..., 7}. Mechanically distinct: a binary-per-day argmax test, not a continuous lift magnitude.
+
+**S-inhibition** (locked: §S-1 path-patching Δ_h, threshold τ_strict = 0.0372).
+Alternative: **Component-DLA on the (IO−S) direction at the S2 token position** (Wang 2023 §3 structural definition). Per-head score = head's direct-logit-attribution magnitude on the (IO−S) direction, evaluated at the S2 token position, averaged over the same 200-prompt IOI set (BABA + ABBA, seed=0) used by the locked detector. Mechanically distinct: a direct DLA readout, not a frozen-path patching perturbation.
+
+### §H1-C-altdetectors-2. Threshold-locking rule (c1-uniform, locked)
+
+Per-motif threshold derivation, uniform across all three alternatives:
+
+1. **Reference set** = heads passing the **locked** detector for that motif in GPT-2 small. (For induction: prefix-match > 0.30; for successor: lift_dla ≥ 0.13496; for S-inhibition: path-patching Δ_h ≥ 0.0372.)
+2. **Alternative threshold** = minimum alternative-detector score across the reference-set heads in GPT-2 small.
+
+Concretely, the three locked thresholds are:
+
+| Motif | Alternative threshold name | Derivation | Locked value (post-GPT-2-validation) |
+|---|---|---|---|
+| Induction | τ_ind_OV | min OV-score across reference set | **TBD post-validation** |
+| Successor | K_min | min K_score across reference set | **TBD post-validation** (integer in {1, ..., 7}) |
+| S-inhibition | τ_si_DLA | min Component-DLA at S2 across reference set | **TBD post-validation** |
+
+The three TBD values are locked by a separate amendment update (`§H1-C-altdetectors-2-locked`) immediately after the GPT-2 small validation runner completes, but before any Pythia application of the alternative detectors.
+
+### §H1-C-altdetectors-3. Pythia application (locked)
+
+Apply each alternative detector at Pythia-{70M, 160M, 410M} × all 40 §H2-1 cells. For each (size, motif, step) cell: count heads with alternative-score ≥ threshold. Fit logistic per (size, motif) per §H2-3 tiered handling (emerged ≥ 5, marginal 2-4, censored < 2). Compute μ_alternative.
+
+### §H1-C-altdetectors-4. Acceptance gate (locked)
+
+The §H2-5 joint sign-test is re-run under each alternative-detector-triple:
+- Under each triple `(alt_ind, locked_suc, locked_si)`, `(locked_ind, alt_suc, locked_si)`, `(locked_ind, locked_suc, alt_si)`, AND `(alt_ind, alt_suc, alt_si)` (the all-alternative triple).
+- For each triple: does the joint sign-test pass at p < 0.005? (i.e., does the directional ordering `μ_ind < μ_suc < μ_si` hold at each of the 3 registered sizes?)
+
+**Acceptance gate**: all four triples pass at p < 0.005.
+
+Failure modes (pre-committed):
+- **Full survival**: all four triples PASS. The temporal-ordering claim is detector-invariant.
+- **Partial survival**: 1–3 triples PASS. The claim is detector-dependent at the specific failing triple; failure is disclosed in the paper with the specific detector that breaks the ordering.
+- **Full failure**: 0 triples PASS. The locked-detector PASS at p = 0.00463 was a detector-specific result; the temporal claim is fundamentally detector-dependent and disclosed as such.
+
+### §H1-C-altdetectors-5. Compute estimate (locked)
+
+GPT-2 small validation: ~1-2 hours wall time (model load + three alt-detector implementations + threshold derivation).
+Pythia alt-detector sweeps: 3 alternatives × 3 sizes × 40 cells. Per-cell wall ~5-30s at 70M/160M, ~30-90s at 410M. Total: ~5-10 hours wall time, chainable.
+§H2-5 joint sign-test re-runs: ~5-10 minutes (cheap, bootstrap on existing data).
+
+### §H1-C-altdetectors-6. Deliverables (locked)
+
+1. `notebooks/_run_pythia_anchor_altdetectors_validation.py` — GPT-2 small validation runner producing per-head OV-scores, K-scores, and Component-DLA-at-S2 scores. Outputs `data/exploration/gpt2_small_altdetector_validation.parquet`.
+2. Three Pythia sweep runners (or one runner with `(motif, size)` loop):
+   - `notebooks/_run_phase4_h1c_alt_induction_ov.py`
+   - `notebooks/_run_phase4_h1c_alt_successor_argmax.py`
+   - `notebooks/_run_phase4_h1c_alt_s_inhibition_compdla.py`
+3. `notebooks/_run_phase4_h1c_alt_analysis.py` — re-runs §H2-5 joint sign-test under each alternative-detector-triple; outputs `phase4_h1c_alt_joint_verdict.parquet`.
+4. New §H2-5-altdetectors section in `h1c_ordering_test.ipynb`.
+
+### §H1-C-altdetectors-7. Pre-registration form (locked, with deferred numerical thresholds)
+
+This amendment is reference-style for the detector procedures, gate predicates, sweep grids, and Pythia-side application. The three threshold values (τ_ind_OV, K_min, τ_si_DLA) are deferred-locked: their derivation procedure (min alt-score across reference set in GPT-2 small per §H1-C-altdetectors-2) is locked here, but the numerical values are derived from GPT-2 small post-pre-data-commit and registered in a small follow-up amendment (`§H1-C-altdetectors-2-locked`) before any Pythia application. This deferred-lock pattern matches the §SU-tau / §S-tau precedent.
+
+A reviewer reading the chronology should see: §H1-C registered → §H2 sweep specification → §H2-5 PASS at p = 0.00463 with the LOCKED detectors → §H2-9-R scale-dependence reframe → §H5 + §H6 causal-disjointness findings → §H1-C-altdetectors registers the cross-readout consistency test → GPT-2 validation locks the three alt thresholds → Pythia sweeps under each alt detector → §H2-5 joint sign-test re-run under each alt-detector-triple. The §H1-C verdict is then either re-affirmed as detector-invariant, or qualified as detector-dependent with explicit disclosure.
