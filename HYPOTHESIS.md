@@ -1559,3 +1559,55 @@ This is the **final revision** before commit to HYPOTHESIS.md. Appends to the pr
 
 None. The 5 sub-changes integrate into existing sub-clauses §H6-causal-2, §H6-causal-7-agg, §H6-causal-10, §H6-causal-11, and §H6-causal-12 without renumbering. Sub-clause numbering from the prior pass (12-skeleton with §H6-causal-2-bis and the vacated §H6-causal-8) is preserved bit-for-bit. The deliverable-0 prerequisite (§H6-causal-6 / §H6-11 deliverable 0) is unchanged.
 
+
+---
+
+## Amendment 2026-05-11 — §H6-causal-ksweep: K-dose-response sweep at Pythia-410M
+
+**Posted after §H6-causal pilot completion (2026-05-11 19:30:41) — 70M = GENERIC_any (weak-readout, anticipated), 410M = aggregate MIXED with Readout A NULL + Readout C NULL + Readout B per-sender NULL;MIXED;NULL.** The 410M aggregate MIXED is driven by L13H13's per-sender MIXED, where `r_ind=0.805` and `r_ctrl=0.791` are essentially identical — the same artifact pattern as §H5-causal-3-record's 1B Metric B (control behaving like the experimental condition; ablating 7 random near-threshold heads in a layer cluster generically perturbs the readout). The §H6-causal-10 extension trigger (DEP on any readout) did NOT fire; the pilot is the sealed verdict.
+
+This amendment registers a **dose-response K-sweep at the 410M anchor only**, exploring how the three readouts move as K (the number of induction heads ablated) varies. The purpose is exploratory characterisation, not a new gate: if induction has a small but real causal contribution that K=7 didn't catch, larger K should show a coherent trend on Readout A or C; if induction is genuinely causally disjoint (the §H6 pilot's reading), readouts should stay NULL or show only the generic-ablation noise pattern Readout B already exhibits.
+
+### §H6-causal-ksweep-1. Scope (locked)
+
+Pythia-**410M**-deduped @ step 143000 only. No other size. The 70M pilot's GENERIC_any verdict already establishes that 70M readouts are too noisy for a K-sweep to be informative.
+
+### §H6-causal-ksweep-2. K values (locked)
+
+```
+K ∈ {5, 10, 15, 19}
+```
+
+Rationale:
+- **K = 5**: §H5-causal precedent (5 heads at 410M); the §H5 successor-ablation experiment used K=5 on a 7-head detected population (71%). For induction at 410M (19 heads), K=5 is 26% of the population.
+- **K = 10**: ~half the induction-detected pool (53%).
+- **K = 15**: matches §H5's 71% fraction-of-detected-population at 410M (15/19 = 79%).
+- **K = 19**: all induction-detected heads at 410M (100%). Maximal possible signal if induction has any causal role.
+
+§H6-causal-2 K-locked value (7) was already run today; its verdict is already in `phase4_h6_induction_410m_anchor_verdict.parquet`. The K-sweep does NOT re-run K=7; analysis incorporates it as a 5th data point in the dose-response curve.
+
+### §H6-causal-ksweep-3. Exclusion clauses (inherited verbatim)
+
+§H6-causal-2 NM + SI exclusion + §H6-causal-2-bis suc-receiver exclusion apply at every K. At 410M none of these catch any of the top-19 induction heads (cf. drafts/H6_locked_sets.md), so K can range up to 19 without exhaustion. Ctrl set is matched to K via the §H6-causal-3 bracket-widening procedure (seed=0); at larger K the ctrl bracket may need to widen further than at K=7.
+
+### §H6-causal-ksweep-4. Readouts and verdict bands (inherited verbatim)
+
+Three readouts and per-readout classifiers identical to §H6-causal-7. The K-sweep does NOT register a new aggregate verdict — each K gets its own per-readout (A, B, C) verdict, and the analysis presents these as a 4-row table plus a dose-response plot of `ratio_ind` and `ratio_ctrl` vs K for each readout. No cross-readout aggregate is locked per-K; the per-readout trend is the deliverable.
+
+### §H6-causal-ksweep-5. Compute estimate (locked)
+
+Single runner, model loaded once, 1 clean condition shared across all K, then 2 × 4 = 8 ablated conditions (ind / ctrl for each of K ∈ {5, 10, 15, 19}). The 410M pilot ran 3 conditions in ~16 min wall time; the K-sweep runs 9 conditions, projected ~50–70 min wall time. Per-condition wall escape hatch inherits from §H4-7 (halt at 2× projection).
+
+### §H6-causal-ksweep-6. Deliverable (locked)
+
+A single new script `notebooks/_run_phase4_h6_induction_410m_ksweep.py` writes:
+
+- `data/exploration/phase4_h6_induction_410m_ksweep.parquet` — per-(K, condition, readout, sender_or_receiver, prompt_idx) values + the 4 verdict rows (one per K). Sufficient to reconstruct the dose-response curve.
+- `data/exploration/phase4_h6_induction_410m_ksweep_verdict.parquet` — 4-row table (one per K) with per-readout verdicts + ratios + CIs + bracket-widening per K.
+- `data/exploration/phase4_h6_induction_410m_ksweep.log` — captured stdout.
+
+No new figure is committed by the runner; the verdict notebook (`causal_dependence.ipynb`) will render the dose-response plot post-compute.
+
+### §H6-causal-ksweep-7. Pre-registration form (locked)
+
+This amendment is reference-style; all thresholds inherited verbatim from §H6-causal / §H5-causal / §H5-causal-2 / §SU-1b. The only locks introduced here are: (a) the K set {5, 10, 15, 19}; (b) the 410M-only scope; (c) the deliverable file paths. No aggregate verdict, no new gate. The K-sweep is a characterisation experiment.
