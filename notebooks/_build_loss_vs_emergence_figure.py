@@ -161,7 +161,7 @@ def main() -> None:
         ax.set_ylabel(f"pass-count\n(Pythia-{size})", fontsize=10)
         ax.tick_params(axis="y", labelsize=8)
         ax.set_xscale("log")
-        ax.set_xlim(0.8, 200_000)
+        ax.set_xlim(100, 200_000)
         ax.grid(True, alpha=0.3, zorder=0)
         ax.set_axisbelow(True)
 
