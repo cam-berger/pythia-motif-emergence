@@ -416,3 +416,35 @@ def gate_verdict(
         top_k=top_k,
         passes=in_top_k and clears_threshold,
     )
+
+
+class SuccessorDetector:
+    """Detector-protocol adapter for the §SU-1b lift_dla detector."""
+
+    motif = "successor"
+    name = "successor_lift"
+
+    def __init__(
+        self,
+        prompts: list[SuccessorPrompt],
+        *,
+        batch_size: int = 8,
+    ):
+        from src.locked_thresholds import SUCCESSOR_LIFT
+        self.threshold = SUCCESSOR_LIFT
+        self.prompts = prompts
+        self.batch_size = batch_size
+
+    def score(self, model):
+        from src.detectors.protocol import PerHeadScores
+        result = successor_screen(
+            model,
+            self.prompts,
+            batch_size=self.batch_size,
+        )
+        return PerHeadScores(
+            scores=result.lift_dla,
+            motif=self.motif,
+            detector_name=self.name,
+            aux=result,
+        )

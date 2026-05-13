@@ -164,3 +164,41 @@ def prefix_matching_score(
         seq_len=seq_len,
         per_sequence_scores=per_seq,
     )
+
+
+class InductionDetector:
+    """Detector-protocol adapter for the Olsson QK prefix-matching detector."""
+
+    motif = "induction"
+    name = "induction_qk"
+
+    def __init__(
+        self,
+        *,
+        n_sequences: int = 50,
+        seq_len: int = 100,
+        seed: int = 0,
+        batch_size: int = 8,
+    ):
+        from src.locked_thresholds import INDUCTION_QK
+        self.threshold = INDUCTION_QK
+        self.n_sequences = n_sequences
+        self.seq_len = seq_len
+        self.seed = seed
+        self.batch_size = batch_size
+
+    def score(self, model):
+        from src.detectors.protocol import PerHeadScores
+        result = prefix_matching_score(
+            model,
+            n_sequences=self.n_sequences,
+            seq_len=self.seq_len,
+            seed=self.seed,
+            batch_size=self.batch_size,
+        )
+        return PerHeadScores(
+            scores=result.scores,
+            motif=self.motif,
+            detector_name=self.name,
+            aux=result,
+        )

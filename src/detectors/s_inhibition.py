@@ -462,3 +462,50 @@ def s_inhibition_screen(
         n_prompts=total_prompts,
         per_prompt_delta=per_prompt_delta_total,
     )
+
+
+class SInhibitionDetector:
+    """Detector-protocol adapter for the §S-1 path-patching Δ_h detector."""
+
+    motif = "s_inhibition"
+    name = "s_inhibition_delta_h"
+
+    def __init__(
+        self,
+        clean_prompts,
+        corrupt_prompts,
+        *,
+        senders=None,
+        k_nm: int = 4,
+        batch_size: int = 50,
+        nm_dla_batch_size: int = 8,
+        nm_heads_override=None,
+    ):
+        from src.locked_thresholds import S_INHIBITION_DELTA
+        self.threshold = S_INHIBITION_DELTA
+        self.clean_prompts = clean_prompts
+        self.corrupt_prompts = corrupt_prompts
+        self.senders = senders
+        self.k_nm = k_nm
+        self.batch_size = batch_size
+        self.nm_dla_batch_size = nm_dla_batch_size
+        self.nm_heads_override = nm_heads_override
+
+    def score(self, model):
+        from src.detectors.protocol import PerHeadScores
+        result = s_inhibition_screen(
+            model,
+            self.clean_prompts,
+            self.corrupt_prompts,
+            senders=self.senders,
+            k_nm=self.k_nm,
+            batch_size=self.batch_size,
+            nm_dla_batch_size=self.nm_dla_batch_size,
+            nm_heads_override=self.nm_heads_override,
+        )
+        return PerHeadScores(
+            scores=result.delta_h,
+            motif=self.motif,
+            detector_name=self.name,
+            aux=result,
+        )

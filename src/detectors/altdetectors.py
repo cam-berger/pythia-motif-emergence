@@ -261,3 +261,91 @@ def s_inhibition_compdla_at_s2(
 
     accumulator /= len(prompts)
     return accumulator
+
+
+# ---- Detector-protocol adapters (§H1-C-altdetectors) ----------------------
+
+
+class InductionOvDetector:
+    """Detector-protocol adapter for the OV-circuit induction alt detector."""
+
+    motif = "induction"
+    name = "induction_ov"
+
+    def __init__(
+        self,
+        *,
+        n_sequences: int = 50,
+        seq_len: int = 100,
+        seed: int = 0,
+        batch_size: int = 8,
+    ):
+        from src.locked_thresholds import ALT_TAU_IND_OV
+        self.threshold = ALT_TAU_IND_OV
+        self.n_sequences = n_sequences
+        self.seq_len = seq_len
+        self.seed = seed
+        self.batch_size = batch_size
+
+    def score(self, model):
+        from src.detectors.protocol import PerHeadScores
+        scores = induction_ov_score(
+            model,
+            n_sequences=self.n_sequences,
+            seq_len=self.seq_len,
+            seed=self.seed,
+            batch_size=self.batch_size,
+        )
+        return PerHeadScores(
+            scores=scores,
+            motif=self.motif,
+            detector_name=self.name,
+            aux=None,
+        )
+
+
+class SuccessorArgmaxKDetector:
+    """Detector-protocol adapter for the successor argmax-K-of-7 alt detector."""
+
+    motif = "successor"
+    name = "successor_argmax_k_of_7"
+
+    def __init__(self, *, batch_size: int = 16):
+        from src.locked_thresholds import ALT_K_MIN
+        self.threshold = ALT_K_MIN
+        self.batch_size = batch_size
+
+    def score(self, model):
+        from src.detectors.protocol import PerHeadScores
+        scores = successor_argmax_k_of_7(model, batch_size=self.batch_size)
+        return PerHeadScores(
+            scores=scores,
+            motif=self.motif,
+            detector_name=self.name,
+            aux=None,
+        )
+
+
+class SInhibitionCompdlaDetector:
+    """Detector-protocol adapter for the S-inhibition CompDLA-at-S2 alt detector."""
+
+    motif = "s_inhibition"
+    name = "s_inhibition_compdla"
+
+    def __init__(self, prompts, *, batch_size: int = 8):
+        from src.locked_thresholds import ALT_TAU_SI_DLA
+        self.threshold = ALT_TAU_SI_DLA
+        self.prompts = prompts
+        self.batch_size = batch_size
+
+    def score(self, model):
+        from src.detectors.protocol import PerHeadScores
+        scores = s_inhibition_compdla_at_s2(
+            model, self.prompts, batch_size=self.batch_size
+        )
+        return PerHeadScores(
+            scores=scores,
+            motif=self.motif,
+            detector_name=self.name,
+            aux=None,
+        )
