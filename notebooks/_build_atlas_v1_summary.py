@@ -428,10 +428,214 @@ plt.show()
 print(f"saved {(FIG_DIR / 'F7_score_distributions.png').relative_to(REPO)}")
 '''),
     md(
+        "## §9. Per-family motif-evolution movies (Pythia-410M)",
+        "",
+        "Each animation steps through the 40 §H2-1 checkpoints from `step0` to `step143000` at",
+        "3 fps (~13 s playback). The 24 × 16 heatmap shows the family's per-(layer, head) score;",
+        "color = viridis with `vmin=0` and a per-family `vmax` chosen so threshold-crossing heads",
+        "are visually prominent.",
+        "",
+        "Sections below: 3 locked motifs (induction, successor, S-inhibition), 5 atlas families.",
+        "All saved to `notebooks/figures/atlas_v1/movies/` as standalone GIFs in addition to the",
+        "inline players here.",
+    ),
+    code('''
+import matplotlib.animation as animation
+from IPython.display import HTML, display
+
+MOVIE_DIR = FIG_DIR / "movies"
+MOVIE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Per-family vmax for the heatmaps. Picked to make threshold-crossing heads
+# visible without saturating the top.
+FAMILY_VMAX = {
+    "induction":         0.5,
+    "successor":         0.3,
+    "s_inhibition":      0.05,
+    "previous_token":    0.5,
+    "duplicate_token":   0.5,
+    "positional_offset": 0.25,
+    "bos_attention":     0.9,
+    "delimiter":         0.8,
+}
+
+STEPS = sorted(combined["step"].unique())
+print(f"steps in movies: {len(STEPS)}, range [{STEPS[0]}, {STEPS[-1]}]")
+
+
+def _frames_for(motif: str) -> list[np.ndarray]:
+    """Return list of (n_layers, n_heads) score arrays, one per step in STEPS."""
+    sub = combined[combined["motif"] == motif]
+    n_layers = int(sub["layer"].max() + 1)
+    n_heads = int(sub["head"].max() + 1)
+    frames = []
+    for step in STEPS:
+        cell = sub[sub["step"] == step]
+        grid = np.zeros((n_layers, n_heads))
+        for _, r in cell.iterrows():
+            grid[int(r["layer"]), int(r["head"])] = r["score"]
+        frames.append(grid)
+    return frames
+
+
+def _render_family_movie(motif: str) -> animation.FuncAnimation:
+    frames = _frames_for(motif)
+    vmax = FAMILY_VMAX[motif]
+    thr_val, _ = THRESHOLDS[motif]
+    fig, (ax_hm, ax_traj) = plt.subplots(1, 2, figsize=(11, 4.5),
+                                         gridspec_kw=dict(width_ratios=[1.2, 1.0]))
+    im = ax_hm.imshow(frames[0], vmin=0, vmax=vmax, cmap="viridis", aspect="auto")
+    ax_hm.set_xlabel("head")
+    ax_hm.set_ylabel("layer")
+    plt.colorbar(im, ax=ax_hm, fraction=0.04, pad=0.02, label=f"{motif} score")
+
+    # Trajectory side panel: pass-count over training, current step highlighted.
+    traj = pass_count_traj(combined, motif)
+    ax_traj.plot(traj.index.values + 1, traj.values, "o-",
+                 color=MOTIF_COLORS[motif], linewidth=1.6, markersize=3)
+    ax_traj.set_xscale("log")
+    ax_traj.set_xlim(100, 200_000)
+    ax_traj.set_xlabel("step")
+    ax_traj.set_ylabel("n_pass")
+    ax_traj.set_title(f"{motif} pass-count vs step (τ = {thr_val})")
+    ax_traj.grid(alpha=0.3)
+    cursor = ax_traj.axvline(STEPS[0] + 1, color="red", linewidth=1.5, alpha=0.7)
+
+    title = fig.suptitle(
+        f"{motif}  —  step {STEPS[0]}  (frame 1/{len(STEPS)})",
+        fontsize=12, y=1.0,
+    )
+
+    def update(i):
+        im.set_array(frames[i])
+        cursor.set_xdata([STEPS[i] + 1, STEPS[i] + 1])
+        title.set_text(f"{motif}  —  step {STEPS[i]}  (frame {i+1}/{len(STEPS)})")
+        return [im, cursor, title]
+
+    ani = animation.FuncAnimation(fig, update, frames=len(STEPS), interval=333, blit=False)
+    plt.close(fig)
+    return ani
+
+
+# Render and display each of the 8 families. Saves a standalone GIF alongside.
+for motif in MOTIF_ORDER:
+    print(f"\\n=== {motif} ===")
+    ani = _render_family_movie(motif)
+    out_gif = MOVIE_DIR / f"{motif}_evolution_410m.gif"
+    ani.save(out_gif, writer=animation.PillowWriter(fps=3))
+    print(f"  saved {out_gif.relative_to(REPO)}")
+    display(HTML(f"<h3>{motif}</h3>"))
+    display(HTML(ani.to_jshtml()))
+'''),
+    md(
+        "## §10. Integrating movie — all 8 families on one panel",
+        "",
+        "A single 24 × 16 heatmap where each cell is colored by **which family it currently passes**:",
+        "",
+        "- If exactly one family's threshold is met → cell takes that family's color.",
+        "- If multiple families' thresholds are met → cell takes the color of the family with the",
+        "  highest *normalized* score (`score / threshold`). Effectively the strongest fit wins.",
+        "- If no family's threshold is met → cell is gray.",
+        "",
+        "This lets you watch the family typology *evolve* through training. Early checkpoints",
+        "show mostly gray (no specialization yet); the field fills in as training progresses.",
+        "Stable regions (heads that always belong to the same family) are visually steady; heads",
+        "that change family membership flicker between colors.",
+    ),
+    code('''
+# Build per-(step, family) pass-mask + normalized-score arrays.
+n_layers = int(combined["layer"].max() + 1)
+n_heads = int(combined["head"].max() + 1)
+families = MOTIF_ORDER
+
+# Categorical color palette, one per family + gray for "no family".
+# Use the existing MOTIF_COLORS plus "lightgray" for unassigned.
+from matplotlib.colors import ListedColormap, BoundaryNorm
+palette = ["#d9d9d9"] + [MOTIF_COLORS[m] for m in families]  # 0 = no family, 1..N = each family
+cmap = ListedColormap(palette)
+bounds = list(range(len(palette) + 1))
+norm = BoundaryNorm(bounds, cmap.N)
+
+# Precompute primary-family-index grids per step.
+def _primary_family_grid(step: int) -> np.ndarray:
+    """Return (n_layers, n_heads) int grid: 0 = no family, k = family index k-1."""
+    grid = np.zeros((n_layers, n_heads), dtype=int)
+    best_norm = np.full((n_layers, n_heads), -np.inf)
+    cell_step = combined[combined["step"] == step]
+    for fi, motif in enumerate(families, start=1):
+        thr_val, op = THRESHOLDS[motif]
+        m_rows = cell_step[cell_step["motif"] == motif]
+        if op == "gt":
+            passes = m_rows["score"] > thr_val
+        else:
+            passes = m_rows["score"] >= thr_val
+        m_pass = m_rows[passes]
+        for _, r in m_pass.iterrows():
+            L, H = int(r["layer"]), int(r["head"])
+            norm_score = float(r["score"]) / thr_val
+            if norm_score > best_norm[L, H]:
+                best_norm[L, H] = norm_score
+                grid[L, H] = fi
+    return grid
+
+
+print("precomputing per-step primary-family grids ...")
+PRIMARY_FRAMES = [_primary_family_grid(s) for s in STEPS]
+print(f"  built {len(PRIMARY_FRAMES)} frames")
+
+# Build legend handles (matplotlib Patch per family + "none").
+from matplotlib.patches import Patch
+legend_handles = [Patch(facecolor=palette[0], edgecolor="black", linewidth=0.3, label="(no family)")]
+for i, motif in enumerate(families, start=1):
+    legend_handles.append(Patch(facecolor=palette[i], edgecolor="black", linewidth=0.3, label=motif))
+
+fig, (ax_grid, ax_counts) = plt.subplots(1, 2, figsize=(13, 5.5),
+                                         gridspec_kw=dict(width_ratios=[1.2, 1.0]))
+im = ax_grid.imshow(PRIMARY_FRAMES[0], cmap=cmap, norm=norm, aspect="auto", interpolation="nearest")
+ax_grid.set_xlabel("head")
+ax_grid.set_ylabel("layer")
+ax_grid.set_title("primary family per (layer, head)")
+ax_grid.legend(handles=legend_handles, bbox_to_anchor=(1.02, 1.0), loc="upper left", fontsize=8, frameon=False)
+
+# Side panel: stacked-area chart of family counts vs step.
+all_counts = np.zeros((len(STEPS), len(families)))
+for si, step in enumerate(STEPS):
+    g = PRIMARY_FRAMES[si]
+    for fi in range(1, len(families) + 1):
+        all_counts[si, fi - 1] = int((g == fi).sum())
+xs = np.array(STEPS) + 1  # +1 for log scale at step 0
+ax_counts.stackplot(xs, all_counts.T, labels=families, colors=[MOTIF_COLORS[m] for m in families], alpha=0.85)
+ax_counts.set_xscale("log")
+ax_counts.set_xlim(100, 200_000)
+ax_counts.set_xlabel("step")
+ax_counts.set_ylabel("# heads with this primary family")
+ax_counts.set_title("family-primary count stack (sum ≤ 384)")
+ax_counts.grid(alpha=0.3)
+cursor_int = ax_counts.axvline(STEPS[0] + 1, color="red", linewidth=1.5, alpha=0.7)
+
+title_int = fig.suptitle(
+    f"Atlas-v1 integrated — step {STEPS[0]}  (frame 1/{len(STEPS)})",
+    fontsize=12, y=1.0,
+)
+
+def update_int(i):
+    im.set_array(PRIMARY_FRAMES[i])
+    cursor_int.set_xdata([STEPS[i] + 1, STEPS[i] + 1])
+    title_int.set_text(f"Atlas-v1 integrated — step {STEPS[i]}  (frame {i+1}/{len(STEPS)})")
+    return [im, cursor_int, title_int]
+
+ani_int = animation.FuncAnimation(fig, update_int, frames=len(STEPS), interval=333, blit=False)
+out_gif_int = MOVIE_DIR / "atlas_v1_integrated_410m.gif"
+ani_int.save(out_gif_int, writer=animation.PillowWriter(fps=3))
+print(f"saved {out_gif_int.relative_to(REPO)}")
+plt.close(fig)
+display(HTML(ani_int.to_jshtml()))
+'''),
+    md(
         "## Summary",
         "",
-        "Atlas-v1 maps 8 attention-head families at Pythia-410M across 40 §H2-1 checkpoints. Three",
-        "patterns stand out:",
+        "Atlas-v1 maps 8 attention-head families at Pythia-410M across 40 §H2-1 checkpoints,",
+        "with per-family + integrating evolution movies in §9–§10. Three patterns stand out:",
         "",
         "1. **Transient over-emergence in delimiter**: ~211 heads pass at step 12000, only ~45",
         "   retain the role at convergence. Stepping-stone hypothesis.",
@@ -443,7 +647,9 @@ print(f"saved {(FIG_DIR / 'F7_score_distributions.png').relative_to(REPO)}")
         "Cross-family overlap analysis surfaces multi-functional heads worth deeper mech-interp",
         "investigation. Score-distribution histograms confirm the per-family threshold calibration",
         "is sensible — most families show clean bimodal distributions with the threshold cleanly",
-        "separating the modes.",
+        "separating the modes. The integrating movie (§10) lets you watch family typology emerge",
+        "in real time — early checkpoints are mostly gray, the field fills in around step ~2000,",
+        "and the final layout stabilizes around step ~15000.",
         "",
         "**Next steps:**",
         "- Multi-seed sweep (currently single seed=0) to quantify trajectory variance.",
