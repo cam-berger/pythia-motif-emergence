@@ -18,65 +18,74 @@ from src.locked_thresholds import LockedThreshold
 
 _AMENDMENT = "atlas-v1 (exploratory)"
 _LOCK_DATE = "2026-05-13"
-_DEFAULT_VALUE = 0.20
-
+# Per-family thresholds calibrated at Pythia-410M step143000 (commit 6...).
+# Loose families (bos_attention, delimiter) tightened to be selective; sparse
+# families (positional_offset) slightly relaxed. The previous_token /
+# duplicate_token defaults at 0.20 were already in the sensible range.
 
 PREVIOUS_TOKEN = LockedThreshold(
-    value=_DEFAULT_VALUE,
+    value=0.20,
     amendment=_AMENDMENT,
     lock_date=_LOCK_DATE,
     comparator="ge",
     motif="previous_token",
     description=(
-        "Mean attention from p to p-1 on Olsson repetition sequences."
+        "Mean attention from p to p-1 on Olsson repetition sequences. "
+        "Calibration: 34/384 pass at 410M step143000."
     ),
 )
 
 DUPLICATE_TOKEN = LockedThreshold(
-    value=_DEFAULT_VALUE,
+    value=0.20,
     amendment=_AMENDMENT,
     lock_date=_LOCK_DATE,
     comparator="ge",
     motif="duplicate_token",
     description=(
         "Mean attention from p∈[50,99] to position p-50 on Olsson "
-        "repetition sequences (the duplicate by construction)."
+        "repetition sequences (the duplicate by construction). "
+        "Calibration: 6/384 pass at 410M step143000."
     ),
 )
 
 POSITIONAL_OFFSET = LockedThreshold(
-    value=_DEFAULT_VALUE,
+    value=0.15,
     amendment=_AMENDMENT,
     lock_date=_LOCK_DATE,
     comparator="ge",
     motif="positional_offset",
     description=(
         "max over k in {-3,-2,+1,+2,+3} of mean attention from p to p+k. "
-        "Excludes k=-1 (which is the previous_token detector)."
+        "Excludes k=-1 (which is the previous_token detector). "
+        "Relaxed from 0.20 → 0.15 at calibration; max=0.22 at 410M "
+        "step143000, so 0.20 is at the ceiling and only 4 heads pass."
     ),
 )
 
 BOS_ATTENTION = LockedThreshold(
-    value=_DEFAULT_VALUE,
+    value=0.50,
     amendment=_AMENDMENT,
     lock_date=_LOCK_DATE,
     comparator="ge",
     motif="bos_attention",
     description=(
         "Mean attention from positions p∈[1,99] to position 0 on Olsson "
-        "repetition sequences."
+        "repetition sequences. Tightened from 0.20 → 0.50 at calibration; "
+        "median attention on BOS across all 384 heads is 0.47 ('BOS sink' "
+        "phenomenon), so 0.50 selects the strong-BOS heads only."
     ),
 )
 
 DELIMITER = LockedThreshold(
-    value=_DEFAULT_VALUE,
+    value=0.40,
     amendment=_AMENDMENT,
     lock_date=_LOCK_DATE,
     comparator="ge",
     motif="delimiter",
     description=(
         "Fraction of attention mass on {',', '.', '\\n'} delimiter tokens "
-        "on 50 PILE samples × 256 tokens."
+        "on 50-snippet natural-prose corpus × 256 tokens. Tightened from "
+        "0.20 → 0.40 at calibration; top heads have 70-80% delimiter mass."
     ),
 )
 

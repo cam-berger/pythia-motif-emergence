@@ -53,7 +53,8 @@ def test_corpus_file_exists_and_nonempty():
     assert all(len(s) > 0 for s in corpus)
 
 
-def test_threshold_value_matches_atlas_default():
+def test_threshold_value_matches_atlas_calibrated():
+    """Calibrated post-smoke at 410M step143000: tightened to 0.40."""
     inst = DelimiterDetector()
-    assert inst.threshold.value == pytest.approx(0.20)
+    assert inst.threshold.value == pytest.approx(0.40)
     assert inst.threshold.motif == "delimiter"
