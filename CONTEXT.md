@@ -29,6 +29,7 @@ A future contributor (or future Claude Code session) landing in this repo cold s
 ## Conventions
 
 - **Pythia checkpoints.** Steps `0, 1, 2, 4, 8, ..., 512` (early, powers of 2) and then every 1000 from `step1000` to `step143000` (final). 154 total per size. Our sweep schedule (40 per size) is in `checkpoints.yaml`.
-- **Model sizes used.** Pythia-70M, Pythia-160M, Pythia-410M. Larger sizes (1B, 1.4B, 2.8B, 6.9B, 12B) exist but are out of scope for hardware reasons.
+- **Model sizes used.** Pythia-70M, Pythia-160M, Pythia-410M (pre-registered triple); Pythia-1B (post-hoc head-count regression check, §H4-1); Pythia-2.8B (post-hoc extension under §H1-C-2.8b-extension and §H4-supersede / §H4-fullgrid).
+- **Locked numeric thresholds.** All pre-registered numeric pass/fail gates live in `src/locked_thresholds.py` as the programmatic mirror of HYPOTHESIS.md. New thresholds are introduced via a HYPOTHESIS.md amendment + a matching entry in the registry + a matching entry in `tests/test_locked_thresholds.py::EXPECTED`.
 - **Numerical precision on MPS.** fp32 default; fp16 acceptable. Avoid bf16 paths — MPS support is unreliable. See `PROJECT_BRIEF.md` §7 for the full set of MPS gotchas.
 - **Reference heads (validation targets).** Induction → known GPT-2 small induction heads. Successor → GPT-2 medium L9H1 (Gould 2024). Copy-suppression → GPT-2 small L10H7 (McDougall 2024). S-inhibition → GPT-2 small heads 7.3, 7.9, 8.6, 8.10 (Wang 2023).

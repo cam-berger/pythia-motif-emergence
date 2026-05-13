@@ -38,16 +38,24 @@ from src.detectors.successor import (
     SuccessorPrompt,
     _compute_per_prompt_dla,
 )
+from src.locked_thresholds import (
+    DEP_THRESHOLD as _DEP_THRESHOLD,
+    GENERIC_THRESHOLD as _GENERIC_THRESHOLD,
+    HARD_K_MIN as _HARD_K_MIN,
+    INDUCTION_QK as _INDUCTION_QK,
+    NULL_HIGH as _NULL_HIGH,
+    NULL_LOW as _NULL_LOW,
+)
 
-# ---- locks ---------------------------------------------------------------
+# ---- locks (imported from src.locked_thresholds for audit-trail) ---------
 
-INDUCTION_THRESHOLD: float = 0.30
-HARD_K_MIN: int = 4
+INDUCTION_THRESHOLD: float = _INDUCTION_QK.value
+HARD_K_MIN: int = int(_HARD_K_MIN.value)
 
-NULL_LO: float = 0.8
-NULL_HI: float = 1.2
-DEP_THRESHOLD: float = 0.5
-GENERIC_THRESHOLD: float = 0.7
+NULL_LO: float = _NULL_LOW.value
+NULL_HI: float = _NULL_HIGH.value
+DEP_THRESHOLD: float = _DEP_THRESHOLD.value
+GENERIC_THRESHOLD: float = _GENERIC_THRESHOLD.value
 
 CTRL_BRACKET_WIDTH_INIT: float = 0.05
 CTRL_BRACKET_WIDTH_STEP: float = 0.025

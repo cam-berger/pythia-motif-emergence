@@ -32,9 +32,16 @@ from src.detectors.successor import DAYS
 from src.replication.tigges_ioi import IOIPrompt
 
 # §H1-C-altdetectors-2-r-supersede locked thresholds
-TAU_IND_OV: float = 13.592629
-K_MIN: int = 2
-TAU_SI_DLA: float = 0.247095
+# (imported from src.locked_thresholds for audit-trail)
+from src.locked_thresholds import (
+    ALT_K_MIN as _ALT_K_MIN,
+    ALT_TAU_IND_OV as _ALT_TAU_IND_OV,
+    ALT_TAU_SI_DLA as _ALT_TAU_SI_DLA,
+)
+
+TAU_IND_OV: float = _ALT_TAU_IND_OV.value
+K_MIN: int = int(_ALT_K_MIN.value)
+TAU_SI_DLA: float = _ALT_TAU_SI_DLA.value
 
 
 def induction_ov_score(
