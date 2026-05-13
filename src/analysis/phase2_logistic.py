@@ -107,6 +107,9 @@ def tiered_fit(
             mu=float(RIGHT_CENSOR_STEP), L=float("nan"), k=float("nan"),
             max_count=max_count,
         )
+    # Logistic-μ extraction goes through src.analysis.emergence_step for the
+    # canonical proxy seam (it calls fit_logistic_to_counts here). The L, k
+    # parameters are extracted directly because emergence_step only returns μ.
     L_fit, k_fit, mu_fit = fit_logistic_to_counts(steps, counts)
     if max_count < N_EMERGED:
         if bootstrap_median_mu is not None:

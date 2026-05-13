@@ -18,7 +18,13 @@ A future contributor (or future Claude Code session) landing in this repo cold s
 
 **Prefix-matching score (Olsson 2022).** Operational detector for induction heads. Construct random-token sequences of length 100 with a repeat at position 50. Score = mean attention from positions 51–100 to the position immediately following the previous occurrence of the current token, averaged over 50 random sequences. A head with score > 0.3 is a candidate induction head.
 
-**Emergence step ($\mu_{s,m}$).** For model size $s$ and motif $m$, the training step at which the count of detected heads passes half of its final-checkpoint value. Extracted via a logistic fit to count-vs-log-step. The hypothesis is a claim about the *ordering* of $\mu$ across motifs within each size.
+**Emergence step ($\mu_{s,m}$).** For model size $s$ and motif $m$, the training step at which the per-(layer, head) pass-count trajectory reaches a milestone. Four proxies coexist in the project, all unified through `src/analysis/emergence_step.py`:
+- `logistic_mu` — μ from the logistic fit (PROJECT_BRIEF.md §3). Used by the §H1-C 3-size joint sign-test at p ≈ 0.00463.
+- `half_max` — first step where pass-count ≥ ⌈0.50 × max⌉. Used by the §H1-C-2.8b-extension under within-motif normalization (locked 2026-05-12).
+- `half_final` — first step where pass-count ≥ ⌈0.50 × final-step count⌉. Used by §H1-C-altdetectors-2-rr-4.
+- `first_geq_k` — first step where pass-count ≥ a fixed k. Used by proxy-sensitivity sweeps.
+
+The hypothesis is a claim about the *ordering* of $\mu$ across motifs within each size.
 
 **Pilot.** Week 1 protocol that decides between Path A (copy-suppression) and Path C (S-inhibition) by testing whether copy-suppression heads exist in Pythia-410M. See `HYPOTHESIS.md` § *Pilot decision rule* and `PROJECT_BRIEF.md` §3.
 

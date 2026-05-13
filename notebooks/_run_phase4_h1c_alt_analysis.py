@@ -170,23 +170,29 @@ def main() -> None:
     # ------------------------------------------------------------------
     print("\n=== [3/4] Emergence steps (half-final crossing) ===")
 
-    def first_step_meeting(grp: pd.DataFrame, col: str, half_target: float) -> int | None:
-        """Smallest step where grp[col] >= half_target."""
-        g = grp.sort_values("step")
-        hits = g[g[col] >= half_target]["step"]
+    # Per §H1-C-altdetectors-2-rr-4: emergence step is the smallest step where
+    # pass-count ≥ K/2 (frozen/top5/locked). For the rank-only readout it's the
+    # smallest step where rank_overlap (a float in [0,1]) ≥ 0.5, which doesn't
+    # match the integer-pass-count `first_geq_k` proxy — kept inline.
+    import math as _math
+    from src.analysis.emergence_step import emergence_step as _emergence_step
+
+    def _first_step_geq_float(grp: pd.DataFrame, col: str, target: float) -> int | None:
+        hits = grp.sort_values("step")[lambda g: g[col] >= target]["step"]
         return int(hits.iloc[0]) if len(hits) > 0 else None
+
+    def _series(grp: pd.DataFrame, col: str) -> pd.Series:
+        return grp.sort_values("step").set_index("step")[col]
 
     emerg_rows = []
     for (motif, size), grp in traj_df.groupby(["motif", "size"]):
         K = int(grp["K_final"].iloc[0])
         K_top5 = int(grp["K_top5"].iloc[0])
-        half_K = K / 2
-        half_K_top5 = K_top5 / 2
-        # Frozen-threshold emergence step (count ≥ K/2)
-        es_frozen = first_step_meeting(grp, "n_pass_frozen", half_K)
-        es_top5 = first_step_meeting(grp, "n_pass_top5", half_K_top5)
-        # Rank-only emergence step (rank_overlap ≥ 0.5)
-        es_rank = first_step_meeting(grp, "rank_overlap", 0.5)
+        half_K = _math.ceil(K / 2)
+        half_K_top5 = _math.ceil(K_top5 / 2)
+        es_frozen = _emergence_step(_series(grp, "n_pass_frozen"), "first_geq_k", k=half_K)
+        es_top5 = _emergence_step(_series(grp, "n_pass_top5"), "first_geq_k", k=half_K_top5)
+        es_rank = _first_step_geq_float(grp, "rank_overlap", 0.5)
         # Locked-detector emergence step for comparison
         locked_df = pd.read_parquet(LOCKED_PARQUET[motif])
         locked_size = locked_df[locked_df["size"] == size]
@@ -195,8 +201,10 @@ def main() -> None:
             lambda d: int(pred(d["score"]).sum()),
             include_groups=False,
         )
-        locked_traj = per_step_locked.reset_index().rename(columns={0: "n_pass"})
-        es_locked = first_step_meeting(locked_traj, "n_pass", half_K)
+        es_locked = _emergence_step(per_step_locked, "first_geq_k", k=half_K)
+        es_frozen = int(es_frozen) if es_frozen is not None else None
+        es_top5 = int(es_top5) if es_top5 is not None else None
+        es_locked = int(es_locked) if es_locked is not None else None
         emerg_rows.append(dict(
             motif=motif, size=size, K_final=K, K_top5=K_top5,
             es_locked=es_locked,
