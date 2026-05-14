@@ -30,32 +30,44 @@ DELIMITER_CHARS = (",", ".", "\n")
 
 
 def _collect_delimiter_token_ids(model) -> set[int]:
-    """Resolve {',', '.', '\\n'} plus their leading-space variants to token IDs."""
+    """Resolve {',', '.', '\\n'} plus their leading-space variants to token IDs.
+
+    Uses ``tokenizer.encode(s, add_special_tokens=False)`` directly rather than
+    HookedTransformer's ``to_single_token``: the latter is unreliable across
+    Pythia size variants because the tokenizer's ``add_special_tokens`` default
+    is not consistent across checkpoints (410m encode prepends BOS, 2.8b does
+    not — and HookedTransformer's ``to_tokens`` over-strips on 2.8b, returning
+    an empty sequence for single-char inputs).
+    """
     candidates = list(DELIMITER_CHARS) + [" ,", " ."]
     ids: set[int] = set()
     for s in candidates:
-        try:
-            tid = model.to_single_token(s)
-            ids.add(int(tid))
-        except (AssertionError, ValueError):
-            # Multi-token form (rare) — skip; the bare char form will catch it.
-            pass
+        toks = model.tokenizer.encode(s, add_special_tokens=False)
+        if len(toks) == 1:
+            ids.add(int(toks[0]))
     return ids
 
 
 def _build_token_windows(model, corpus: list[str], n_sequences: int, seq_len: int, seed: int) -> torch.Tensor:
-    """Tokenize each corpus string with BOS, then slice/pad to (n_sequences, seq_len) deterministically."""
-    rng = torch.Generator(device="cpu").manual_seed(seed)
-    all_tokens: list[torch.Tensor] = []
-    for text in corpus:
-        toks = model.to_tokens(text, prepend_bos=True)[0]
-        all_tokens.append(toks)
+    """Tokenize each corpus string with BOS, then slice/pad to (n_sequences, seq_len) deterministically.
 
-    # Build n_sequences windows: cycle through corpus, take seq_len tokens each.
-    # If a sample is shorter than seq_len, repeat its content cyclically until full.
-    windows = torch.zeros(n_sequences, seq_len, dtype=torch.long)
+    Tokenization goes through ``model.tokenizer.encode(text, add_special_tokens=False)``
+    + explicit BOS prepend, sidestepping HookedTransformer's ``to_tokens`` whose
+    BOS-stripping is inconsistent across Pythia size variants (see
+    ``_collect_delimiter_token_ids``).
+    """
+    rng = torch.Generator(device="cpu").manual_seed(seed)
     bos_id = model.tokenizer.bos_token_id if model.tokenizer.bos_token_id is not None else 0
     pad_id = model.tokenizer.eos_token_id if model.tokenizer.eos_token_id is not None else 0
+
+    all_tokens: list[torch.Tensor] = []
+    for text in corpus:
+        body_ids = model.tokenizer.encode(text, add_special_tokens=False)
+        # Explicit BOS prepend so we control the prefix; position 0 is always BOS.
+        toks = torch.tensor([bos_id] + body_ids, dtype=torch.long)
+        all_tokens.append(toks)
+
+    windows = torch.zeros(n_sequences, seq_len, dtype=torch.long)
     order = torch.randperm(len(corpus), generator=rng).tolist()
     for i in range(n_sequences):
         toks = all_tokens[order[i % len(corpus)]]
@@ -66,8 +78,7 @@ def _build_token_windows(model, corpus: list[str], n_sequences: int, seq_len: in
         else:
             window = torch.full((seq_len,), pad_id, dtype=torch.long)
             window[0] = bos_id
-            # Cycle the corpus tokens (skip the BOS at position 0 of toks) to fill.
-            body = toks[1:] if toks[0] == bos_id else toks
+            body = toks[1:]  # skip the BOS we prepended; cycle the content
             for j in range(1, seq_len):
                 window[j] = body[(j - 1) % body.shape[0]]
         windows[i] = window
