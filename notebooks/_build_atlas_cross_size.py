@@ -422,6 +422,30 @@ for _, r in peak_df.iterrows():
             print(f"  {r['motif']:>20} @ {sz}: peak={p} (step {r[f'{sz}_step']:,}), final={f}, ratio={ratio:.2f}")
 '''),
     md(
+        "## §6. Integrated atlas, 4 sizes side-by-side",
+        "",
+        "Categorical primary-family heatmap per size, shown together. Each panel is a (layer × head)",
+        "grid where cells are colored by their primary family at step 143000. Side-by-side reveals",
+        "how the typology shifts with scale: 70m sparse + delimiter-heavy → 160m mixed → 410m",
+        "BOS-dominant → 2.8b BOS+delimiter co-dominant.",
+        "",
+        "Built by `notebooks/_build_atlas_cross_size_movie.py` — produces both the static figure",
+        "below and an animated GIF (`atlas_v1_integrated_4size.gif`) advancing through all 40",
+        "checkpoints in lockstep across the 4 sizes.",
+    ),
+    code('''
+from IPython.display import Image, display
+
+static_fig = REPO / "notebooks" / "figures" / "atlas_v1" / "cross_size" / "C6_integrated_4size_final.png"
+animated_gif = REPO / "notebooks" / "figures" / "atlas_v1" / "cross_size" / "atlas_v1_integrated_4size.gif"
+
+print("Static figure (final checkpoint, step 143000):")
+display(Image(filename=str(static_fig)))
+
+print("\\nAnimated GIF (all 40 §H2-1 checkpoints in lockstep across 4 sizes):")
+display(Image(filename=str(animated_gif)))
+'''),
+    md(
         "## §7. Cross-size summary",
         "",
         "Key observations across the 4 sizes:",
