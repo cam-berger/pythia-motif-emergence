@@ -135,15 +135,29 @@ def precompute_mean_z_by_length(
     model,
     clean_prompts,
     ablate_set: list[tuple[int, int]],
+    *,
+    extra_token_rows: list[torch.Tensor] | None = None,
 ) -> dict[tuple[int, int, int], torch.Tensor]:
     """Precompute mean of hook_z[:, :, head, :] across batch, per length group.
 
     Returns dict keyed by (layer, head, seq_len) → tensor shape (seq_len, d_head),
     on CPU.
+
+    §H6-causal extension (backward-compatible): if `extra_token_rows` is
+    supplied (list of pre-tokenized 1-D token tensors with BOS already
+    prepended), those tokens contribute to the per-length-group pool
+    alongside the rows derived from `clean_prompts.text`. This lets §H6's
+    runner build a single mean-z that spans the union of IOI lengths
+    (Readouts B, C) and successor-prompt lengths (Readout A), so the same
+    perma-hooks apply across all three readouts under a single condition.
     """
     device = next(model.parameters()).device
     by_len: dict[int, list[int]] = defaultdict(list)
-    token_rows = [model.to_tokens(p.text, prepend_bos=True)[0] for p in clean_prompts]
+    token_rows: list[torch.Tensor] = [
+        model.to_tokens(p.text, prepend_bos=True)[0] for p in clean_prompts
+    ]
+    if extra_token_rows is not None:
+        token_rows = token_rows + list(extra_token_rows)
     for i, t in enumerate(token_rows):
         by_len[int(t.shape[0])].append(i)
 
